@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleName {
+  Admin
+  Pilgrim
+  MawkibOwner
+}
+
+enum MawkibStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+enum ReservationStatus {
+  Pending
+  Confirmed
+  Cancelled
+  Completed
+}
+
+enum RegistrationRequestStatus {
+  Pending
+  Approved
+  Rejected
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  fullName     String
+  mobileNumber String   @unique
+  passwordHash String
+  province     String?
+  city         String?
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  roles                  UserRole[]
+  ownedMawkibs           Mawkib[]                  @relation("MawkibOwner")
+  pilgrimReservations    Reservation[]             @relation("Pilgrim")
+  reservedByReservations Reservation[]             @relation("ReservedBy")
+  registrationRequests   MawkibRegistrationRequest[]
+
+  @@map("users")
+}
+
+model Role {
+  id   Int      @id @default(autoincrement())
+  name RoleName @unique
+
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId Int
+  roleId Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model Mawkib {
+  id          Int          @id @default(autoincrement())
+  name        String
+  address     String
+  latitude    Float?
+  longitude   Float?
+  phoneNumber String
+  description String?
+  capacity    Int
+  imageUrl    String?
+  ownerUserId Int
+  status      MawkibStatus @default(Pending)
+  createdAt   DateTime     @default(now())
+
+  owner        User          @relation("MawkibOwner", fields: [ownerUserId], references: [id])
+  reservations Reservation[]
+
+  @@map("mawkibs")
+}
+
+model Reservation {
+  id              Int               @id @default(autoincrement())
+  mawkibId        Int
+  pilgrimUserId   Int
+  reservedByUserId Int
+  reservationDate DateTime          @db.Date
+  guestCount      Int
+  pilgrimMobile   String
+  description     String?
+  status          ReservationStatus @default(Pending)
+  createdAt       DateTime          @default(now())
+
+  mawkib      Mawkib @relation(fields: [mawkibId], references: [id])
+  pilgrim     User   @relation("Pilgrim", fields: [pilgrimUserId], references: [id])
+  reservedBy  User   @relation("ReservedBy", fields: [reservedByUserId], references: [id])
+
+  @@index([mawkibId, reservationDate])
+  @@map("reservations")
+}
+
+model MawkibRegistrationRequest {
+  id          Int                       @id @default(autoincrement())
+  ownerUserId Int
+  ownerName   String
+  phoneNumber String
+  mawkibName  String
+  address     String
+  latitude    Float?
+  longitude   Float?
+  capacity    Int
+  description String?
+  status      RegistrationRequestStatus @default(Pending)
+  createdAt   DateTime                  @default(now())
+
+  owner User @relation(fields: [ownerUserId], references: [id])
+
+  @@map("mawkib_registration_requests")
+}
