@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const roles: RoleName[] = ['Admin', 'Pilgrim', 'MawkibOwner'];
+  const roles: RoleName[] = ['Admin', 'Pilgrim', 'MawkibOwner', 'HonoraryServant'];
 
   for (const name of roles) {
     await prisma.role.upsert({

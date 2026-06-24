@@ -11,6 +11,7 @@ enum RoleName {
   Admin
   Pilgrim
   MawkibOwner
+  HonoraryServant
 }
 
 enum MawkibStatus {
@@ -30,6 +31,27 @@ enum RegistrationRequestStatus {
   Pending
   Approved
   Rejected
+}
+
+enum HonoraryVolunteerServiceType {
+  Transportation
+  Cleaning
+  Cooking
+  Servantship
+  FoodSupply
+  Other
+}
+
+enum HonoraryVolunteerApplicationStatus {
+  Pending
+  Approved
+  Rejected
+  Cancelled
+}
+
+enum HonoraryVolunteerApplicantType {
+  Volunteer
+  MawkibOwner
 }
 
 model User {
@@ -53,6 +75,8 @@ model User {
   pilgrimReservations    Reservation[]             @relation("Pilgrim")
   reservedByReservations Reservation[]             @relation("ReservedBy")
   registrationRequests   MawkibRegistrationRequest[]
+  reviewedHonoraryVolunteerApplications HonoraryVolunteerApplication[] @relation("ReviewedHonoraryVolunteerApplications")
+  submittedHonoraryVolunteerApplications HonoraryVolunteerApplication[] @relation("SubmittedHonoraryVolunteerApplications")
 
   @@map("users")
 }
@@ -128,6 +152,7 @@ model Mawkib {
 
   owner        User          @relation("MawkibOwner", fields: [ownerUserId], references: [id])
   reservations Reservation[]
+  honoraryVolunteerApplications HonoraryVolunteerApplication[]
 
   @@map("mawkibs")
 }
@@ -174,4 +199,34 @@ model MawkibRegistrationRequest {
   owner User @relation(fields: [ownerUserId], references: [id])
 
   @@map("mawkib_registration_requests")
+}
+
+model HonoraryVolunteerApplication {
+  id                      Int                                @id @default(autoincrement())
+  trackingCode            String                             @unique
+  applicantType           HonoraryVolunteerApplicantType     @default(Volunteer)
+  firstName               String
+  lastName                String
+  mobileNumber            String
+  province                String?
+  city                    String?
+  mawkibId                Int?
+  submittedByUserId       Int?
+  description             String?
+  serviceTypes            HonoraryVolunteerServiceType[]
+  serviceDescription      String?
+  availabilityStartDate   DateTime                           @db.Date
+  availabilityEndDate     DateTime                           @db.Date
+  availabilityDescription String?
+  status                  HonoraryVolunteerApplicationStatus @default(Pending)
+  reviewNote              String?
+  reviewedAt              DateTime?
+  reviewedByUserId        Int?
+  createdAt               DateTime                           @default(now())
+
+  mawkib       Mawkib? @relation(fields: [mawkibId], references: [id], onDelete: SetNull)
+  submittedBy  User?   @relation("SubmittedHonoraryVolunteerApplications", fields: [submittedByUserId], references: [id], onDelete: SetNull)
+  reviewedBy   User?   @relation("ReviewedHonoraryVolunteerApplications", fields: [reviewedByUserId], references: [id])
+
+  @@map("honorary_volunteer_applications")
 }

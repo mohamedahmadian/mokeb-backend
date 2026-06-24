@@ -32,7 +32,7 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get('me')
-  @Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.Pilgrim)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.Pilgrim, RoleName.HonoraryServant)
   findMe(@CurrentUser() user: AuthUser) {
     return this.usersService.findOne(user.id);
   }

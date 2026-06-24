@@ -19,6 +19,15 @@ type UserWithRoles = {
   roles: { role: { name: string } }[];
 };
 
+export type RegisterHonoraryServantInput = {
+  firstName: string;
+  lastName: string;
+  mobileNumber: string;
+  password: string;
+  province?: string;
+  city?: string;
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -78,6 +87,80 @@ export class AuthService {
     });
 
     return this.buildAuthResponseFromCreated(user);
+  }
+
+  async registerHonoraryServant(dto: RegisterHonoraryServantInput) {
+    const fullName = `${dto.firstName.trim()} ${dto.lastName.trim()}`;
+    const mobileNumber = dto.mobileNumber.trim();
+
+    const existing = await this.prisma.user.findUnique({
+      where: { mobileNumber },
+      include: { roles: { include: { role: true } } },
+    });
+
+    if (existing) {
+      const isValid = await bcrypt.compare(dto.password, existing.passwordHash);
+      if (!isValid) {
+        throw new UnauthorizedException(
+          'این شماره موبایل قبلاً ثبت شده است. لطفاً با رمز عبور صحیح وارد شوید.',
+        );
+      }
+
+      await this.ensureHonoraryServantRole(existing.id);
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: existing.id },
+        include: { roles: { include: { role: true } } },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('کاربر یافت نشد');
+      }
+
+      return this.buildAuthResponse(user);
+    }
+
+    const user = await this.usersService.create({
+      fullName,
+      mobileNumber,
+      password: dto.password,
+      province: dto.province?.trim() || undefined,
+      city: dto.city?.trim() || undefined,
+      roles: [RoleName.HonoraryServant],
+    });
+
+    const userWithRoles = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: { roles: { include: { role: true } } },
+    });
+
+    if (!userWithRoles) {
+      throw new UnauthorizedException('کاربر یافت نشد');
+    }
+
+    return this.buildAuthResponseFromCreated(userWithRoles);
+  }
+
+  private async ensureHonoraryServantRole(userId: number) {
+    const role = await this.prisma.role.findUnique({
+      where: { name: RoleName.HonoraryServant },
+    });
+
+    if (!role) {
+      throw new UnauthorizedException('نقش خادم‌یار یافت نشد');
+    }
+
+    await this.prisma.userRole.upsert({
+      where: {
+        userId_roleId: { userId, roleId: role.id },
+      },
+      create: { userId, roleId: role.id },
+      update: {},
+    });
+  }
+
+  async assignHonoraryServantRole(userId: number) {
+    await this.ensureHonoraryServantRole(userId);
   }
 
   async login(dto: LoginDto) {

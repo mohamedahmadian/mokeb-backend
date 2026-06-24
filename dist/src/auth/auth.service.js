@@ -105,6 +105,63 @@ let AuthService = class AuthService {
         });
         return this.buildAuthResponseFromCreated(user);
     }
+    async registerHonoraryServant(dto) {
+        const fullName = `${dto.firstName.trim()} ${dto.lastName.trim()}`;
+        const mobileNumber = dto.mobileNumber.trim();
+        const existing = await this.prisma.user.findUnique({
+            where: { mobileNumber },
+            include: { roles: { include: { role: true } } },
+        });
+        if (existing) {
+            const isValid = await bcrypt.compare(dto.password, existing.passwordHash);
+            if (!isValid) {
+                throw new common_1.UnauthorizedException('این شماره موبایل قبلاً ثبت شده است. لطفاً با رمز عبور صحیح وارد شوید.');
+            }
+            await this.ensureHonoraryServantRole(existing.id);
+            const user = await this.prisma.user.findUnique({
+                where: { id: existing.id },
+                include: { roles: { include: { role: true } } },
+            });
+            if (!user) {
+                throw new common_1.UnauthorizedException('کاربر یافت نشد');
+            }
+            return this.buildAuthResponse(user);
+        }
+        const user = await this.usersService.create({
+            fullName,
+            mobileNumber,
+            password: dto.password,
+            province: dto.province?.trim() || undefined,
+            city: dto.city?.trim() || undefined,
+            roles: [client_1.RoleName.HonoraryServant],
+        });
+        const userWithRoles = await this.prisma.user.findUnique({
+            where: { id: user.id },
+            include: { roles: { include: { role: true } } },
+        });
+        if (!userWithRoles) {
+            throw new common_1.UnauthorizedException('کاربر یافت نشد');
+        }
+        return this.buildAuthResponseFromCreated(userWithRoles);
+    }
+    async ensureHonoraryServantRole(userId) {
+        const role = await this.prisma.role.findUnique({
+            where: { name: client_1.RoleName.HonoraryServant },
+        });
+        if (!role) {
+            throw new common_1.UnauthorizedException('نقش خادم‌یار یافت نشد');
+        }
+        await this.prisma.userRole.upsert({
+            where: {
+                userId_roleId: { userId, roleId: role.id },
+            },
+            create: { userId, roleId: role.id },
+            update: {},
+        });
+    }
+    async assignHonoraryServantRole(userId) {
+        await this.ensureHonoraryServantRole(userId);
+    }
     async login(dto) {
         const user = await this.prisma.user.findUnique({
             where: { mobileNumber: dto.mobileNumber },

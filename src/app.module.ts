@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { MawkibsModule } from './mawkibs/mawkibs.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { RegistrationRequestsModule } from './registration-requests/registration-requests.module';
+import { HonoraryVolunteersModule } from './honorary-volunteers/honorary-volunteers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
@@ -17,6 +18,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     MawkibsModule,
     ReservationsModule,
     RegistrationRequestsModule,
+    HonoraryVolunteersModule,
     DashboardModule,
   ],
 })

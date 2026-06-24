@@ -37,7 +37,7 @@ const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma = new client_1.PrismaClient();
 async function main() {
-    const roles = ['Admin', 'Pilgrim', 'MawkibOwner'];
+    const roles = ['Admin', 'Pilgrim', 'MawkibOwner', 'HonoraryServant'];
     for (const name of roles) {
         await prisma.role.upsert({
             where: { name },

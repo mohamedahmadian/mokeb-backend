@@ -4,6 +4,14 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterMawkibOwnerDto, RegisterPilgrimDto } from './dto/public-register.dto';
 import { PrismaService } from '../prisma/prisma.service';
+export type RegisterHonoraryServantInput = {
+    firstName: string;
+    lastName: string;
+    mobileNumber: string;
+    password: string;
+    province?: string;
+    city?: string;
+};
 export declare class AuthService {
     private prisma;
     private jwtService;
@@ -36,6 +44,17 @@ export declare class AuthService {
             roles: string[];
         };
     }>;
+    registerHonoraryServant(dto: RegisterHonoraryServantInput): Promise<{
+        accessToken: string;
+        user: {
+            id: number;
+            fullName: string;
+            mobileNumber: string;
+            roles: string[];
+        };
+    }>;
+    private ensureHonoraryServantRole;
+    assignHonoraryServantRole(userId: number): Promise<void>;
     login(dto: LoginDto): Promise<{
         accessToken: string;
         user: {
