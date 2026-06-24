@@ -6,8 +6,25 @@ import {
   IsOptional,
   IsString,
   Min,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
 } from 'class-validator';
 import { ReservationStatus } from '@prisma/client';
+import { Type, Transform } from 'class-transformer';
+
+@ValidatorConstraint({ name: 'hasGuestCount', async: false })
+class HasGuestCountConstraint implements ValidatorConstraintInterface {
+  validate(_: unknown, args: ValidationArguments) {
+    const obj = args.object as { maleGuestCount?: number; femaleGuestCount?: number };
+    return (obj.maleGuestCount ?? 0) + (obj.femaleGuestCount ?? 0) > 0;
+  }
+
+  defaultMessage() {
+    return 'حداقل یک نفر (آقا یا خانم) باید برای رزرو وارد شود';
+  }
+}
 
 export class CreateReservationDto {
   @IsInt()
@@ -20,9 +37,20 @@ export class CreateReservationDto {
   @IsDateString()
   reservationDate: string;
 
+  @IsOptional()
+  @IsDateString()
+  reservationEndDate?: string;
+
   @IsInt()
-  @Min(1)
-  guestCount: number;
+  @Min(0)
+  maleGuestCount: number;
+
+  @IsInt()
+  @Min(0)
+  femaleGuestCount: number;
+
+  @Validate(HasGuestCountConstraint)
+  private readonly _guestCheck?: never;
 
   @IsString()
   @IsNotEmpty()
@@ -31,9 +59,127 @@ export class CreateReservationDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  companions?: string;
+}
+
+export class CreateGuestReservationDto {
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mobileNumber: string;
+
+  @IsOptional()
+  @IsString()
+  province?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsInt()
+  mawkibId: number;
+
+  @IsDateString()
+  reservationDate: string;
+
+  @IsDateString()
+  reservationEndDate: string;
+
+  @IsInt()
+  @Min(0)
+  maleGuestCount: number;
+
+  @IsInt()
+  @Min(0)
+  femaleGuestCount: number;
+
+  @Validate(HasGuestCountConstraint)
+  private readonly _guestCheck?: never;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  companions?: string;
 }
 
 export class UpdateReservationStatusDto {
   @IsEnum(ReservationStatus)
   status: ReservationStatus;
+}
+
+export class CancelReservationDto {
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+export class SearchReservationDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  mawkibId?: number;
+
+  @IsOptional()
+  @IsEnum(ReservationStatus)
+  status?: ReservationStatus;
+
+  @IsOptional()
+  @IsDateString()
+  reservationDateFrom?: string;
+
+  @IsOptional()
+  @IsDateString()
+  reservationDateTo?: string;
+
+  @IsOptional()
+  @IsString()
+  pilgrimName?: string;
+
+  @IsOptional()
+  @IsString()
+  pilgrimMobile?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  pilgrimUserId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  guestCountMin?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  guestCountMax?: number;
+}
+
+export class TrackReservationDto {
+  @IsString()
+  @IsNotEmpty({ message: 'کد رزرو الزامی است' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  trackingCode: string;
+}
+
+export class TrackByMobileDto {
+  @IsString()
+  @IsNotEmpty({ message: 'شماره موبایل الزامی است' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  mobileNumber: string;
 }

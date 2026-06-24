@@ -1,14 +1,33 @@
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterMawkibOwnerDto, RegisterPilgrimDto } from './dto/public-register.dto';
+import { PrismaService } from '../prisma/prisma.service';
 export declare class AuthService {
     private prisma;
     private jwtService;
-    private configService;
-    constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService);
+    private usersService;
+    constructor(prisma: PrismaService, jwtService: JwtService, usersService: UsersService);
     register(dto: RegisterDto): Promise<{
+        accessToken: string;
+        user: {
+            id: number;
+            fullName: string;
+            mobileNumber: string;
+            roles: string[];
+        };
+    }>;
+    registerPilgrim(dto: RegisterPilgrimDto): Promise<{
+        accessToken: string;
+        user: {
+            id: number;
+            fullName: string;
+            mobileNumber: string;
+            roles: string[];
+        };
+    }>;
+    registerMawkibOwner(dto: RegisterMawkibOwnerDto): Promise<{
         accessToken: string;
         user: {
             id: number;
@@ -31,5 +50,6 @@ export declare class AuthService {
         mobileNumber: string;
         roles: import("@prisma/client").$Enums.RoleName[];
     } | null>;
+    private buildAuthResponseFromCreated;
     private buildAuthResponse;
 }

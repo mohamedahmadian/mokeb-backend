@@ -1,17 +1,21 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { RoleName } from '@prisma/client';
 import { ReservationsService } from './reservations.service';
 import {
+  CancelReservationDto,
   CreateReservationDto,
+  SearchReservationDto,
   UpdateReservationStatusDto,
 } from './dto/reservation.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -28,21 +32,27 @@ export class ReservationsController {
   @Get('admin')
   @UseGuards(RolesGuard)
   @Roles(RoleName.Admin)
-  findAllAdmin() {
-    return this.reservationsService.findAllAdmin();
+  findAllAdmin(@Query() search: SearchReservationDto) {
+    return this.reservationsService.findAllAdmin(search);
   }
 
   @Get('my')
-  findMy(@CurrentUser() user: AuthUser) {
+  findMy(
+    @CurrentUser() user: AuthUser,
+    @Query() search: SearchReservationDto,
+  ) {
     if (user.roles.includes(RoleName.MawkibOwner)) {
-      return this.reservationsService.findByMawkibOwner(user.id);
+      return this.reservationsService.findByMawkibOwner(user.id, search);
     }
-    return this.reservationsService.findByPilgrim(user.id);
+    return this.reservationsService.findByPilgrim(user.id, search);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.reservationsService.findOne(id);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.findOneForUser(id, user);
   }
 
   @Post()
@@ -59,5 +69,21 @@ export class ReservationsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.reservationsService.updateStatus(id, dto, user);
+  }
+
+  @Patch(':id/cancel')
+  cancel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CancelReservationDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.cancel(id, dto, user);
+  }
+
+  @Delete(':id')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin)
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.reservationsService.remove(id);
   }
 }

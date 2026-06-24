@@ -40,6 +40,11 @@ model User {
   province     String?
   city         String?
   description  String?
+  whatsapp     String?
+  telegram     String?
+  bale         String?
+  eitaa        String?
+  email        String?
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -72,19 +77,54 @@ model UserRole {
   @@map("user_roles")
 }
 
+enum MawkibCountry {
+  Iran
+  Iraq
+}
+
+enum MawkibCity {
+  Mashhad
+  Qom
+  Najaf
+  Karbala
+}
+
 model Mawkib {
-  id          Int          @id @default(autoincrement())
-  name        String
-  address     String
-  latitude    Float?
-  longitude   Float?
-  phoneNumber String
-  description String?
-  capacity    Int
-  imageUrl    String?
-  ownerUserId Int
-  status      MawkibStatus @default(Pending)
-  createdAt   DateTime     @default(now())
+  id               Int          @id @default(autoincrement())
+  name             String
+  address          String
+  latitude         Float?
+  longitude        Float?
+  phoneNumber      String
+  description      String?
+  facilities       String?
+  services         String?
+  serviceStartDate DateTime?    @db.Date
+  serviceEndDate   DateTime?    @db.Date
+  maleCapacity     Int
+  femaleCapacity   Int
+  imageUrl         String?
+  distanceToShrine String?
+  lunchReception       Boolean  @default(false)
+  breakfastReception   Boolean  @default(false)
+  dinnerReception      Boolean  @default(false)
+  bathroom             Boolean  @default(false)
+  laundry              Boolean  @default(false)
+  parking              Boolean  @default(false)
+  internet             Boolean  @default(false)
+  familyFriendly       Boolean  @default(false)
+  maxReservationDays   Int?
+  country              MawkibCountry @default(Iran)
+  mawkibCity           MawkibCity?
+  rules                String?
+  telegramChannel      String?
+  whatsapp             String?
+  bale                 String?
+  eitaa                String?
+  websiteUrl           String?
+  ownerUserId      Int
+  status           MawkibStatus @default(Pending)
+  createdAt        DateTime     @default(now())
 
   owner        User          @relation("MawkibOwner", fields: [ownerUserId], references: [id])
   reservations Reservation[]
@@ -97,11 +137,16 @@ model Reservation {
   mawkibId        Int
   pilgrimUserId   Int
   reservedByUserId Int
-  reservationDate DateTime          @db.Date
-  guestCount      Int
+  reservationDate    DateTime          @db.Date
+  reservationEndDate DateTime          @db.Date
+  maleGuestCount     Int
+  femaleGuestCount   Int
+  trackingCode       String            @unique
   pilgrimMobile   String
-  description     String?
-  status          ReservationStatus @default(Pending)
+  companions         String?
+  description        String?
+  cancellationNote   String?
+  status             ReservationStatus @default(Pending)
   createdAt       DateTime          @default(now())
 
   mawkib      Mawkib @relation(fields: [mawkibId], references: [id])

@@ -10,14 +10,16 @@ exports.ReservationsModule = void 0;
 const common_1 = require("@nestjs/common");
 const reservations_service_1 = require("./reservations.service");
 const reservations_controller_1 = require("./reservations.controller");
+const guest_reservations_controller_1 = require("./guest-reservations.controller");
 const mawkibs_module_1 = require("../mawkibs/mawkibs.module");
+const users_module_1 = require("../users/users.module");
 let ReservationsModule = class ReservationsModule {
 };
 exports.ReservationsModule = ReservationsModule;
 exports.ReservationsModule = ReservationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [mawkibs_module_1.MawkibsModule],
-        controllers: [reservations_controller_1.ReservationsController],
+        imports: [mawkibs_module_1.MawkibsModule, users_module_1.UsersModule],
+        controllers: [reservations_controller_1.ReservationsController, guest_reservations_controller_1.GuestReservationsController],
         providers: [reservations_service_1.ReservationsService],
     })
 ], ReservationsModule);

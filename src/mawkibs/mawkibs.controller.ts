@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -12,6 +13,7 @@ import {
 import { MawkibStatus, RoleName } from '@prisma/client';
 import { MawkibsService } from './mawkibs.service';
 import {
+  AdminSearchMawkibDto,
   CreateMawkibDto,
   SearchMawkibDto,
   UpdateMawkibDto,
@@ -34,20 +36,20 @@ export class MawkibsController {
   @Get('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleName.Admin)
-  findAllAdmin() {
-    return this.mawkibsService.findAllAdmin();
+  findAllAdmin(@Query() search: AdminSearchMawkibDto) {
+    return this.mawkibsService.findAllAdmin(search);
   }
 
   @Get('my')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleName.MawkibOwner)
-  findMy(@CurrentUser() user: AuthUser) {
-    return this.mawkibsService.findByOwner(user.id);
+  findMy(@CurrentUser() user: AuthUser, @Query() search: AdminSearchMawkibDto) {
+    return this.mawkibsService.findByOwner(user.id, search);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.mawkibsService.findOne(id);
+  @Get('public/:id')
+  findOnePublic(@Param('id', ParseIntPipe) id: number) {
+    return this.mawkibsService.findOnePublic(id);
   }
 
   @Get(':id/capacity')
@@ -55,10 +57,21 @@ export class MawkibsController {
     @Param('id', ParseIntPipe) id: number,
     @Query('date') date?: string,
   ) {
-    return this.mawkibsService.getAvailableCapacity(
+    return this.mawkibsService.getCapacitySnapshot(
       id,
       date ? new Date(date) : undefined,
     );
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    const isAdmin = user.roles.includes(RoleName.Admin);
+    return this.mawkibsService.findOne(id, user.id, isAdmin);
   }
 
   @Post()
@@ -70,9 +83,21 @@ export class MawkibsController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMawkibDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    const isAdmin = user.roles.includes(RoleName.Admin);
+    return this.mawkibsService.update(id, dto, user.id, isAdmin);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleName.Admin)
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMawkibDto) {
-    return this.mawkibsService.update(id, dto);
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.mawkibsService.remove(id);
   }
 
   @Patch(':id/status')

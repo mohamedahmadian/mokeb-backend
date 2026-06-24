@@ -15,6 +15,7 @@ const users_module_1 = require("./users/users.module");
 const mawkibs_module_1 = require("./mawkibs/mawkibs.module");
 const reservations_module_1 = require("./reservations/reservations.module");
 const registration_requests_module_1 = require("./registration-requests/registration-requests.module");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,6 +29,7 @@ exports.AppModule = AppModule = __decorate([
             mawkibs_module_1.MawkibsModule,
             reservations_module_1.ReservationsModule,
             registration_requests_module_1.RegistrationRequestsModule,
+            dashboard_module_1.DashboardModule,
         ],
     })
 ], AppModule);

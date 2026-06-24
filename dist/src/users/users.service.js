@@ -44,6 +44,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../prisma/prisma.service");
 const userInclude = {
@@ -58,10 +59,49 @@ let UsersService = class UsersService {
         const { passwordHash: _, ...rest } = user;
         return rest;
     }
-    async findAll() {
+    async findAll(filters = {}) {
+        const where = {};
+        if (filters.role) {
+            where.roles = { some: { role: { name: filters.role } } };
+        }
+        if (filters.search?.trim()) {
+            const term = filters.search.trim();
+            where.OR = [
+                { fullName: { contains: term, mode: 'insensitive' } },
+                { mobileNumber: { contains: term, mode: 'insensitive' } },
+            ];
+        }
+        else {
+            if (filters.fullName?.trim()) {
+                where.fullName = { contains: filters.fullName.trim(), mode: 'insensitive' };
+            }
+            if (filters.mobileNumber?.trim()) {
+                where.mobileNumber = { contains: filters.mobileNumber.trim(), mode: 'insensitive' };
+            }
+        }
+        if (filters.province?.trim()) {
+            where.province = { contains: filters.province.trim(), mode: 'insensitive' };
+        }
+        if (filters.city?.trim()) {
+            where.city = { contains: filters.city.trim(), mode: 'insensitive' };
+        }
+        if (filters.isActive !== undefined) {
+            where.isActive = filters.isActive;
+        }
+        const include = filters.role === client_1.RoleName.MawkibOwner
+            ? {
+                ...userInclude,
+                ownedMawkibs: {
+                    select: { id: true, name: true, status: true },
+                    orderBy: { name: 'asc' },
+                },
+            }
+            : userInclude;
         const users = await this.prisma.user.findMany({
-            include: userInclude,
-            orderBy: { createdAt: 'desc' },
+            where,
+            include,
+            orderBy: filters.search?.trim() ? { fullName: 'asc' } : { createdAt: 'desc' },
+            ...(filters.search?.trim() ? { take: 50 } : {}),
         });
         return users.map((user) => this.sanitize(user));
     }
@@ -100,6 +140,11 @@ let UsersService = class UsersService {
                 province: dto.province,
                 city: dto.city,
                 description: dto.description,
+                whatsapp: dto.whatsapp,
+                telegram: dto.telegram,
+                bale: dto.bale,
+                eitaa: dto.eitaa,
+                email: dto.email,
                 roles: {
                     create: roles.map((role) => ({ roleId: role.id })),
                 },
@@ -107,6 +152,115 @@ let UsersService = class UsersService {
             include: userInclude,
         });
         return this.sanitize(user);
+    }
+    async findOneForUser(id, user) {
+        const isAdmin = user.roles.includes(client_1.RoleName.Admin);
+        if (!isAdmin && user.id !== id) {
+            throw new common_1.ForbiddenException('شما مجوز مشاهده این کاربر را ندارید');
+        }
+        return this.findOne(id);
+    }
+    async updateForUser(id, dto, user) {
+        const isAdmin = user.roles.includes(client_1.RoleName.Admin);
+        if (!isAdmin && user.id !== id) {
+            throw new common_1.ForbiddenException('شما مجوز ویرایش این کاربر را ندارید');
+        }
+        if (!isAdmin) {
+            const { roles, isActive, ...selfFields } = dto;
+            if (roles !== undefined || isActive !== undefined) {
+                throw new common_1.ForbiddenException('شما مجوز تغییر نقش یا وضعیت را ندارید');
+            }
+            return this.update(id, selfFields);
+        }
+        return this.update(id, dto);
+    }
+    buildPilgrimWhere(query, ownerUserId) {
+        const term = query.search?.trim();
+        return {
+            roles: { some: { role: { name: client_1.RoleName.Pilgrim } } },
+            ...(query.isActive !== undefined ? { isActive: query.isActive } : {}),
+            ...(query.fullName?.trim() && {
+                fullName: { contains: query.fullName.trim(), mode: 'insensitive' },
+            }),
+            ...(query.mobileNumber?.trim() && {
+                mobileNumber: { contains: query.mobileNumber.trim(), mode: 'insensitive' },
+            }),
+            ...(query.province?.trim() && {
+                province: { contains: query.province.trim(), mode: 'insensitive' },
+            }),
+            ...(query.city?.trim() && {
+                city: { contains: query.city.trim(), mode: 'insensitive' },
+            }),
+            ...(term && {
+                OR: [
+                    { fullName: { contains: term, mode: 'insensitive' } },
+                    { mobileNumber: { contains: term, mode: 'insensitive' } },
+                ],
+            }),
+            ...(ownerUserId && {
+                pilgrimReservations: {
+                    some: { mawkib: { ownerUserId } },
+                },
+            }),
+        };
+    }
+    async findPilgrims(query = {}, ownerUserId) {
+        const isQuickSearch = !!query.search?.trim() &&
+            !query.fullName?.trim() &&
+            !query.mobileNumber?.trim() &&
+            !query.province?.trim() &&
+            !query.city?.trim() &&
+            query.isActive === undefined;
+        const where = this.buildPilgrimWhere(query, ownerUserId);
+        if (isQuickSearch) {
+            return this.prisma.user.findMany({
+                where: { ...where, isActive: true },
+                select: {
+                    id: true,
+                    fullName: true,
+                    mobileNumber: true,
+                    city: true,
+                },
+                orderBy: { fullName: 'asc' },
+                take: 50,
+            });
+        }
+        const users = await this.prisma.user.findMany({
+            where,
+            include: userInclude,
+            orderBy: { fullName: 'asc' },
+        });
+        return users.map((user) => this.sanitize(user));
+    }
+    async createQuickPilgrim(dto) {
+        const mobileNumber = dto.mobileNumber.trim();
+        const existing = await this.prisma.user.findUnique({
+            where: { mobileNumber },
+            include: userInclude,
+        });
+        if (existing) {
+            return this.sanitize(existing);
+        }
+        const digits = mobileNumber.replace(/\D/g, '');
+        const password = dto.password?.trim() || digits.slice(-4);
+        if (password.length < 4) {
+            throw new common_1.BadRequestException('رمز عبور باید حداقل ۴ کاراکتر باشد یا شماره موبایل معتبر وارد کنید');
+        }
+        const fullName = `${dto.firstName.trim()} ${dto.lastName.trim()}`;
+        return this.create({
+            fullName,
+            mobileNumber,
+            password,
+            province: dto.province?.trim() || undefined,
+            city: dto.city?.trim() || undefined,
+            description: dto.description?.trim() || undefined,
+            whatsapp: dto.whatsapp?.trim() || undefined,
+            telegram: dto.telegram?.trim() || undefined,
+            bale: dto.bale?.trim() || undefined,
+            eitaa: dto.eitaa?.trim() || undefined,
+            email: dto.email?.trim() || undefined,
+            roles: ['Pilgrim'],
+        });
     }
     async update(id, dto) {
         await this.findOne(id);

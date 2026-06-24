@@ -1,10 +1,11 @@
+import { AuthUser } from '../common/decorators/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
-import { AssignRoleDto, CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { AssignRoleDto, CreateQuickPilgrimDto, CreateUserDto, ListPilgrimsDto, ListUsersDto, UpdateUserDto } from './dto/user.dto';
 export declare class UsersService {
     private prisma;
     constructor(prisma: PrismaService);
     private sanitize;
-    findAll(): Promise<{
+    findAll(filters?: ListUsersDto): Promise<{
         roles: ({
             role: {
                 id: number;
@@ -20,6 +21,11 @@ export declare class UsersService {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }[]>;
@@ -39,6 +45,11 @@ export declare class UsersService {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
@@ -58,6 +69,90 @@ export declare class UsersService {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
+        isActive: boolean;
+        createdAt: Date;
+    }>;
+    findOneForUser(id: number, user: AuthUser): Promise<{
+        roles: ({
+            role: {
+                id: number;
+                name: import("@prisma/client").$Enums.RoleName;
+            };
+        } & {
+            roleId: number;
+            userId: number;
+        })[];
+        id: number;
+        mobileNumber: string;
+        fullName: string;
+        province: string | null;
+        city: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
+        isActive: boolean;
+        createdAt: Date;
+    }>;
+    updateForUser(id: number, dto: UpdateUserDto, user: AuthUser): Promise<{
+        roles: ({
+            role: {
+                id: number;
+                name: import("@prisma/client").$Enums.RoleName;
+            };
+        } & {
+            roleId: number;
+            userId: number;
+        })[];
+        id: number;
+        mobileNumber: string;
+        fullName: string;
+        province: string | null;
+        city: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
+        isActive: boolean;
+        createdAt: Date;
+    }>;
+    private buildPilgrimWhere;
+    findPilgrims(query?: ListPilgrimsDto, ownerUserId?: number): Promise<{
+        id: number;
+        mobileNumber: string;
+        fullName: string;
+        city: string | null;
+    }[]>;
+    createQuickPilgrim(dto: CreateQuickPilgrimDto): Promise<{
+        roles: ({
+            role: {
+                id: number;
+                name: import("@prisma/client").$Enums.RoleName;
+            };
+        } & {
+            roleId: number;
+            userId: number;
+        })[];
+        id: number;
+        mobileNumber: string;
+        fullName: string;
+        province: string | null;
+        city: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
@@ -77,6 +172,11 @@ export declare class UsersService {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
@@ -98,6 +198,11 @@ export declare class UsersService {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     } | {
@@ -121,6 +226,11 @@ export declare class UsersService {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
@@ -140,6 +250,11 @@ export declare class UsersService {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;

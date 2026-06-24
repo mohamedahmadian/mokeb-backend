@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const login_dto_1 = require("./dto/login.dto");
 const register_dto_1 = require("./dto/register.dto");
+const public_register_dto_1 = require("./dto/public-register.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../common/decorators/current-user.decorator");
 let AuthController = class AuthController {
@@ -26,6 +27,12 @@ let AuthController = class AuthController {
     }
     register(dto) {
         return this.authService.register(dto);
+    }
+    registerPilgrim(dto) {
+        return this.authService.registerPilgrim(dto);
+    }
+    registerMawkibOwner(dto) {
+        return this.authService.registerMawkibOwner(dto);
     }
     login(dto) {
         return this.authService.login(dto);
@@ -42,6 +49,20 @@ __decorate([
     __metadata("design:paramtypes", [register_dto_1.RegisterDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "register", null);
+__decorate([
+    (0, common_1.Post)('register/pilgrim'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [public_register_dto_1.RegisterPilgrimDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "registerPilgrim", null);
+__decorate([
+    (0, common_1.Post)('register/mawkib-owner'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [public_register_dto_1.RegisterMawkibOwnerDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "registerMawkibOwner", null);
 __decorate([
     (0, common_1.Post)('login'),
     __param(0, (0, common_1.Body)()),

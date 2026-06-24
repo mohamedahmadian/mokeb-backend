@@ -1,0 +1,18 @@
+-- AlterTable
+ALTER TABLE "mawkibs" ADD COLUMN     "bale" TEXT,
+ADD COLUMN     "bathroom" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "breakfastReception" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "country" TEXT,
+ADD COLUMN     "dinnerReception" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "distanceToShrine" TEXT,
+ADD COLUMN     "eitaa" TEXT,
+ADD COLUMN     "familyFriendly" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "internet" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "laundry" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "lunchReception" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "maxReservationDays" INTEGER,
+ADD COLUMN     "parking" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "rules" TEXT,
+ADD COLUMN     "telegramChannel" TEXT,
+ADD COLUMN     "websiteUrl" TEXT,
+ADD COLUMN     "whatsapp" TEXT;

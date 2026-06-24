@@ -1,12 +1,14 @@
 import {
   ArrayMinSize,
   IsBoolean,
+  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   MinLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { RoleName } from '@prisma/client';
 
 export class CreateUserDto {
@@ -34,6 +36,26 @@ export class CreateUserDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
+  @IsString()
+  whatsapp?: string;
+
+  @IsOptional()
+  @IsString()
+  telegram?: string;
+
+  @IsOptional()
+  @IsString()
+  bale?: string;
+
+  @IsOptional()
+  @IsString()
+  eitaa?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
   @IsEnum(RoleName, { each: true })
   @ArrayMinSize(1)
   roles: RoleName[];
@@ -58,6 +80,26 @@ export class UpdateUserDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  whatsapp?: string;
+
+  @IsOptional()
+  @IsString()
+  telegram?: string;
+
+  @IsOptional()
+  @IsString()
+  bale?: string;
+
+  @IsOptional()
+  @IsString()
+  eitaa?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 
@@ -76,4 +118,95 @@ export class AssignRoleDto {
   @IsEnum(RoleName)
   @IsNotEmpty()
   role: RoleName;
+}
+
+export class CreateQuickPilgrimDto {
+  @IsString()
+  @IsNotEmpty()
+  firstName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  lastName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mobileNumber: string;
+
+  @IsOptional()
+  @IsString()
+  province?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(4)
+  password?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  whatsapp?: string;
+
+  @IsOptional()
+  @IsString()
+  telegram?: string;
+
+  @IsOptional()
+  @IsString()
+  bale?: string;
+
+  @IsOptional()
+  @IsString()
+  eitaa?: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+}
+
+export class ListUsersDto {
+  @IsOptional()
+  @IsEnum(RoleName)
+  role?: RoleName;
+
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  mobileNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  province?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  isActive?: boolean;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
+
+export class ListPilgrimsDto extends ListUsersDto {}
+
+/** @deprecated use ListPilgrimsDto */
+export class SearchPilgrimDto {
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

@@ -17,13 +17,14 @@ class LoginDto {
 }
 exports.LoginDto = LoginDto;
 __decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsString)({ message: 'شماره موبایل نامعتبر است' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'شماره موبایل الزامی است' }),
     __metadata("design:type", String)
 ], LoginDto.prototype, "mobileNumber", void 0);
 __decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.IsString)({ message: 'رمز عبور نامعتبر است' }),
+    (0, class_validator_1.IsNotEmpty)({ message: 'رمز عبور الزامی است' }),
+    (0, class_validator_1.MinLength)(6, { message: 'رمز عبور باید حداقل ۶ کاراکتر باشد' }),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
 class RegisterDto {

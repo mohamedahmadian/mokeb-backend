@@ -3,10 +3,49 @@ export declare class CreateReservationDto {
     mawkibId: number;
     pilgrimUserId?: number;
     reservationDate: string;
-    guestCount: number;
+    reservationEndDate?: string;
+    maleGuestCount: number;
+    femaleGuestCount: number;
+    private readonly _guestCheck?;
     pilgrimMobile: string;
     description?: string;
+    companions?: string;
+}
+export declare class CreateGuestReservationDto {
+    firstName: string;
+    lastName: string;
+    mobileNumber: string;
+    province?: string;
+    city?: string;
+    mawkibId: number;
+    reservationDate: string;
+    reservationEndDate: string;
+    maleGuestCount: number;
+    femaleGuestCount: number;
+    private readonly _guestCheck?;
+    description?: string;
+    companions?: string;
 }
 export declare class UpdateReservationStatusDto {
     status: ReservationStatus;
+}
+export declare class CancelReservationDto {
+    note?: string;
+}
+export declare class SearchReservationDto {
+    mawkibId?: number;
+    status?: ReservationStatus;
+    reservationDateFrom?: string;
+    reservationDateTo?: string;
+    pilgrimName?: string;
+    pilgrimMobile?: string;
+    pilgrimUserId?: number;
+    guestCountMin?: number;
+    guestCountMax?: number;
+}
+export declare class TrackReservationDto {
+    trackingCode: string;
+}
+export declare class TrackByMobileDto {
+    mobileNumber: string;
 }

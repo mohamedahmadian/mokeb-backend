@@ -1,9 +1,10 @@
 import { UsersService } from './users.service';
-import { AssignRoleDto, CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { AssignRoleDto, CreateQuickPilgrimDto, CreateUserDto, ListPilgrimsDto, ListUsersDto, UpdateUserDto } from './dto/user.dto';
+import type { AuthUser } from '../common/decorators/current-user.decorator';
 export declare class UsersController {
     private usersService;
     constructor(usersService: UsersService);
-    findAll(): Promise<{
+    findMe(user: AuthUser): Promise<{
         roles: ({
             role: {
                 id: number;
@@ -19,10 +20,45 @@ export declare class UsersController {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
+        isActive: boolean;
+        createdAt: Date;
+    }>;
+    findPilgrims(query: ListPilgrimsDto, user: AuthUser): Promise<{
+        id: number;
+        mobileNumber: string;
+        fullName: string;
+        city: string | null;
+    }[]>;
+    findAll(query: ListUsersDto): Promise<{
+        roles: ({
+            role: {
+                id: number;
+                name: import("@prisma/client").$Enums.RoleName;
+            };
+        } & {
+            roleId: number;
+            userId: number;
+        })[];
+        id: number;
+        mobileNumber: string;
+        fullName: string;
+        province: string | null;
+        city: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }[]>;
-    findOne(id: number): Promise<{
+    findOne(id: number, user: AuthUser): Promise<{
         roles: ({
             role: {
                 id: number;
@@ -38,6 +74,11 @@ export declare class UsersController {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
@@ -57,10 +98,15 @@ export declare class UsersController {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
-    update(id: number, dto: UpdateUserDto): Promise<{
+    createQuickPilgrim(dto: CreateQuickPilgrimDto): Promise<{
         roles: ({
             role: {
                 id: number;
@@ -76,6 +122,35 @@ export declare class UsersController {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
+        isActive: boolean;
+        createdAt: Date;
+    }>;
+    update(id: number, dto: UpdateUserDto, user: AuthUser): Promise<{
+        roles: ({
+            role: {
+                id: number;
+                name: import("@prisma/client").$Enums.RoleName;
+            };
+        } & {
+            roleId: number;
+            userId: number;
+        })[];
+        id: number;
+        mobileNumber: string;
+        fullName: string;
+        province: string | null;
+        city: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
@@ -97,6 +172,11 @@ export declare class UsersController {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     } | {
@@ -120,6 +200,11 @@ export declare class UsersController {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;
@@ -139,6 +224,11 @@ export declare class UsersController {
         province: string | null;
         city: string | null;
         description: string | null;
+        whatsapp: string | null;
+        telegram: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        email: string | null;
         isActive: boolean;
         createdAt: Date;
     }>;

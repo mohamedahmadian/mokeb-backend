@@ -1,12 +1,13 @@
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @IsString()
-  @IsNotEmpty()
+  @IsString({ message: 'شماره موبایل نامعتبر است' })
+  @IsNotEmpty({ message: 'شماره موبایل الزامی است' })
   mobileNumber: string;
 
-  @IsString()
-  @MinLength(6)
+  @IsString({ message: 'رمز عبور نامعتبر است' })
+  @IsNotEmpty({ message: 'رمز عبور الزامی است' })
+  @MinLength(6, { message: 'رمز عبور باید حداقل ۶ کاراکتر باشد' })
   password: string;
 }
 

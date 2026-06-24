@@ -45,48 +45,65 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
-const config_1 = require("@nestjs/config");
+const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
+const users_service_1 = require("../users/users.service");
 const prisma_service_1 = require("../prisma/prisma.service");
 let AuthService = class AuthService {
     prisma;
     jwtService;
-    configService;
-    constructor(prisma, jwtService, configService) {
+    usersService;
+    constructor(prisma, jwtService, usersService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
-        this.configService = configService;
+        this.usersService = usersService;
     }
     async register(dto) {
-        const existing = await this.prisma.user.findUnique({
-            where: { mobileNumber: dto.mobileNumber },
+        const parts = dto.fullName.trim().split(/\s+/);
+        const firstName = parts[0] ?? '';
+        const lastName = parts.slice(1).join(' ') || firstName;
+        return this.registerPilgrim({
+            firstName,
+            lastName,
+            mobileNumber: dto.mobileNumber,
+            password: dto.password,
+            province: dto.province,
+            city: dto.city,
         });
-        if (existing) {
-            throw new common_1.UnauthorizedException('این شماره موبایل قبلاً ثبت شده است');
-        }
-        const pilgrimRole = await this.prisma.role.findUnique({
-            where: { name: 'Pilgrim' },
+    }
+    async registerPilgrim(dto) {
+        const user = await this.usersService.create({
+            fullName: `${dto.firstName.trim()} ${dto.lastName.trim()}`,
+            mobileNumber: dto.mobileNumber.trim(),
+            password: dto.password,
+            province: dto.province?.trim() || undefined,
+            city: dto.city?.trim() || undefined,
+            description: dto.description?.trim() || undefined,
+            whatsapp: dto.whatsapp?.trim() || undefined,
+            telegram: dto.telegram?.trim() || undefined,
+            bale: dto.bale?.trim() || undefined,
+            eitaa: dto.eitaa?.trim() || undefined,
+            email: dto.email?.trim() || undefined,
+            roles: [client_1.RoleName.Pilgrim],
         });
-        if (!pilgrimRole) {
-            throw new common_1.UnauthorizedException('نقش زائر یافت نشد. لطفاً seed را اجرا کنید');
-        }
-        const passwordHash = await bcrypt.hash(dto.password, 10);
-        const user = await this.prisma.user.create({
-            data: {
-                fullName: dto.fullName,
-                mobileNumber: dto.mobileNumber,
-                passwordHash,
-                province: dto.province,
-                city: dto.city,
-                roles: {
-                    create: { roleId: pilgrimRole.id },
-                },
-            },
-            include: {
-                roles: { include: { role: true } },
-            },
+        return this.buildAuthResponseFromCreated(user);
+    }
+    async registerMawkibOwner(dto) {
+        const user = await this.usersService.create({
+            fullName: dto.fullName.trim(),
+            mobileNumber: dto.mobileNumber.trim(),
+            password: dto.password,
+            province: dto.province?.trim() || undefined,
+            city: dto.city?.trim() || undefined,
+            description: dto.description?.trim() || undefined,
+            whatsapp: dto.whatsapp?.trim() || undefined,
+            telegram: dto.telegram?.trim() || undefined,
+            bale: dto.bale?.trim() || undefined,
+            eitaa: dto.eitaa?.trim() || undefined,
+            email: dto.email?.trim() || undefined,
+            roles: [client_1.RoleName.MawkibOwner],
         });
-        return this.buildAuthResponse(user);
+        return this.buildAuthResponseFromCreated(user);
     }
     async login(dto) {
         const user = await this.prisma.user.findUnique({
@@ -120,6 +137,15 @@ let AuthService = class AuthService {
             roles: user.roles.map((ur) => ur.role.name),
         };
     }
+    buildAuthResponseFromCreated(user) {
+        return this.buildAuthResponse({
+            id: user.id,
+            fullName: user.fullName,
+            mobileNumber: user.mobileNumber,
+            isActive: true,
+            roles: user.roles,
+        });
+    }
     buildAuthResponse(user) {
         const roles = user.roles.map((ur) => ur.role.name);
         const payload = { sub: user.id, mobileNumber: user.mobileNumber, roles };
@@ -139,6 +165,6 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         jwt_1.JwtService,
-        config_1.ConfigService])
+        users_service_1.UsersService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map
