@@ -22,6 +22,7 @@ import {
   MawkibCapacitySnapshot,
   totalAvailable,
 } from '../common/types/capacity.types';
+import { reservationOccupiesDay } from '../reservations/reservation-occupancy.util';
 
 const mawkibInclude = {
   owner: { select: { id: true, fullName: true, mobileNumber: true, province: true, city: true } },
@@ -94,6 +95,155 @@ export class MawkibsService {
     );
   }
 
+  private hasAvailabilitySearchParams(
+    search?: Pick<
+      SearchMawkibDto,
+      | 'reservationDate'
+      | 'reservationDateFrom'
+      | 'reservationDateTo'
+      | 'hasAvailability'
+      | 'minAvailableMaleCapacity'
+      | 'minAvailableFemaleCapacity'
+      | 'province'
+      | 'city'
+      | 'capacityFilter'
+      | 'serviceStartFrom'
+      | 'serviceStartTo'
+      | 'serviceEndFrom'
+      | 'serviceEndTo'
+    >,
+  ) {
+    if (!search) return false;
+    return !!(
+      search.reservationDate ||
+      search.reservationDateFrom ||
+      search.reservationDateTo ||
+      search.hasAvailability ||
+      search.minAvailableMaleCapacity !== undefined ||
+      search.minAvailableFemaleCapacity !== undefined ||
+      search.province ||
+      search.city ||
+      search.capacityFilter ||
+      search.serviceStartFrom ||
+      search.serviceStartTo ||
+      search.serviceEndFrom ||
+      search.serviceEndTo
+    );
+  }
+
+  private async enrichAndFilterByAvailability<
+    T extends {
+      id: number;
+      maleCapacity: number;
+      femaleCapacity: number;
+      maxReservationDays: number | null;
+      serviceStartDate: Date | null;
+      owner: { province: string | null; city: string | null };
+    },
+  >(
+    mawkibs: T[],
+    search: Pick<
+      SearchMawkibDto,
+      | 'reservationDate'
+      | 'reservationDateFrom'
+      | 'reservationDateTo'
+      | 'hasAvailability'
+      | 'minAvailableMaleCapacity'
+      | 'minAvailableFemaleCapacity'
+      | 'capacityFilter'
+      | 'province'
+      | 'city'
+    >,
+  ) {
+    const rangeStart =
+      search.reservationDateFrom ?? search.reservationDate ?? undefined;
+    const rangeEnd =
+      search.reservationDateTo ??
+      search.reservationDateFrom ??
+      search.reservationDate ??
+      undefined;
+
+    const enriched = await Promise.all(
+      mawkibs.map(async (mawkib) => {
+        let snapshot: MawkibCapacitySnapshot;
+        if (rangeStart && rangeEnd) {
+          snapshot = await this.getMinCapacityInRange(
+            mawkib.id,
+            parseDateOnly(rangeStart),
+            parseDateOnly(rangeEnd),
+          );
+        } else if (rangeStart) {
+          snapshot = await this.getCapacitySnapshot(mawkib.id, parseDateOnly(rangeStart));
+        } else {
+          snapshot = await this.getCapacitySnapshot(mawkib.id);
+        }
+        return {
+          ...mawkib,
+          availableMaleCapacity: snapshot.availableMale,
+          availableFemaleCapacity: snapshot.availableFemale,
+        };
+      }),
+    );
+
+    return enriched.filter((m) => {
+      if (search.province && m.owner.province !== search.province) return false;
+      if (search.city && m.owner.city !== search.city) return false;
+      if (rangeStart && m.maxReservationDays) {
+        const dayCount = eachDateInRange(
+          parseDateOnly(rangeStart),
+          parseDateOnly(rangeEnd ?? rangeStart),
+        ).length;
+        if (dayCount > m.maxReservationDays) return false;
+      }
+      if (rangeStart && m.serviceStartDate) {
+        const resStart = parseDateOnly(rangeStart);
+        if (resStart < m.serviceStartDate) return false;
+      }
+      if (
+        search.minAvailableMaleCapacity !== undefined &&
+        m.maleCapacity < search.minAvailableMaleCapacity
+      ) {
+        return false;
+      }
+      if (
+        search.minAvailableFemaleCapacity !== undefined &&
+        m.femaleCapacity < search.minAvailableFemaleCapacity
+      ) {
+        return false;
+      }
+      if (
+        search.minAvailableMaleCapacity !== undefined &&
+        m.availableMaleCapacity < search.minAvailableMaleCapacity
+      ) {
+        return false;
+      }
+      if (
+        search.minAvailableFemaleCapacity !== undefined &&
+        m.availableFemaleCapacity < search.minAvailableFemaleCapacity
+      ) {
+        return false;
+      }
+      if (
+        search.hasAvailability &&
+        m.availableMaleCapacity <= 0 &&
+        m.availableFemaleCapacity <= 0
+      ) {
+        return false;
+      }
+      if (search.capacityFilter === MawkibCapacityFilter.Available) {
+        if (m.availableMaleCapacity <= 0 && m.availableFemaleCapacity <= 0) {
+          return false;
+        }
+      }
+      if (search.capacityFilter === MawkibCapacityFilter.Full) {
+        if (m.availableMaleCapacity > 0 || m.availableFemaleCapacity > 0) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
   async findAll(search?: SearchMawkibDto) {
     const where: Prisma.MawkibWhereInput = {
       status: MawkibStatus.Approved,
@@ -151,111 +301,11 @@ export class MawkibsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    if (
-      !search?.reservationDate &&
-      !search?.reservationDateFrom &&
-      !search?.reservationDateTo &&
-      !search?.hasAvailability &&
-      !search?.minAvailableMaleCapacity &&
-      !search?.minAvailableFemaleCapacity &&
-      !search?.province &&
-      !search?.city &&
-      !search?.capacityFilter &&
-      !search?.serviceStartFrom &&
-      !search?.serviceStartTo &&
-      !search?.serviceEndFrom &&
-      !search?.serviceEndTo
-    ) {
+    if (!this.hasAvailabilitySearchParams(search)) {
       return mawkibs;
     }
 
-    const rangeStart =
-      search?.reservationDateFrom ?? search?.reservationDate ?? undefined;
-    const rangeEnd =
-      search?.reservationDateTo ??
-      search?.reservationDateFrom ??
-      search?.reservationDate ??
-      undefined;
-
-    const enriched = await Promise.all(
-      mawkibs.map(async (mawkib) => {
-        let snapshot: MawkibCapacitySnapshot;
-        if (rangeStart && rangeEnd) {
-          snapshot = await this.getMinCapacityInRange(
-            mawkib.id,
-            parseDateOnly(rangeStart),
-            parseDateOnly(rangeEnd),
-          );
-        } else if (rangeStart) {
-          snapshot = await this.getCapacitySnapshot(mawkib.id, parseDateOnly(rangeStart));
-        } else {
-          snapshot = await this.getCapacitySnapshot(mawkib.id);
-        }
-        return {
-          ...mawkib,
-          availableMaleCapacity: snapshot.availableMale,
-          availableFemaleCapacity: snapshot.availableFemale,
-        };
-      }),
-    );
-
-    return enriched.filter((m) => {
-      if (search?.province && m.owner.province !== search.province) return false;
-      if (search?.city && m.owner.city !== search.city) return false;
-      if (rangeStart && m.maxReservationDays) {
-        const dayCount = eachDateInRange(
-          parseDateOnly(rangeStart),
-          parseDateOnly(rangeEnd ?? rangeStart),
-        ).length;
-        if (dayCount > m.maxReservationDays) return false;
-      }
-      if (rangeStart && m.serviceStartDate) {
-        const resStart = parseDateOnly(rangeStart);
-        if (resStart < m.serviceStartDate) return false;
-      }
-      if (
-        search?.minAvailableMaleCapacity !== undefined &&
-        m.maleCapacity < search.minAvailableMaleCapacity
-      ) {
-        return false;
-      }
-      if (
-        search?.minAvailableFemaleCapacity !== undefined &&
-        m.femaleCapacity < search.minAvailableFemaleCapacity
-      ) {
-        return false;
-      }
-      if (
-        search?.minAvailableMaleCapacity !== undefined &&
-        m.availableMaleCapacity < search.minAvailableMaleCapacity
-      ) {
-        return false;
-      }
-      if (
-        search?.minAvailableFemaleCapacity !== undefined &&
-        m.availableFemaleCapacity < search.minAvailableFemaleCapacity
-      ) {
-        return false;
-      }
-      if (
-        search?.hasAvailability &&
-        m.availableMaleCapacity <= 0 &&
-        m.availableFemaleCapacity <= 0
-      ) {
-        return false;
-      }
-      if (search?.capacityFilter === MawkibCapacityFilter.Available) {
-        if (m.availableMaleCapacity <= 0 && m.availableFemaleCapacity <= 0) {
-          return false;
-        }
-      }
-      if (search?.capacityFilter === MawkibCapacityFilter.Full) {
-        if (m.availableMaleCapacity > 0 || m.availableFemaleCapacity > 0) {
-          return false;
-        }
-      }
-      return true;
-    });
+    return this.enrichAndFilterByAvailability(mawkibs, search!);
   }
 
   async findAllAdmin(search?: AdminSearchMawkibDto) {
@@ -288,6 +338,10 @@ export class MawkibsService {
       include: mawkibInclude,
       orderBy: { createdAt: 'desc' },
     });
+
+    if (this.hasAvailabilitySearchParams(search)) {
+      return this.enrichAndFilterByAvailability(mawkibs, search!);
+    }
 
     const enriched = await Promise.all(
       mawkibs.map(async (mawkib) => {
@@ -345,9 +399,19 @@ export class MawkibsService {
     };
   }
 
-  async create(dto: CreateMawkibDto) {
+  async create(dto: CreateMawkibDto, actingUserId?: number, isAdmin = true) {
+    const ownerUserId = isAdmin ? dto.ownerUserId : actingUserId;
+
+    if (!ownerUserId) {
+      throw new BadRequestException('مسئول موکب مشخص نشده است');
+    }
+
+    if (!isAdmin && dto.ownerUserId && dto.ownerUserId !== actingUserId) {
+      throw new ForbiddenException('امکان ثبت موکب برای کاربر دیگر وجود ندارد');
+    }
+
     const owner = await this.prisma.user.findUnique({
-      where: { id: dto.ownerUserId },
+      where: { id: ownerUserId },
     });
 
     if (!owner) {
@@ -355,7 +419,7 @@ export class MawkibsService {
     }
 
     const {
-      ownerUserId,
+      ownerUserId: _ownerUserId,
       serviceStartDate,
       serviceEndDate,
       status,
@@ -367,7 +431,7 @@ export class MawkibsService {
         ...fields,
         serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : undefined,
         serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : undefined,
-        status: status ?? MawkibStatus.Approved,
+        status: isAdmin ? (status ?? MawkibStatus.Approved) : MawkibStatus.Pending,
         owner: { connect: { id: ownerUserId } },
       },
       include: mawkibInclude,
@@ -480,29 +544,41 @@ export class MawkibsService {
       throw new NotFoundException('موکب یافت نشد');
     }
 
-    const dateFilter = reservationDate
-      ? parseDateOnly(reservationDate)
-      : undefined;
+    const dateFilter = parseDateOnly(reservationDate ?? new Date());
 
-    const where = {
-      mawkibId,
-      status: { in: [ReservationStatus.Pending, ReservationStatus.Confirmed] },
-      ...(dateFilter && { reservationDate: dateFilter }),
-    };
-
-    const result = await this.prisma.reservation.aggregate({
-      where,
-      _sum: { maleGuestCount: true, femaleGuestCount: true },
+    const candidates = await this.prisma.reservation.findMany({
+      where: {
+        mawkibId,
+        status: ReservationStatus.Confirmed,
+        reservationDate: { lte: dateFilter },
+        OR: [
+          { reservationEndDate: { gt: dateFilter } },
+          { actualCheckOutAt: { not: null } },
+        ],
+      },
+      select: {
+        reservationDate: true,
+        reservationEndDate: true,
+        actualCheckOutAt: true,
+        maleGuestCount: true,
+        femaleGuestCount: true,
+      },
     });
 
-    const reservedMale = result._sum.maleGuestCount ?? 0;
-    const reservedFemale = result._sum.femaleGuestCount ?? 0;
+    let reservedMale = 0;
+    let reservedFemale = 0;
+
+    for (const reservation of candidates) {
+      if (!reservationOccupiesDay(reservation, dateFilter)) continue;
+      reservedMale += reservation.maleGuestCount;
+      reservedFemale += reservation.femaleGuestCount;
+    }
 
     return {
       maleCapacity: mawkib.maleCapacity,
       femaleCapacity: mawkib.femaleCapacity,
-      availableMale: mawkib.maleCapacity - reservedMale,
-      availableFemale: mawkib.femaleCapacity - reservedFemale,
+      availableMale: Math.max(0, mawkib.maleCapacity - reservedMale),
+      availableFemale: Math.max(0, mawkib.femaleCapacity - reservedFemale),
     };
   }
 

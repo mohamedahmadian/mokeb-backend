@@ -24,7 +24,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsString)({ message: 'رمز عبور نامعتبر است' }),
     (0, class_validator_1.IsNotEmpty)({ message: 'رمز عبور الزامی است' }),
-    (0, class_validator_1.MinLength)(6, { message: 'رمز عبور باید حداقل ۶ کاراکتر باشد' }),
+    (0, class_validator_1.MinLength)(4, { message: 'رمز عبور باید حداقل ۴ کاراکتر باشد' }),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
 class RegisterDto {
@@ -47,7 +47,7 @@ __decorate([
 ], RegisterDto.prototype, "mobileNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(4),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "password", void 0);
 __decorate([

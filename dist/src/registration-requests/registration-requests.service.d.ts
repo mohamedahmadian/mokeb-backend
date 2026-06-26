@@ -140,6 +140,8 @@ export declare class RegistrationRequestsService {
             rules: string | null;
             telegramChannel: string | null;
             websiteUrl: string | null;
+            defaultCheckInTime: string;
+            defaultCheckOutTime: string;
             ownerUserId: number;
             status: import("@prisma/client").$Enums.MawkibStatus;
         };

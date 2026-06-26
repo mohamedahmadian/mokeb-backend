@@ -43,7 +43,7 @@ __decorate([
 ], RegisterPilgrimDto.prototype, "mobileNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(4),
     __metadata("design:type", String)
 ], RegisterPilgrimDto.prototype, "password", void 0);
 __decorate([

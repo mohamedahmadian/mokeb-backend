@@ -1,6 +1,7 @@
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterMawkibOwnerDto, RegisterPilgrimDto } from './dto/public-register.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -63,6 +64,9 @@ export declare class AuthService {
             mobileNumber: string;
             roles: string[];
         };
+    }>;
+    changePassword(userId: number, dto: ChangePasswordDto): Promise<{
+        message: string;
     }>;
     validateUser(userId: number): Promise<{
         id: number;

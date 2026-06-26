@@ -18,6 +18,10 @@ import {
   SearchReservationDto,
   UpdateReservationStatusDto,
 } from './dto/reservation.dto';
+import {
+  CreateReservationReviewDto,
+  ReplyReservationReviewDto,
+} from './dto/reservation-review.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -78,6 +82,51 @@ export class ReservationsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.reservationsService.cancel(id, dto, user);
+  }
+
+  @Post(':id/check-in')
+  checkIn(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.checkIn(id, user);
+  }
+
+  @Post(':id/check-out')
+  checkOut(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.checkOut(id, user);
+  }
+
+  @Post(':id/review')
+  createReview(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateReservationReviewDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.createReview(id, dto, user);
+  }
+
+  @Patch(':id/review')
+  updateReview(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateReservationReviewDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.updateReview(id, dto, user);
+  }
+
+  @Patch(':id/review/reply')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  replyToReview(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ReplyReservationReviewDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.replyToReview(id, dto, user);
   }
 
   @Delete(':id')

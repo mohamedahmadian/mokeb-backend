@@ -8,6 +8,7 @@ import { ReservationsModule } from './reservations/reservations.module';
 import { RegistrationRequestsModule } from './registration-requests/registration-requests.module';
 import { HonoraryVolunteersModule } from './honorary-volunteers/honorary-volunteers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { MawkibFeedbackModule } from './mawkib-feedback/mawkib-feedback.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     RegistrationRequestsModule,
     HonoraryVolunteersModule,
     DashboardModule,
+    MawkibFeedbackModule,
   ],
 })
 export class AppModule {}

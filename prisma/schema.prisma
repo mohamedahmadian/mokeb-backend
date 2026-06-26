@@ -77,6 +77,10 @@ model User {
   registrationRequests   MawkibRegistrationRequest[]
   reviewedHonoraryVolunteerApplications HonoraryVolunteerApplication[] @relation("ReviewedHonoraryVolunteerApplications")
   submittedHonoraryVolunteerApplications HonoraryVolunteerApplication[] @relation("SubmittedHonoraryVolunteerApplications")
+  reservationReviewsAuthored           ReservationReview[] @relation("ReservationReviewAuthor")
+  reservationReviewsReplied              ReservationReview[] @relation("ReservationReviewReplier")
+  mawkibFeedbacksAuthored              MawkibFeedback[] @relation("MawkibFeedbackAuthor")
+  mawkibFeedbacksReplied               MawkibFeedback[] @relation("MawkibFeedbackReplier")
 
   @@map("users")
 }
@@ -146,6 +150,8 @@ model Mawkib {
   bale                 String?
   eitaa                String?
   websiteUrl           String?
+  defaultCheckInTime   String       @default("14:00")
+  defaultCheckOutTime  String       @default("11:00")
   ownerUserId      Int
   status           MawkibStatus @default(Pending)
   createdAt        DateTime     @default(now())
@@ -153,6 +159,7 @@ model Mawkib {
   owner        User          @relation("MawkibOwner", fields: [ownerUserId], references: [id])
   reservations Reservation[]
   honoraryVolunteerApplications HonoraryVolunteerApplication[]
+  feedbacks    MawkibFeedback[]
 
   @@map("mawkibs")
 }
@@ -164,6 +171,10 @@ model Reservation {
   reservedByUserId Int
   reservationDate    DateTime          @db.Date
   reservationEndDate DateTime          @db.Date
+  plannedCheckInTime  String?
+  plannedCheckOutTime String?
+  actualCheckInAt     DateTime?
+  actualCheckOutAt    DateTime?
   maleGuestCount     Int
   femaleGuestCount   Int
   trackingCode       String            @unique
@@ -177,9 +188,28 @@ model Reservation {
   mawkib      Mawkib @relation(fields: [mawkibId], references: [id])
   pilgrim     User   @relation("Pilgrim", fields: [pilgrimUserId], references: [id])
   reservedBy  User   @relation("ReservedBy", fields: [reservedByUserId], references: [id])
+  review      ReservationReview?
 
   @@index([mawkibId, reservationDate])
   @@map("reservations")
+}
+
+model ReservationReview {
+  id              Int       @id @default(autoincrement())
+  reservationId   Int       @unique
+  authorUserId    Int
+  content         String
+  adminReply      String?
+  repliedAt       DateTime?
+  repliedByUserId Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  author      User        @relation("ReservationReviewAuthor", fields: [authorUserId], references: [id])
+  repliedBy   User?       @relation("ReservationReviewReplier", fields: [repliedByUserId], references: [id])
+
+  @@map("reservation_reviews")
 }
 
 model MawkibRegistrationRequest {
@@ -229,4 +259,24 @@ model HonoraryVolunteerApplication {
   reviewedBy   User?   @relation("ReviewedHonoraryVolunteerApplications", fields: [reviewedByUserId], references: [id])
 
   @@map("honorary_volunteer_applications")
+}
+
+model MawkibFeedback {
+  id              Int       @id @default(autoincrement())
+  mawkibId        Int
+  authorUserId    Int
+  content         String
+  ownerReply      String?
+  repliedAt       DateTime?
+  repliedByUserId Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  mawkib    Mawkib @relation(fields: [mawkibId], references: [id])
+  author    User   @relation("MawkibFeedbackAuthor", fields: [authorUserId], references: [id])
+  repliedBy User?  @relation("MawkibFeedbackReplier", fields: [repliedByUserId], references: [id])
+
+  @@index([mawkibId, createdAt])
+  @@index([authorUserId, createdAt])
+  @@map("mawkib_feedbacks")
 }

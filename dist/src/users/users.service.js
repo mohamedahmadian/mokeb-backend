@@ -47,6 +47,8 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../prisma/prisma.service");
+const user_dto_1 = require("./dto/user.dto");
+const MIN_PILGRIM_SEARCH_LENGTH = 2;
 const userInclude = {
     roles: { include: { role: true } },
 };
@@ -205,13 +207,21 @@ let UsersService = class UsersService {
         };
     }
     async findPilgrims(query = {}, ownerUserId) {
+        const scope = query.scope ?? user_dto_1.PilgrimListScope.Mine;
+        if (scope === user_dto_1.PilgrimListScope.All) {
+            const term = query.search?.trim() ?? '';
+            if (term.length < MIN_PILGRIM_SEARCH_LENGTH) {
+                return [];
+            }
+        }
         const isQuickSearch = !!query.search?.trim() &&
             !query.fullName?.trim() &&
             !query.mobileNumber?.trim() &&
             !query.province?.trim() &&
             !query.city?.trim() &&
             query.isActive === undefined;
-        const where = this.buildPilgrimWhere(query, ownerUserId);
+        const effectiveOwnerId = scope === user_dto_1.PilgrimListScope.Mine ? ownerUserId : undefined;
+        const where = this.buildPilgrimWhere(query, effectiveOwnerId);
         if (isQuickSearch) {
             return this.prisma.user.findMany({
                 where: { ...where, isActive: true },

@@ -19,15 +19,43 @@ import {
   SearchReservationDto,
   UpdateReservationStatusDto,
 } from './dto/reservation.dto';
+import {
+  CreateReservationReviewDto,
+  ReplyReservationReviewDto,
+} from './dto/reservation-review.dto';
 import { AuthUser } from '../common/decorators/current-user.decorator';
 import { UsersService } from '../users/users.service';
 import { parseDateOnly } from '../common/utils/date.util';
 import { generateReservationTrackingCode } from '../common/utils/reservation-code.util';
+import {
+  BLOCKING_RESERVATION_STATUSES,
+  isExactReservationDuplicate,
+} from './reservation-conflict.util';
+import { resolvePlannedTimes } from './reservation-occupancy.util';
+
+const reviewUserSelect = {
+  id: true,
+  fullName: true,
+} as const;
 
 const reservationInclude = {
-  mawkib: { select: { id: true, name: true } },
+  mawkib: {
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      defaultCheckInTime: true,
+      defaultCheckOutTime: true,
+    },
+  },
   pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
   reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
+  review: {
+    include: {
+      author: { select: reviewUserSelect },
+      repliedBy: { select: reviewUserSelect },
+    },
+  },
 } satisfies Prisma.ReservationInclude;
 
 @Injectable()
@@ -63,6 +91,12 @@ export class ReservationsService {
     }
     if (search.pilgrimUserId) {
       where.pilgrimUserId = search.pilgrimUserId;
+    }
+    if (search.trackingCode) {
+      where.trackingCode = {
+        contains: search.trackingCode.trim(),
+        mode: 'insensitive',
+      };
     }
     if (search.pilgrimName || search.pilgrimMobile) {
       where.pilgrim = {
@@ -109,11 +143,7 @@ export class ReservationsService {
         pilgrimUserId,
         ...this.buildSearchWhere(search),
       },
-      include: {
-        mawkib: { select: { id: true, name: true, address: true } },
-        pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
-        reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
-      },
+      include: reservationInclude,
       orderBy: { createdAt: 'desc' },
     });
     return this.filterByGuestCountTotal(items, search);
@@ -147,11 +177,7 @@ export class ReservationsService {
   async findOne(id: number) {
     const reservation = await this.prisma.reservation.findUnique({
       where: { id },
-      include: {
-        mawkib: true,
-        pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
-        reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
-      },
+      include: reservationInclude,
     });
 
     if (!reservation) {
@@ -169,11 +195,7 @@ export class ReservationsService {
 
     const reservation = await this.prisma.reservation.findUnique({
       where: { trackingCode: code },
-      include: {
-        mawkib: { select: { id: true, name: true, address: true } },
-        pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
-        reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
-      },
+      include: reservationInclude,
     });
 
     if (!reservation) {
@@ -265,6 +287,61 @@ export class ReservationsService {
     throw new BadRequestException('خطا در تولید شناسه رزرو');
   }
 
+  private async assertNoConflictingReservation(params: {
+    pilgrimUserId: number;
+    mawkibId: number;
+    reservationDate: Date;
+    reservationEndDate: Date;
+    maleGuestCount: number;
+    femaleGuestCount: number;
+    excludeReservationId?: number;
+  }) {
+    const conflict = await this.prisma.reservation.findFirst({
+      where: {
+        pilgrimUserId: params.pilgrimUserId,
+        status: { in: BLOCKING_RESERVATION_STATUSES },
+        ...(params.excludeReservationId && {
+          id: { not: params.excludeReservationId },
+        }),
+        reservationDate: { lte: params.reservationEndDate },
+        reservationEndDate: { gte: params.reservationDate },
+      },
+      select: {
+        id: true,
+        mawkibId: true,
+        trackingCode: true,
+        reservationDate: true,
+        reservationEndDate: true,
+        maleGuestCount: true,
+        femaleGuestCount: true,
+        mawkib: { select: { name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!conflict) {
+      return;
+    }
+
+    const candidate = {
+      mawkibId: params.mawkibId,
+      reservationDate: params.reservationDate,
+      reservationEndDate: params.reservationEndDate,
+      maleGuestCount: params.maleGuestCount,
+      femaleGuestCount: params.femaleGuestCount,
+    };
+
+    if (isExactReservationDuplicate(conflict, candidate)) {
+      throw new BadRequestException(
+        'رزرو تکراری با همین موکب، بازه تاریخ و تعداد نفرات برای این زائر وجود دارد',
+      );
+    }
+
+    throw new BadRequestException(
+      `این زائر در بازه تاریخ انتخابی رزرو فعال دیگری دارد (کد: ${conflict.trackingCode}${conflict.mawkib?.name ? ` — ${conflict.mawkib.name}` : ''})`,
+    );
+  }
+
   async create(dto: CreateReservationDto, currentUser: AuthUser) {
     const mawkib = await this.prisma.mawkib.findUnique({
       where: { id: dto.mawkibId },
@@ -331,12 +408,25 @@ export class ReservationsService {
       pilgrimUserId = pilgrim.id;
     }
 
+    await this.assertNoConflictingReservation({
+      pilgrimUserId,
+      mawkibId: dto.mawkibId,
+      reservationDate,
+      reservationEndDate,
+      maleGuestCount: dto.maleGuestCount,
+      femaleGuestCount: dto.femaleGuestCount,
+    });
+
+    const plannedTimes = resolvePlannedTimes(dto, mawkib);
+
     return this.createWithTrackingCode({
       mawkibId: dto.mawkibId,
       pilgrimUserId,
       reservedByUserId: currentUser.id,
       reservationDate,
       reservationEndDate,
+      plannedCheckInTime: plannedTimes.plannedCheckInTime,
+      plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
       maleGuestCount: dto.maleGuestCount,
       femaleGuestCount: dto.femaleGuestCount,
       pilgrimMobile: dto.pilgrimMobile,
@@ -390,7 +480,19 @@ export class ReservationsService {
       mobileNumber,
       province: dto.province,
       city: dto.city,
+      password: dto.password?.trim() || undefined,
     });
+
+    await this.assertNoConflictingReservation({
+      pilgrimUserId: pilgrim.id,
+      mawkibId: dto.mawkibId,
+      reservationDate,
+      reservationEndDate,
+      maleGuestCount: dto.maleGuestCount,
+      femaleGuestCount: dto.femaleGuestCount,
+    });
+
+    const plannedTimes = resolvePlannedTimes(dto, mawkib);
 
     const reservation = await this.createWithTrackingCode(
       {
@@ -399,6 +501,8 @@ export class ReservationsService {
         reservedByUserId: pilgrim.id,
         reservationDate,
         reservationEndDate,
+        plannedCheckInTime: plannedTimes.plannedCheckInTime,
+        plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
         maleGuestCount: dto.maleGuestCount,
         femaleGuestCount: dto.femaleGuestCount,
         pilgrimMobile: mobileNumber,
@@ -407,7 +511,14 @@ export class ReservationsService {
         status: ReservationStatus.Pending,
       },
       {
-        mawkib: { select: { id: true, name: true } },
+        mawkib: {
+          select: {
+            id: true,
+            name: true,
+            defaultCheckInTime: true,
+            defaultCheckOutTime: true,
+          },
+        },
       },
     );
 
@@ -455,6 +566,17 @@ export class ReservationsService {
     if (dto.status === ReservationStatus.Confirmed) {
       const endDate =
         reservation.reservationEndDate ?? reservation.reservationDate;
+
+      await this.assertNoConflictingReservation({
+        pilgrimUserId: reservation.pilgrimUserId,
+        mawkibId: reservation.mawkibId,
+        reservationDate: reservation.reservationDate,
+        reservationEndDate: endDate,
+        maleGuestCount: reservation.maleGuestCount,
+        femaleGuestCount: reservation.femaleGuestCount,
+        excludeReservationId: reservation.id,
+      });
+
       await this.mawkibsService.assertCapacityInRange(
         reservation.mawkibId,
         reservation.maleGuestCount,
@@ -516,5 +638,249 @@ export class ReservationsService {
     const reservation = await this.findOne(id);
     await this.prisma.reservation.delete({ where: { id: reservation.id } });
     return { id, message: 'رزرو با موفقیت حذف شد' };
+  }
+
+  private assertCanRecordAttendance(reservation: {
+    status: ReservationStatus;
+    actualCheckInAt: Date | null;
+    actualCheckOutAt: Date | null;
+  }) {
+    if (reservation.status === ReservationStatus.Cancelled) {
+      throw new BadRequestException('رزرو لغوشده قابل ثبت ورود/خروج نیست');
+    }
+    if (reservation.status === ReservationStatus.Pending) {
+      throw new BadRequestException(
+        'تا زمان تایید رزرو، امکان ثبت ورود یا خروج وجود ندارد',
+      );
+    }
+  }
+
+  async checkIn(id: number, currentUser: AuthUser) {
+    const reservation = await this.findOneForUser(id, currentUser);
+    const isAdmin = currentUser.roles.includes(RoleName.Admin);
+    const isOwner = currentUser.roles.includes(RoleName.MawkibOwner);
+    const isPilgrim =
+      currentUser.roles.includes(RoleName.Pilgrim) && !isAdmin && !isOwner;
+
+    if (isPilgrim && reservation.pilgrimUserId !== currentUser.id) {
+      throw new ForbiddenException('فقط رزروهای خودتان را می‌توانید ثبت کنید');
+    }
+
+    if (isOwner && !isAdmin) {
+      await this.mawkibsService.assertOwnerAccess(
+        reservation.mawkibId,
+        currentUser.id,
+      );
+    }
+
+    this.assertCanRecordAttendance(reservation);
+
+    if (reservation.actualCheckInAt) {
+      throw new BadRequestException('ورود این رزرو قبلاً ثبت شده است');
+    }
+
+    if (reservation.actualCheckOutAt) {
+      throw new BadRequestException('این رزرو قبلاً خروج خورده است');
+    }
+
+    return this.prisma.reservation.update({
+      where: { id },
+      data: { actualCheckInAt: new Date() },
+      include: reservationInclude,
+    });
+  }
+
+  async checkOut(id: number, currentUser: AuthUser) {
+    const reservation = await this.findOneForUser(id, currentUser);
+    const isAdmin = currentUser.roles.includes(RoleName.Admin);
+    const isOwner = currentUser.roles.includes(RoleName.MawkibOwner);
+    const isPilgrim =
+      currentUser.roles.includes(RoleName.Pilgrim) && !isAdmin && !isOwner;
+
+    if (isPilgrim && reservation.pilgrimUserId !== currentUser.id) {
+      throw new ForbiddenException('فقط رزروهای خودتان را می‌توانید ثبت کنید');
+    }
+
+    if (isOwner && !isAdmin) {
+      await this.mawkibsService.assertOwnerAccess(
+        reservation.mawkibId,
+        currentUser.id,
+      );
+    }
+
+    this.assertCanRecordAttendance(reservation);
+
+    if (!reservation.actualCheckInAt) {
+      throw new BadRequestException('ابتدا باید ورود ثبت شود');
+    }
+
+    if (reservation.actualCheckOutAt) {
+      throw new BadRequestException('خروج این رزرو قبلاً ثبت شده است');
+    }
+
+    return this.prisma.reservation.update({
+      where: { id },
+      data: {
+        actualCheckOutAt: new Date(),
+        status: ReservationStatus.Completed,
+      },
+      include: reservationInclude,
+    });
+  }
+
+  async checkInGuest(trackingCode: string) {
+    const reservation = await this.findByTrackingCode(trackingCode);
+    this.assertCanRecordAttendance(reservation);
+
+    if (reservation.actualCheckInAt) {
+      throw new BadRequestException('ورود این رزرو قبلاً ثبت شده است');
+    }
+
+    if (reservation.actualCheckOutAt) {
+      throw new BadRequestException('این رزرو قبلاً خروج خورده است');
+    }
+
+    return this.prisma.reservation.update({
+      where: { id: reservation.id },
+      data: { actualCheckInAt: new Date() },
+      include: reservationInclude,
+    });
+  }
+
+  async checkOutGuest(trackingCode: string) {
+    const reservation = await this.findByTrackingCode(trackingCode);
+    this.assertCanRecordAttendance(reservation);
+
+    if (!reservation.actualCheckInAt) {
+      throw new BadRequestException('ابتدا باید ورود ثبت شود');
+    }
+
+    if (reservation.actualCheckOutAt) {
+      throw new BadRequestException('خروج این رزرو قبلاً ثبت شده است');
+    }
+
+    return this.prisma.reservation.update({
+      where: { id: reservation.id },
+      data: {
+        actualCheckOutAt: new Date(),
+        status: ReservationStatus.Completed,
+      },
+      include: reservationInclude,
+    });
+  }
+
+  private assertCanReviewReservation(
+    reservation: { status: ReservationStatus; pilgrimUserId: number },
+    userId: number,
+  ) {
+    if (reservation.pilgrimUserId !== userId) {
+      throw new ForbiddenException('فقط زائر این رزرو می‌تواند نظر ثبت کند');
+    }
+
+    if (
+      reservation.status !== ReservationStatus.Confirmed &&
+      reservation.status !== ReservationStatus.Completed
+    ) {
+      throw new BadRequestException(
+        'فقط برای رزروهای تایید شده یا تکمیل شده می‌توانید نظر ثبت کنید',
+      );
+    }
+  }
+
+  async createReview(
+    reservationId: number,
+    dto: CreateReservationReviewDto,
+    currentUser: AuthUser,
+  ) {
+    const reservation = await this.findOneForUser(reservationId, currentUser);
+    this.assertCanReviewReservation(reservation, currentUser.id);
+
+    const existing = await this.prisma.reservationReview.findUnique({
+      where: { reservationId },
+    });
+
+    if (existing) {
+      throw new BadRequestException('برای این رزرو قبلاً نظر ثبت شده است');
+    }
+
+    await this.prisma.reservationReview.create({
+      data: {
+        reservationId,
+        authorUserId: currentUser.id,
+        content: dto.content.trim(),
+      },
+    });
+
+    return this.findOne(reservationId);
+  }
+
+  async updateReview(
+    reservationId: number,
+    dto: CreateReservationReviewDto,
+    currentUser: AuthUser,
+  ) {
+    const reservation = await this.findOneForUser(reservationId, currentUser);
+    this.assertCanReviewReservation(reservation, currentUser.id);
+
+    const review = await this.prisma.reservationReview.findUnique({
+      where: { reservationId },
+    });
+
+    if (!review) {
+      throw new NotFoundException('نظری برای این رزرو ثبت نشده است');
+    }
+
+    if (review.authorUserId !== currentUser.id) {
+      throw new ForbiddenException('فقط نویسنده نظر می‌تواند آن را ویرایش کند');
+    }
+
+    if (review.adminReply) {
+      throw new BadRequestException(
+        'پس از دریافت پاسخ مدیریت، امکان ویرایش نظر وجود ندارد',
+      );
+    }
+
+    await this.prisma.reservationReview.update({
+      where: { reservationId },
+      data: { content: dto.content.trim() },
+    });
+
+    return this.findOne(reservationId);
+  }
+
+  async replyToReview(
+    reservationId: number,
+    dto: ReplyReservationReviewDto,
+    currentUser: AuthUser,
+  ) {
+    const isAdmin = currentUser.roles.includes(RoleName.Admin);
+    const isOwner = currentUser.roles.includes(RoleName.MawkibOwner);
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException(
+        'فقط مدیر یا مسئول موکب می‌تواند به نظر پاسخ دهد',
+      );
+    }
+
+    await this.findOneForUser(reservationId, currentUser);
+
+    const review = await this.prisma.reservationReview.findUnique({
+      where: { reservationId },
+    });
+
+    if (!review) {
+      throw new NotFoundException('نظری برای این رزرو ثبت نشده است');
+    }
+
+    await this.prisma.reservationReview.update({
+      where: { reservationId },
+      data: {
+        adminReply: dto.adminReply.trim(),
+        repliedAt: new Date(),
+        repliedByUserId: currentUser.id,
+      },
+    });
+
+    return this.findOne(reservationId);
   }
 }

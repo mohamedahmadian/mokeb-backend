@@ -22,6 +22,7 @@ export declare class DashboardService {
             totalReservations: number;
             pendingReservations: number;
             confirmedReservations: number;
+            cancelledReservations: number;
         };
         myMawkibsStats?: undefined;
         totalPilgrims?: undefined;

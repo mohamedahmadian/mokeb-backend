@@ -36,6 +36,8 @@ class CreateReservationDto {
     pilgrimMobile;
     description;
     companions;
+    plannedCheckInTime;
+    plannedCheckOutTime;
 }
 exports.CreateReservationDto = CreateReservationDto;
 __decorate([
@@ -85,12 +87,29 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateReservationDto.prototype, "companions", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت ورود باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], CreateReservationDto.prototype, "plannedCheckInTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت خروج باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], CreateReservationDto.prototype, "plannedCheckOutTime", void 0);
 class CreateGuestReservationDto {
     firstName;
     lastName;
     mobileNumber;
     province;
     city;
+    password;
     mawkibId;
     reservationDate;
     reservationEndDate;
@@ -99,6 +118,8 @@ class CreateGuestReservationDto {
     _guestCheck;
     description;
     companions;
+    plannedCheckInTime;
+    plannedCheckOutTime;
 }
 exports.CreateGuestReservationDto = CreateGuestReservationDto;
 __decorate([
@@ -126,6 +147,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateGuestReservationDto.prototype, "city", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(4, { message: 'رمز عبور باید حداقل ۴ کاراکتر باشد' }),
+    __metadata("design:type", String)
+], CreateGuestReservationDto.prototype, "password", void 0);
 __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
@@ -162,6 +189,22 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateGuestReservationDto.prototype, "companions", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت ورود باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], CreateGuestReservationDto.prototype, "plannedCheckInTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت خروج باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], CreateGuestReservationDto.prototype, "plannedCheckOutTime", void 0);
 class UpdateReservationStatusDto {
     status;
 }
@@ -186,6 +229,7 @@ class SearchReservationDto {
     reservationDateTo;
     pilgrimName;
     pilgrimMobile;
+    trackingCode;
     pilgrimUserId;
     guestCountMin;
     guestCountMax;
@@ -222,6 +266,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SearchReservationDto.prototype, "pilgrimMobile", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], SearchReservationDto.prototype, "trackingCode", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),

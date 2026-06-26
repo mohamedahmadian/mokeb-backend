@@ -20,7 +20,7 @@ export class RegisterPilgrimDto {
   mobileNumber: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   password: string;
 
   @IsOptional()

@@ -19,7 +19,7 @@ exports.ReservationsModule = ReservationsModule;
 exports.ReservationsModule = ReservationsModule = __decorate([
     (0, common_1.Module)({
         imports: [mawkibs_module_1.MawkibsModule, users_module_1.UsersModule],
-        controllers: [reservations_controller_1.ReservationsController, guest_reservations_controller_1.GuestReservationsController],
+        controllers: [guest_reservations_controller_1.GuestReservationsController, reservations_controller_1.ReservationsController],
         providers: [reservations_service_1.ReservationsService],
     })
 ], ReservationsModule);

@@ -30,7 +30,9 @@ let UsersController = class UsersController {
         return this.usersService.findOne(user.id);
     }
     findPilgrims(query, user) {
-        const ownerId = user.roles.includes(client_1.RoleName.Admin) ? undefined : user.id;
+        const scope = query.scope ?? user_dto_1.PilgrimListScope.Mine;
+        const isAdmin = user.roles.includes(client_1.RoleName.Admin);
+        const ownerId = !isAdmin && scope === user_dto_1.PilgrimListScope.Mine ? user.id : undefined;
         return this.usersService.findPilgrims(query, ownerId);
     }
     findAll(query) {

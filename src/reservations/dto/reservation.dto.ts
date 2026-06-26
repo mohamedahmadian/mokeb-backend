@@ -5,7 +5,9 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   Min,
+  MinLength,
   Validate,
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -63,6 +65,20 @@ export class CreateReservationDto {
   @IsOptional()
   @IsString()
   companions?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت ورود باید به فرمت HH:mm باشد',
+  })
+  plannedCheckInTime?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت خروج باید به فرمت HH:mm باشد',
+  })
+  plannedCheckOutTime?: string;
 }
 
 export class CreateGuestReservationDto {
@@ -85,6 +101,11 @@ export class CreateGuestReservationDto {
   @IsOptional()
   @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(4, { message: 'رمز عبور باید حداقل ۴ کاراکتر باشد' })
+  password?: string;
 
   @IsInt()
   mawkibId: number;
@@ -113,6 +134,20 @@ export class CreateGuestReservationDto {
   @IsOptional()
   @IsString()
   companions?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت ورود باید به فرمت HH:mm باشد',
+  })
+  plannedCheckInTime?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت خروج باید به فرمت HH:mm باشد',
+  })
+  plannedCheckOutTime?: string;
 }
 
 export class UpdateReservationStatusDto {
@@ -151,6 +186,11 @@ export class SearchReservationDto {
   @IsOptional()
   @IsString()
   pilgrimMobile?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  trackingCode?: string;
 
   @IsOptional()
   @Type(() => Number)

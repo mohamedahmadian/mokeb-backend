@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const reservations_service_1 = require("./reservations.service");
 const reservation_dto_1 = require("./dto/reservation.dto");
+const reservation_review_dto_1 = require("./dto/reservation-review.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const roles_guard_1 = require("../common/guards/roles.guard");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
@@ -46,6 +47,21 @@ let ReservationsController = class ReservationsController {
     }
     cancel(id, dto, user) {
         return this.reservationsService.cancel(id, dto, user);
+    }
+    checkIn(id, user) {
+        return this.reservationsService.checkIn(id, user);
+    }
+    checkOut(id, user) {
+        return this.reservationsService.checkOut(id, user);
+    }
+    createReview(id, dto, user) {
+        return this.reservationsService.createReview(id, dto, user);
+    }
+    updateReview(id, dto, user) {
+        return this.reservationsService.updateReview(id, dto, user);
+    }
+    replyToReview(id, dto, user) {
+        return this.reservationsService.replyToReview(id, dto, user);
     }
     remove(id) {
         return this.reservationsService.remove(id);
@@ -105,6 +121,51 @@ __decorate([
     __metadata("design:paramtypes", [Number, reservation_dto_1.CancelReservationDto, Object]),
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "cancel", null);
+__decorate([
+    (0, common_1.Post)(':id/check-in'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "checkIn", null);
+__decorate([
+    (0, common_1.Post)(':id/check-out'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "checkOut", null);
+__decorate([
+    (0, common_1.Post)(':id/review'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, reservation_review_dto_1.CreateReservationReviewDto, Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "createReview", null);
+__decorate([
+    (0, common_1.Patch)(':id/review'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, reservation_review_dto_1.CreateReservationReviewDto, Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "updateReview", null);
+__decorate([
+    (0, common_1.Patch)(':id/review/reply'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, reservation_review_dto_1.ReplyReservationReviewDto, Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "replyToReview", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),

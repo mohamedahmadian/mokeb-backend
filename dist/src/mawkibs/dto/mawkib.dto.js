@@ -51,6 +51,8 @@ class CreateMawkibDto {
     bale;
     eitaa;
     websiteUrl;
+    defaultCheckInTime;
+    defaultCheckOutTime;
     ownerUserId;
     status;
 }
@@ -213,6 +215,22 @@ __decorate([
     __metadata("design:type", String)
 ], CreateMawkibDto.prototype, "websiteUrl", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت ورود پیش‌فرض باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "defaultCheckInTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت خروج پیش‌فرض باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "defaultCheckOutTime", void 0);
+__decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateMawkibDto.prototype, "ownerUserId", void 0);
@@ -253,6 +271,8 @@ class UpdateMawkibDto {
     bale;
     eitaa;
     websiteUrl;
+    defaultCheckInTime;
+    defaultCheckOutTime;
     ownerUserId;
     status;
 }
@@ -419,6 +439,22 @@ __decorate([
 ], UpdateMawkibDto.prototype, "websiteUrl", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت ورود پیش‌فرض باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], UpdateMawkibDto.prototype, "defaultCheckInTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت خروج پیش‌فرض باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], UpdateMawkibDto.prototype, "defaultCheckOutTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], UpdateMawkibDto.prototype, "ownerUserId", void 0);
@@ -544,6 +580,12 @@ class AdminSearchMawkibDto {
     serviceEndFrom;
     serviceEndTo;
     capacityFilter;
+    reservationDate;
+    reservationDateFrom;
+    reservationDateTo;
+    minAvailableMaleCapacity;
+    minAvailableFemaleCapacity;
+    hasAvailability;
 }
 exports.AdminSearchMawkibDto = AdminSearchMawkibDto;
 __decorate([
@@ -607,4 +649,39 @@ __decorate([
     (0, class_validator_1.IsEnum)(MawkibCapacityFilter),
     __metadata("design:type", String)
 ], AdminSearchMawkibDto.prototype, "capacityFilter", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], AdminSearchMawkibDto.prototype, "reservationDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], AdminSearchMawkibDto.prototype, "reservationDateFrom", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], AdminSearchMawkibDto.prototype, "reservationDateTo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], AdminSearchMawkibDto.prototype, "minAvailableMaleCapacity", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], AdminSearchMawkibDto.prototype, "minAvailableFemaleCapacity", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], AdminSearchMawkibDto.prototype, "hasAvailability", void 0);
 //# sourceMappingURL=mawkib.dto.js.map

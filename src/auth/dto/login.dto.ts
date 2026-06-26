@@ -7,7 +7,7 @@ export class LoginDto {
 
   @IsString({ message: 'رمز عبور نامعتبر است' })
   @IsNotEmpty({ message: 'رمز عبور الزامی است' })
-  @MinLength(6, { message: 'رمز عبور باید حداقل ۶ کاراکتر باشد' })
+  @MinLength(4, { message: 'رمز عبور باید حداقل ۴ کاراکتر باشد' })
   password: string;
 }
 
@@ -21,7 +21,7 @@ export class RegisterDto {
   mobileNumber: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   password: string;
 
   @IsString()

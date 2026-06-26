@@ -1,6 +1,10 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
-import { CreateGuestReservationDto, TrackByMobileDto, TrackReservationDto } from './dto/reservation.dto';
+import {
+  CreateGuestReservationDto,
+  TrackByMobileDto,
+  TrackReservationDto,
+} from './dto/reservation.dto';
 
 @Controller('reservations')
 export class GuestReservationsController {
@@ -9,6 +13,16 @@ export class GuestReservationsController {
   @Post('guest')
   createGuest(@Body() dto: CreateGuestReservationDto) {
     return this.reservationsService.createGuest(dto);
+  }
+
+  @Post('guest/check-in')
+  checkInGuest(@Body() body: TrackReservationDto) {
+    return this.reservationsService.checkInGuest(body.trackingCode);
+  }
+
+  @Post('guest/check-out')
+  checkOutGuest(@Body() body: TrackReservationDto) {
+    return this.reservationsService.checkOutGuest(body.trackingCode);
   }
 
   @Get('guest/track')

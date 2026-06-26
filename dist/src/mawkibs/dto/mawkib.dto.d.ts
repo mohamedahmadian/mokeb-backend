@@ -36,6 +36,8 @@ export declare class CreateMawkibDto {
     bale?: string;
     eitaa?: string;
     websiteUrl?: string;
+    defaultCheckInTime?: string;
+    defaultCheckOutTime?: string;
     ownerUserId: number;
     status?: MawkibStatus;
 }
@@ -71,6 +73,8 @@ export declare class UpdateMawkibDto {
     bale?: string;
     eitaa?: string;
     websiteUrl?: string;
+    defaultCheckInTime?: string;
+    defaultCheckOutTime?: string;
     ownerUserId?: number;
     status?: MawkibStatus;
 }
@@ -105,4 +109,10 @@ export declare class AdminSearchMawkibDto {
     serviceEndFrom?: string;
     serviceEndTo?: string;
     capacityFilter?: MawkibCapacityFilter;
+    reservationDate?: string;
+    reservationDateFrom?: string;
+    reservationDateTo?: string;
+    minAvailableMaleCapacity?: number;
+    minAvailableFemaleCapacity?: number;
+    hasAvailability?: boolean;
 }

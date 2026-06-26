@@ -169,14 +169,39 @@ let AuthService = class AuthService {
                 roles: { include: { role: true } },
             },
         });
-        if (!user || !user.isActive) {
+        if (!user) {
             throw new common_1.UnauthorizedException('شماره موبایل یا رمز عبور اشتباه است');
+        }
+        if (!user.isActive) {
+            throw new common_1.UnauthorizedException('کاربر مورد نظر توسط مدیریت غیرفعال شده است');
         }
         const isValid = await bcrypt.compare(dto.password, user.passwordHash);
         if (!isValid) {
             throw new common_1.UnauthorizedException('شماره موبایل یا رمز عبور اشتباه است');
         }
         return this.buildAuthResponse(user);
+    }
+    async changePassword(userId, dto) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new common_1.UnauthorizedException('کاربر یافت نشد');
+        }
+        const isValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+        if (!isValid) {
+            throw new common_1.UnauthorizedException('رمز عبور فعلی اشتباه است');
+        }
+        if (dto.currentPassword === dto.newPassword) {
+            throw new common_1.BadRequestException('رمز عبور جدید باید با رمز فعلی متفاوت باشد');
+        }
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                passwordHash: await bcrypt.hash(dto.newPassword, 10),
+            },
+        });
+        return { message: 'رمز عبور با موفقیت تغییر کرد' };
     }
     async validateUser(userId) {
         const user = await this.prisma.user.findUnique({

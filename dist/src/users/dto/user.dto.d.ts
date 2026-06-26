@@ -53,7 +53,12 @@ export declare class ListUsersDto {
     isActive?: boolean;
     search?: string;
 }
+export declare enum PilgrimListScope {
+    Mine = "mine",
+    All = "all"
+}
 export declare class ListPilgrimsDto extends ListUsersDto {
+    scope?: PilgrimListScope;
 }
 export declare class SearchPilgrimDto {
     search?: string;

@@ -47,6 +47,8 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     })[]>;
@@ -96,12 +98,12 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }[]>;
-    findMy(user: AuthUser, search: AdminSearchMawkibDto): Promise<{
-        availableMaleCapacity: number;
-        availableFemaleCapacity: number;
+    findMy(user: AuthUser, search: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
         };
@@ -112,6 +114,7 @@ export declare class MawkibsController {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -145,9 +148,14 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
-    }[]>;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+    })[]>;
     findOnePublic(id: number): Promise<{
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
@@ -194,6 +202,8 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -244,10 +254,12 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
-    create(dto: CreateMawkibDto): Promise<{
+    create(dto: CreateMawkibDto, user: AuthUser): Promise<{
         _count: {
             reservations: number;
         };
@@ -292,6 +304,8 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -340,6 +354,8 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -389,6 +405,8 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } | {
@@ -441,6 +459,8 @@ export declare class MawkibsController {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;

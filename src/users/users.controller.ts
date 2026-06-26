@@ -18,6 +18,7 @@ import {
   CreateUserDto,
   ListPilgrimsDto,
   ListUsersDto,
+  PilgrimListScope,
   UpdateUserDto,
 } from './dto/user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -43,7 +44,10 @@ export class UsersController {
     @Query() query: ListPilgrimsDto,
     @CurrentUser() user: AuthUser,
   ) {
-    const ownerId = user.roles.includes(RoleName.Admin) ? undefined : user.id;
+    const scope = query.scope ?? PilgrimListScope.Mine;
+    const isAdmin = user.roles.includes(RoleName.Admin);
+    const ownerId =
+      !isAdmin && scope === PilgrimListScope.Mine ? user.id : undefined;
     return this.usersService.findPilgrims(query, ownerId);
   }
 

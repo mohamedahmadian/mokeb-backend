@@ -21,7 +21,7 @@ export class CreateUserDto {
   mobileNumber: string;
 
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   password: string;
 
   @IsOptional()
@@ -105,7 +105,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(6)
+  @MinLength(4)
   password?: string;
 
   @IsOptional()
@@ -202,7 +202,16 @@ export class ListUsersDto {
   search?: string;
 }
 
-export class ListPilgrimsDto extends ListUsersDto {}
+export enum PilgrimListScope {
+  Mine = 'mine',
+  All = 'all',
+}
+
+export class ListPilgrimsDto extends ListUsersDto {
+  @IsOptional()
+  @IsEnum(PilgrimListScope)
+  scope?: PilgrimListScope;
+}
 
 /** @deprecated use ListPilgrimsDto */
 export class SearchPilgrimDto {

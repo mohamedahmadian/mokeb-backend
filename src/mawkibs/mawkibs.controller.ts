@@ -76,9 +76,10 @@ export class MawkibsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleName.Admin)
-  create(@Body() dto: CreateMawkibDto) {
-    return this.mawkibsService.create(dto);
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  create(@Body() dto: CreateMawkibDto, @CurrentUser() user: AuthUser) {
+    const isAdmin = user.roles.includes(RoleName.Admin);
+    return this.mawkibsService.create(dto, user.id, isAdmin);
   }
 
   @Patch(':id')

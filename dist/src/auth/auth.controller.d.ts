@@ -1,5 +1,6 @@
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterMawkibOwnerDto, RegisterPilgrimDto } from './dto/public-register.dto';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
@@ -43,4 +44,7 @@ export declare class AuthController {
         };
     }>;
     me(user: AuthUser): AuthUser;
+    changePassword(user: AuthUser, dto: ChangePasswordDto): Promise<{
+        message: string;
+    }>;
 }

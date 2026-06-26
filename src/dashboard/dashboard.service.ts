@@ -69,7 +69,7 @@ export class DashboardService {
       !user.roles.includes(RoleName.MawkibOwner);
 
     if (isPilgrim) {
-      const [capacityStats, total, pending, confirmed] = await Promise.all([
+      const [capacityStats, total, pending, confirmed, cancelled] = await Promise.all([
         this.computeCapacityStats(),
         this.prisma.reservation.count({
           where: { pilgrimUserId: user.id },
@@ -80,6 +80,9 @@ export class DashboardService {
         this.prisma.reservation.count({
           where: { pilgrimUserId: user.id, status: ReservationStatus.Confirmed },
         }),
+        this.prisma.reservation.count({
+          where: { pilgrimUserId: user.id, status: ReservationStatus.Cancelled },
+        }),
       ]);
 
       return {
@@ -88,6 +91,7 @@ export class DashboardService {
           totalReservations: total,
           pendingReservations: pending,
           confirmedReservations: confirmed,
+          cancelledReservations: cancelled,
         },
       };
     }

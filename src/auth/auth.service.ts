@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RoleName } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterDto } from './dto/register.dto';
 import {
   RegisterMawkibOwnerDto,
@@ -171,8 +172,12 @@ export class AuthService {
       },
     });
 
-    if (!user || !user.isActive) {
+    if (!user) {
       throw new UnauthorizedException('شماره موبایل یا رمز عبور اشتباه است');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('کاربر مورد نظر توسط مدیریت غیرفعال شده است');
     }
 
     const isValid = await bcrypt.compare(dto.password, user.passwordHash);
@@ -182,6 +187,34 @@ export class AuthService {
     }
 
     return this.buildAuthResponse(user);
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('کاربر یافت نشد');
+    }
+
+    const isValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException('رمز عبور فعلی اشتباه است');
+    }
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException('رمز عبور جدید باید با رمز فعلی متفاوت باشد');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: await bcrypt.hash(dto.newPassword, 10),
+      },
+    });
+
+    return { message: 'رمز عبور با موفقیت تغییر کرد' };
   }
 
   async validateUser(userId: number) {

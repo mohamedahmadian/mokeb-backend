@@ -9,7 +9,9 @@ import { Prisma, RoleName } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AuthUser } from '../common/decorators/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
-import { AssignRoleDto, CreateQuickPilgrimDto, CreateUserDto, ListPilgrimsDto, ListUsersDto, UpdateUserDto } from './dto/user.dto';
+import { AssignRoleDto, CreateQuickPilgrimDto, CreateUserDto, ListPilgrimsDto, ListUsersDto, PilgrimListScope, UpdateUserDto } from './dto/user.dto';
+
+const MIN_PILGRIM_SEARCH_LENGTH = 2;
 
 const userInclude = {
   roles: { include: { role: true } },
@@ -195,6 +197,15 @@ export class UsersService {
   }
 
   async findPilgrims(query: ListPilgrimsDto = {}, ownerUserId?: number) {
+    const scope = query.scope ?? PilgrimListScope.Mine;
+
+    if (scope === PilgrimListScope.All) {
+      const term = query.search?.trim() ?? '';
+      if (term.length < MIN_PILGRIM_SEARCH_LENGTH) {
+        return [];
+      }
+    }
+
     const isQuickSearch =
       !!query.search?.trim() &&
       !query.fullName?.trim() &&
@@ -203,7 +214,9 @@ export class UsersService {
       !query.city?.trim() &&
       query.isActive === undefined;
 
-    const where = this.buildPilgrimWhere(query, ownerUserId);
+    const effectiveOwnerId =
+      scope === PilgrimListScope.Mine ? ownerUserId : undefined;
+    const where = this.buildPilgrimWhere(query, effectiveOwnerId);
 
     if (isQuickSearch) {
       return this.prisma.user.findMany({

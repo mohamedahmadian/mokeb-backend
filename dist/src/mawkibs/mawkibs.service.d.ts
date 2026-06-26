@@ -7,6 +7,8 @@ export declare class MawkibsService {
     constructor(prisma: PrismaService);
     private buildAdminWhere;
     private filterByCapacityView;
+    private hasAvailabilitySearchParams;
+    private enrichAndFilterByAvailability;
     findAll(search?: SearchMawkibDto): Promise<({
         owner: {
             id: number;
@@ -49,6 +51,8 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     })[]>;
@@ -98,12 +102,12 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }[]>;
-    findByOwner(ownerUserId: number, search?: AdminSearchMawkibDto): Promise<{
-        availableMaleCapacity: number;
-        availableFemaleCapacity: number;
+    findByOwner(ownerUserId: number, search?: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
         };
@@ -114,6 +118,7 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -147,9 +152,14 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
-    }[]>;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+    })[]>;
     findOnePublic(id: number): Promise<{
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
@@ -196,6 +206,8 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -245,10 +257,12 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
-    create(dto: CreateMawkibDto): Promise<{
+    create(dto: CreateMawkibDto, actingUserId?: number, isAdmin?: boolean): Promise<{
         _count: {
             reservations: number;
         };
@@ -293,6 +307,8 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -341,6 +357,8 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -390,6 +408,8 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } | {
@@ -442,6 +462,8 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -488,6 +510,8 @@ export declare class MawkibsService {
         rules: string | null;
         telegramChannel: string | null;
         websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;

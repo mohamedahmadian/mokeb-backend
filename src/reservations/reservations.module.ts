@@ -7,7 +7,7 @@ import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [MawkibsModule, UsersModule],
-  controllers: [ReservationsController, GuestReservationsController],
+  controllers: [GuestReservationsController, ReservationsController],
   providers: [ReservationsService],
 })
 export class ReservationsModule {}

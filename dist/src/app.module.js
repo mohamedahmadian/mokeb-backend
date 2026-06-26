@@ -17,6 +17,7 @@ const reservations_module_1 = require("./reservations/reservations.module");
 const registration_requests_module_1 = require("./registration-requests/registration-requests.module");
 const honorary_volunteers_module_1 = require("./honorary-volunteers/honorary-volunteers.module");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
+const mawkib_feedback_module_1 = require("./mawkib-feedback/mawkib-feedback.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -32,6 +33,7 @@ exports.AppModule = AppModule = __decorate([
             registration_requests_module_1.RegistrationRequestsModule,
             honorary_volunteers_module_1.HonoraryVolunteersModule,
             dashboard_module_1.DashboardModule,
+            mawkib_feedback_module_1.MawkibFeedbackModule,
         ],
     })
 ], AppModule);

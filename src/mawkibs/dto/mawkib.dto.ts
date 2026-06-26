@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Min,
 } from 'class-validator';
 import { MawkibCity, MawkibCountry, MawkibStatus } from '@prisma/client';
@@ -144,6 +145,20 @@ export class CreateMawkibDto {
   @IsOptional()
   @IsString()
   websiteUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت ورود پیش‌فرض باید به فرمت HH:mm باشد',
+  })
+  defaultCheckInTime?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت خروج پیش‌فرض باید به فرمت HH:mm باشد',
+  })
+  defaultCheckOutTime?: string;
 
   @IsInt()
   ownerUserId: number;
@@ -284,6 +299,20 @@ export class UpdateMawkibDto {
   websiteUrl?: string;
 
   @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت ورود پیش‌فرض باید به فرمت HH:mm باشد',
+  })
+  defaultCheckInTime?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت خروج پیش‌فرض باید به فرمت HH:mm باشد',
+  })
+  defaultCheckOutTime?: string;
+
+  @IsOptional()
   @IsInt()
   ownerUserId?: number;
 
@@ -412,4 +441,33 @@ export class AdminSearchMawkibDto {
   @IsOptional()
   @IsEnum(MawkibCapacityFilter)
   capacityFilter?: MawkibCapacityFilter;
+
+  @IsOptional()
+  @IsDateString()
+  reservationDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  reservationDateFrom?: string;
+
+  @IsOptional()
+  @IsDateString()
+  reservationDateTo?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  minAvailableMaleCapacity?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  minAvailableFemaleCapacity?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  hasAvailability?: boolean;
 }

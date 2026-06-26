@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SearchPilgrimDto = exports.ListPilgrimsDto = exports.ListUsersDto = exports.CreateQuickPilgrimDto = exports.AssignRoleDto = exports.UpdateUserDto = exports.CreateUserDto = void 0;
+exports.SearchPilgrimDto = exports.ListPilgrimsDto = exports.PilgrimListScope = exports.ListUsersDto = exports.CreateQuickPilgrimDto = exports.AssignRoleDto = exports.UpdateUserDto = exports.CreateUserDto = void 0;
 const class_validator_1 = require("class-validator");
 const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
@@ -40,7 +40,7 @@ __decorate([
 ], CreateUserDto.prototype, "mobileNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(4),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "password", void 0);
 __decorate([
@@ -157,7 +157,7 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MinLength)(4),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "password", void 0);
 __decorate([
@@ -297,9 +297,20 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], ListUsersDto.prototype, "search", void 0);
+var PilgrimListScope;
+(function (PilgrimListScope) {
+    PilgrimListScope["Mine"] = "mine";
+    PilgrimListScope["All"] = "all";
+})(PilgrimListScope || (exports.PilgrimListScope = PilgrimListScope = {}));
 class ListPilgrimsDto extends ListUsersDto {
+    scope;
 }
 exports.ListPilgrimsDto = ListPilgrimsDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(PilgrimListScope),
+    __metadata("design:type", String)
+], ListPilgrimsDto.prototype, "scope", void 0);
 class SearchPilgrimDto {
     search;
 }

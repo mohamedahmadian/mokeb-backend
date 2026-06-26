@@ -45,8 +45,9 @@ let MawkibsController = class MawkibsController {
         const isAdmin = user.roles.includes(client_1.RoleName.Admin);
         return this.mawkibsService.findOne(id, user.id, isAdmin);
     }
-    create(dto) {
-        return this.mawkibsService.create(dto);
+    create(dto, user) {
+        const isAdmin = user.roles.includes(client_1.RoleName.Admin);
+        return this.mawkibsService.create(dto, user.id, isAdmin);
     }
     update(id, dto, user) {
         const isAdmin = user.roles.includes(client_1.RoleName.Admin);
@@ -114,10 +115,11 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
     __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [mawkib_dto_1.CreateMawkibDto]),
+    __metadata("design:paramtypes", [mawkib_dto_1.CreateMawkibDto, Object]),
     __metadata("design:returntype", void 0)
 ], MawkibsController.prototype, "create", null);
 __decorate([

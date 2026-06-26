@@ -10,6 +10,8 @@ export declare class CreateReservationDto {
     pilgrimMobile: string;
     description?: string;
     companions?: string;
+    plannedCheckInTime?: string;
+    plannedCheckOutTime?: string;
 }
 export declare class CreateGuestReservationDto {
     firstName: string;
@@ -17,6 +19,7 @@ export declare class CreateGuestReservationDto {
     mobileNumber: string;
     province?: string;
     city?: string;
+    password?: string;
     mawkibId: number;
     reservationDate: string;
     reservationEndDate: string;
@@ -25,6 +28,8 @@ export declare class CreateGuestReservationDto {
     private readonly _guestCheck?;
     description?: string;
     companions?: string;
+    plannedCheckInTime?: string;
+    plannedCheckOutTime?: string;
 }
 export declare class UpdateReservationStatusDto {
     status: ReservationStatus;
@@ -39,6 +44,7 @@ export declare class SearchReservationDto {
     reservationDateTo?: string;
     pilgrimName?: string;
     pilgrimMobile?: string;
+    trackingCode?: string;
     pilgrimUserId?: number;
     guestCountMin?: number;
     guestCountMax?: number;
