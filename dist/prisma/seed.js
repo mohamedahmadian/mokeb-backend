@@ -35,8 +35,22 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
+const fs_1 = require("fs");
+const path_1 = require("path");
 const prisma = new client_1.PrismaClient();
+function assertIranLocationsFile() {
+    const filePath = (0, path_1.join)(__dirname, '..', 'data', 'iran-locations.json');
+    if (!(0, fs_1.existsSync)(filePath)) {
+        throw new Error('Missing backend/data/iran-locations.json — province/city lists depend on this file');
+    }
+    const parsed = JSON.parse((0, fs_1.readFileSync)(filePath, 'utf-8'));
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+        throw new Error('Invalid backend/data/iran-locations.json');
+    }
+    console.log(`Iran locations file OK (${parsed.length} provinces)`);
+}
 async function main() {
+    assertIranLocationsFile();
     const roles = ['Admin', 'Pilgrim', 'MawkibOwner', 'HonoraryServant'];
     for (const name of roles) {
         await prisma.role.upsert({

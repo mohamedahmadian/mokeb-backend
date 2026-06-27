@@ -18,6 +18,7 @@ const registration_requests_module_1 = require("./registration-requests/registra
 const honorary_volunteers_module_1 = require("./honorary-volunteers/honorary-volunteers.module");
 const dashboard_module_1 = require("./dashboard/dashboard.module");
 const mawkib_feedback_module_1 = require("./mawkib-feedback/mawkib-feedback.module");
+const locations_module_1 = require("./locations/locations.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,6 +35,7 @@ exports.AppModule = AppModule = __decorate([
             honorary_volunteers_module_1.HonoraryVolunteersModule,
             dashboard_module_1.DashboardModule,
             mawkib_feedback_module_1.MawkibFeedbackModule,
+            locations_module_1.LocationsModule,
         ],
     })
 ], AppModule);

@@ -24,7 +24,7 @@ class HasGuestCountConstraint implements ValidatorConstraintInterface {
   }
 
   defaultMessage() {
-    return 'حداقل یک نفر (آقا یا خانم) باید برای رزرو وارد شود';
+    return 'حداقل یک نفر (آقا یا بانو) باید برای رزرو وارد شود';
   }
 }
 

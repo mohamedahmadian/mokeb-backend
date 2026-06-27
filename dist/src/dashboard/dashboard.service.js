@@ -86,8 +86,38 @@ let DashboardService = class DashboardService {
             };
         }
         if (isMawkibOwner) {
-            const myMawkibsStats = await this.computeCapacityStats(user.id);
-            return { myMawkibsStats };
+            const ownedMawkibs = await this.prisma.mawkib.findMany({
+                where: { ownerUserId: user.id },
+                select: { id: true },
+            });
+            const mawkibIds = ownedMawkibs.map((m) => m.id);
+            const reservationWhere = mawkibIds.length > 0 ? { mawkibId: { in: mawkibIds } } : { mawkibId: -1 };
+            const [myMawkibsStats, totalReservations, pendingReservations, confirmedReservations, cancelledReservations, completedReservations,] = await Promise.all([
+                this.computeCapacityStats(user.id),
+                this.prisma.reservation.count({ where: reservationWhere }),
+                this.prisma.reservation.count({
+                    where: { ...reservationWhere, status: client_1.ReservationStatus.Pending },
+                }),
+                this.prisma.reservation.count({
+                    where: { ...reservationWhere, status: client_1.ReservationStatus.Confirmed },
+                }),
+                this.prisma.reservation.count({
+                    where: { ...reservationWhere, status: client_1.ReservationStatus.Cancelled },
+                }),
+                this.prisma.reservation.count({
+                    where: { ...reservationWhere, status: client_1.ReservationStatus.Completed },
+                }),
+            ]);
+            return {
+                myMawkibsStats,
+                mawkibOwnerStats: {
+                    totalReservations,
+                    pendingReservations,
+                    confirmedReservations,
+                    cancelledReservations,
+                    completedReservations,
+                },
+            };
         }
         const capacityStats = await this.computeCapacityStats();
         const [totalPilgrims, totalMawkibOwners, pendingRequests, pendingReservations] = await Promise.all([

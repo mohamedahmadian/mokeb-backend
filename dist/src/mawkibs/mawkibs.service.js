@@ -481,7 +481,7 @@ let MawkibsService = class MawkibsService {
             throw new common_1.BadRequestException(`تعداد آقایان (${maleGuestCount}) از ظرفیت کل موکب (${mawkib.maleCapacity} نفر) بیشتر است`);
         }
         if (femaleGuestCount > mawkib.femaleCapacity) {
-            throw new common_1.BadRequestException(`تعداد خانم‌ها (${femaleGuestCount}) از ظرفیت کل موکب (${mawkib.femaleCapacity} نفر) بیشتر است`);
+            throw new common_1.BadRequestException(`تعداد بانوان (${femaleGuestCount}) از ظرفیت کل موکب (${mawkib.femaleCapacity} نفر) بیشتر است`);
         }
     }
     async assertCapacity(mawkibId, maleGuestCount, femaleGuestCount, reservationDate) {
@@ -491,7 +491,7 @@ let MawkibsService = class MawkibsService {
             throw new common_1.BadRequestException(`ظرفیت آقایان کافی نیست. باقی‌مانده: ${snapshot.availableMale} نفر`);
         }
         if (femaleGuestCount > snapshot.availableFemale) {
-            throw new common_1.BadRequestException(`ظرفیت خانم‌ها کافی نیست. باقی‌مانده: ${snapshot.availableFemale} نفر`);
+            throw new common_1.BadRequestException(`ظرفیت بانوان کافی نیست. باقی‌مانده: ${snapshot.availableFemale} نفر`);
         }
     }
     async assertCapacityInRange(mawkibId, maleGuestCount, femaleGuestCount, startDate, endDate) {
@@ -501,7 +501,7 @@ let MawkibsService = class MawkibsService {
             throw new common_1.BadRequestException(`ظرفیت آقایان کافی نیست. کمترین ظرفیت باقی‌مانده در بازه: ${snapshot.availableMale} نفر`);
         }
         if (femaleGuestCount > snapshot.availableFemale) {
-            throw new common_1.BadRequestException(`ظرفیت خانم‌ها کافی نیست. کمترین ظرفیت باقی‌مانده در بازه: ${snapshot.availableFemale} نفر`);
+            throw new common_1.BadRequestException(`ظرفیت بانوان کافی نیست. کمترین ظرفیت باقی‌مانده در بازه: ${snapshot.availableFemale} نفر`);
         }
     }
     async assertReservationServiceStart(mawkibId, reservationStart) {

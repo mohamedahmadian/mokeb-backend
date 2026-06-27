@@ -13,6 +13,7 @@ exports.CreateHonoraryVolunteerApplicationDto = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
+const pin_password_validator_1 = require("../../common/validators/pin-password.validator");
 class CreateHonoraryVolunteerApplicationDto {
     firstName;
     lastName;
@@ -46,7 +47,7 @@ __decorate([
 ], CreateHonoraryVolunteerApplicationDto.prototype, "mobileNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, pin_password_validator_1.IsPinPassword)(),
     __metadata("design:type", String)
 ], CreateHonoraryVolunteerApplicationDto.prototype, "password", void 0);
 __decorate([

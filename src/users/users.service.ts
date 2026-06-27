@@ -138,10 +138,27 @@ export class UsersService {
 
   async findOneForUser(id: number, user: AuthUser) {
     const isAdmin = user.roles.includes(RoleName.Admin);
-    if (!isAdmin && user.id !== id) {
-      throw new ForbiddenException('شما مجوز مشاهده این کاربر را ندارید');
+    if (isAdmin || user.id === id) {
+      return this.findOne(id);
     }
-    return this.findOne(id);
+
+    const isMawkibOwner = user.roles.includes(RoleName.MawkibOwner);
+    if (isMawkibOwner) {
+      const pilgrim = await this.prisma.user.findFirst({
+        where: {
+          id,
+          isActive: true,
+          roles: { some: { role: { name: RoleName.Pilgrim } } },
+        },
+        include: userInclude,
+      });
+
+      if (pilgrim) {
+        return this.sanitize(pilgrim);
+      }
+    }
+
+    throw new ForbiddenException('شما مجوز مشاهده این کاربر را ندارید');
   }
 
   async updateForUser(id: number, dto: UpdateUserDto, user: AuthUser) {
@@ -188,11 +205,22 @@ export class UsersService {
           { mobileNumber: { contains: term, mode: 'insensitive' } },
         ],
       }),
-      ...(ownerUserId && {
-        pilgrimReservations: {
-          some: { mawkib: { ownerUserId } },
-        },
-      }),
+      ...(query.mawkibId
+        ? {
+            pilgrimReservations: {
+              some: {
+                mawkibId: query.mawkibId,
+                ...(ownerUserId ? { mawkib: { ownerUserId } } : {}),
+              },
+            },
+          }
+        : ownerUserId
+          ? {
+              pilgrimReservations: {
+                some: { mawkib: { ownerUserId } },
+              },
+            }
+          : {}),
     };
   }
 
@@ -212,10 +240,22 @@ export class UsersService {
       !query.mobileNumber?.trim() &&
       !query.province?.trim() &&
       !query.city?.trim() &&
-      query.isActive === undefined;
+      query.isActive === undefined &&
+      !query.mawkibId;
 
     const effectiveOwnerId =
       scope === PilgrimListScope.Mine ? ownerUserId : undefined;
+
+    if (query.mawkibId && effectiveOwnerId) {
+      const ownedMawkib = await this.prisma.mawkib.findFirst({
+        where: { id: query.mawkibId, ownerUserId: effectiveOwnerId },
+        select: { id: true },
+      });
+      if (!ownedMawkib) {
+        throw new ForbiddenException('شما مجوز فیلتر با این موکب را ندارید');
+      }
+    }
+
     const where = this.buildPilgrimWhere(query, effectiveOwnerId);
 
     if (isQuickSearch) {

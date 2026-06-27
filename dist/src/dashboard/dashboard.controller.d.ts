@@ -12,6 +12,7 @@ export declare class DashboardController {
             cancelledReservations: number;
         };
         myMawkibsStats?: undefined;
+        mawkibOwnerStats?: undefined;
         totalPilgrims?: undefined;
         totalMawkibOwners?: undefined;
         pendingRequests?: undefined;
@@ -19,6 +20,13 @@ export declare class DashboardController {
         totalReservations?: undefined;
     } | {
         myMawkibsStats: import("./dashboard.service").CapacityStats;
+        mawkibOwnerStats: {
+            totalReservations: number;
+            pendingReservations: number;
+            confirmedReservations: number;
+            cancelledReservations: number;
+            completedReservations: number;
+        };
         capacityStats?: undefined;
         pilgrimStats?: undefined;
         totalPilgrims?: undefined;
@@ -35,5 +43,6 @@ export declare class DashboardController {
         totalReservations: number;
         pilgrimStats?: undefined;
         myMawkibsStats?: undefined;
+        mawkibOwnerStats?: undefined;
     }>;
 }

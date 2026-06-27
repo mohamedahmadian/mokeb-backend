@@ -3,8 +3,8 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  MinLength,
 } from 'class-validator';
+import { IsPinPassword } from '../../common/validators/pin-password.validator';
 
 export class RegisterPilgrimDto {
   @IsString()
@@ -20,7 +20,7 @@ export class RegisterPilgrimDto {
   mobileNumber: string;
 
   @IsString()
-  @MinLength(4)
+  @IsPinPassword()
   password: string;
 
   @IsOptional()
@@ -66,7 +66,7 @@ export class RegisterMawkibOwnerDto {
   mobileNumber: string;
 
   @IsString()
-  @MinLength(6)
+  @IsPinPassword()
   password: string;
 
   @IsOptional()

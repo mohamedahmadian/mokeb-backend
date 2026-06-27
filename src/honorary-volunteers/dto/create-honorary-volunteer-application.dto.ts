@@ -7,10 +7,10 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  MinLength,
 } from 'class-validator';
 import { HonoraryVolunteerServiceType } from '@prisma/client';
 import { Type } from 'class-transformer';
+import { IsPinPassword } from '../../common/validators/pin-password.validator';
 
 export class CreateHonoraryVolunteerApplicationDto {
   @IsString()
@@ -26,7 +26,7 @@ export class CreateHonoraryVolunteerApplicationDto {
   mobileNumber: string;
 
   @IsString()
-  @MinLength(6)
+  @IsPinPassword()
   password: string;
 
   @IsOptional()

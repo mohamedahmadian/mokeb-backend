@@ -9,6 +9,7 @@ import { RegistrationRequestsModule } from './registration-requests/registration
 import { HonoraryVolunteersModule } from './honorary-volunteers/honorary-volunteers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MawkibFeedbackModule } from './mawkib-feedback/mawkib-feedback.module';
+import { LocationsModule } from './locations/locations.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { MawkibFeedbackModule } from './mawkib-feedback/mawkib-feedback.module';
     HonoraryVolunteersModule,
     DashboardModule,
     MawkibFeedbackModule,
+    LocationsModule,
   ],
 })
 export class AppModule {}

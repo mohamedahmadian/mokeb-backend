@@ -97,8 +97,48 @@ export class DashboardService {
     }
 
     if (isMawkibOwner) {
-      const myMawkibsStats = await this.computeCapacityStats(user.id);
-      return { myMawkibsStats };
+      const ownedMawkibs = await this.prisma.mawkib.findMany({
+        where: { ownerUserId: user.id },
+        select: { id: true },
+      });
+      const mawkibIds = ownedMawkibs.map((m) => m.id);
+      const reservationWhere =
+        mawkibIds.length > 0 ? { mawkibId: { in: mawkibIds } } : { mawkibId: -1 };
+
+      const [
+        myMawkibsStats,
+        totalReservations,
+        pendingReservations,
+        confirmedReservations,
+        cancelledReservations,
+        completedReservations,
+      ] = await Promise.all([
+        this.computeCapacityStats(user.id),
+        this.prisma.reservation.count({ where: reservationWhere }),
+        this.prisma.reservation.count({
+          where: { ...reservationWhere, status: ReservationStatus.Pending },
+        }),
+        this.prisma.reservation.count({
+          where: { ...reservationWhere, status: ReservationStatus.Confirmed },
+        }),
+        this.prisma.reservation.count({
+          where: { ...reservationWhere, status: ReservationStatus.Cancelled },
+        }),
+        this.prisma.reservation.count({
+          where: { ...reservationWhere, status: ReservationStatus.Completed },
+        }),
+      ]);
+
+      return {
+        myMawkibsStats,
+        mawkibOwnerStats: {
+          totalReservations,
+          pendingReservations,
+          confirmedReservations,
+          cancelledReservations,
+          completedReservations,
+        },
+      };
     }
 
     const capacityStats = await this.computeCapacityStats();

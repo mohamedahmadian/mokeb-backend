@@ -1,9 +1,31 @@
 import { PrismaClient, RoleName } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 
 const prisma = new PrismaClient();
 
+function assertIranLocationsFile() {
+  const filePath = join(__dirname, '..', 'data', 'iran-locations.json');
+
+  if (!existsSync(filePath)) {
+    throw new Error(
+      'Missing backend/data/iran-locations.json — province/city lists depend on this file',
+    );
+  }
+
+  const parsed = JSON.parse(readFileSync(filePath, 'utf-8')) as unknown;
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new Error('Invalid backend/data/iran-locations.json');
+  }
+
+  console.log(`Iran locations file OK (${parsed.length} provinces)`);
+}
+
 async function main() {
+  assertIranLocationsFile();
+
   const roles: RoleName[] = ['Admin', 'Pilgrim', 'MawkibOwner', 'HonoraryServant'];
 
   for (const name of roles) {

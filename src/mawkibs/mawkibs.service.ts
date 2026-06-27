@@ -654,7 +654,7 @@ export class MawkibsService {
 
     if (femaleGuestCount > mawkib.femaleCapacity) {
       throw new BadRequestException(
-        `تعداد خانم‌ها (${femaleGuestCount}) از ظرفیت کل موکب (${mawkib.femaleCapacity} نفر) بیشتر است`,
+        `تعداد بانوان (${femaleGuestCount}) از ظرفیت کل موکب (${mawkib.femaleCapacity} نفر) بیشتر است`,
       );
     }
   }
@@ -680,7 +680,7 @@ export class MawkibsService {
     }
     if (femaleGuestCount > snapshot.availableFemale) {
       throw new BadRequestException(
-        `ظرفیت خانم‌ها کافی نیست. باقی‌مانده: ${snapshot.availableFemale} نفر`,
+        `ظرفیت بانوان کافی نیست. باقی‌مانده: ${snapshot.availableFemale} نفر`,
       );
     }
   }
@@ -711,7 +711,7 @@ export class MawkibsService {
     }
     if (femaleGuestCount > snapshot.availableFemale) {
       throw new BadRequestException(
-        `ظرفیت خانم‌ها کافی نیست. کمترین ظرفیت باقی‌مانده در بازه: ${snapshot.availableFemale} نفر`,
+        `ظرفیت بانوان کافی نیست. کمترین ظرفیت باقی‌مانده در بازه: ${snapshot.availableFemale} نفر`,
       );
     }
   }

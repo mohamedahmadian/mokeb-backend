@@ -59,6 +59,7 @@ export declare enum PilgrimListScope {
 }
 export declare class ListPilgrimsDto extends ListUsersDto {
     scope?: PilgrimListScope;
+    mawkibId?: number;
 }
 export declare class SearchPilgrimDto {
     search?: string;

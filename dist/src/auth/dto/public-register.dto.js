@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RegisterMawkibOwnerDto = exports.RegisterPilgrimDto = void 0;
 const class_validator_1 = require("class-validator");
+const pin_password_validator_1 = require("../../common/validators/pin-password.validator");
 class RegisterPilgrimDto {
     firstName;
     lastName;
@@ -43,7 +44,7 @@ __decorate([
 ], RegisterPilgrimDto.prototype, "mobileNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(4),
+    (0, pin_password_validator_1.IsPinPassword)(),
     __metadata("design:type", String)
 ], RegisterPilgrimDto.prototype, "password", void 0);
 __decorate([
@@ -112,7 +113,7 @@ __decorate([
 ], RegisterMawkibOwnerDto.prototype, "mobileNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.MinLength)(6),
+    (0, pin_password_validator_1.IsPinPassword)(),
     __metadata("design:type", String)
 ], RegisterMawkibOwnerDto.prototype, "password", void 0);
 __decorate([

@@ -304,6 +304,7 @@ var PilgrimListScope;
 })(PilgrimListScope || (exports.PilgrimListScope = PilgrimListScope = {}));
 class ListPilgrimsDto extends ListUsersDto {
     scope;
+    mawkibId;
 }
 exports.ListPilgrimsDto = ListPilgrimsDto;
 __decorate([
@@ -311,6 +312,12 @@ __decorate([
     (0, class_validator_1.IsEnum)(PilgrimListScope),
     __metadata("design:type", String)
 ], ListPilgrimsDto.prototype, "scope", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], ListPilgrimsDto.prototype, "mawkibId", void 0);
 class SearchPilgrimDto {
     search;
 }

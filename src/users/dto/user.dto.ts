@@ -3,12 +3,13 @@ import {
   IsBoolean,
   IsEmail,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   MinLength,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { RoleName } from '@prisma/client';
 
 export class CreateUserDto {
@@ -211,6 +212,11 @@ export class ListPilgrimsDto extends ListUsersDto {
   @IsOptional()
   @IsEnum(PilgrimListScope)
   scope?: PilgrimListScope;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  mawkibId?: number;
 }
 
 /** @deprecated use ListPilgrimsDto */

@@ -19,7 +19,7 @@ let HasGuestCountConstraint = class HasGuestCountConstraint {
         return (obj.maleGuestCount ?? 0) + (obj.femaleGuestCount ?? 0) > 0;
     }
     defaultMessage() {
-        return 'حداقل یک نفر (آقا یا خانم) باید برای رزرو وارد شود';
+        return 'حداقل یک نفر (آقا یا بانو) باید برای رزرو وارد شود';
     }
 };
 HasGuestCountConstraint = __decorate([

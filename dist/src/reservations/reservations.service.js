@@ -17,6 +17,7 @@ const mawkibs_service_1 = require("../mawkibs/mawkibs.service");
 const users_service_1 = require("../users/users.service");
 const date_util_1 = require("../common/utils/date.util");
 const reservation_code_util_1 = require("../common/utils/reservation-code.util");
+const mobile_search_util_1 = require("../common/utils/mobile-search.util");
 const reservation_conflict_util_1 = require("./reservation-conflict.util");
 const reservation_occupancy_util_1 = require("./reservation-occupancy.util");
 const reviewUserSelect = {
@@ -81,14 +82,40 @@ let ReservationsService = class ReservationsService {
             };
         }
         if (search.pilgrimName || search.pilgrimMobile) {
-            where.pilgrim = {
-                ...(search.pilgrimName && {
-                    fullName: { contains: search.pilgrimName, mode: 'insensitive' },
-                }),
-                ...(search.pilgrimMobile && {
-                    mobileNumber: { contains: search.pilgrimMobile, mode: 'insensitive' },
-                }),
-            };
+            const pilgrimFilters = [];
+            if (search.pilgrimName) {
+                pilgrimFilters.push({
+                    pilgrim: {
+                        fullName: { contains: search.pilgrimName, mode: 'insensitive' },
+                    },
+                });
+            }
+            if (search.pilgrimMobile) {
+                const patterns = (0, mobile_search_util_1.buildMobileSearchPatterns)(search.pilgrimMobile);
+                if (patterns.length > 0) {
+                    pilgrimFilters.push({
+                        OR: patterns.flatMap((pattern) => [
+                            { pilgrimMobile: { contains: pattern, mode: 'insensitive' } },
+                            {
+                                pilgrim: {
+                                    mobileNumber: { contains: pattern, mode: 'insensitive' },
+                                },
+                            },
+                        ]),
+                    });
+                }
+            }
+            if (pilgrimFilters.length === 1) {
+                Object.assign(where, pilgrimFilters[0]);
+            }
+            else {
+                const existingAnd = where.AND
+                    ? Array.isArray(where.AND)
+                        ? where.AND
+                        : [where.AND]
+                    : [];
+                where.AND = [...existingAnd, ...pilgrimFilters];
+            }
         }
         if (search.guestCountMin || search.guestCountMax) {
         }
@@ -112,7 +139,7 @@ let ReservationsService = class ReservationsService {
             include: reservationInclude,
             orderBy: { createdAt: 'desc' },
         });
-        return this.filterByGuestCountTotal(items, search);
+        return this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search);
     }
     async findByPilgrim(pilgrimUserId, search) {
         const items = await this.prisma.reservation.findMany({
@@ -123,7 +150,7 @@ let ReservationsService = class ReservationsService {
             include: reservationInclude,
             orderBy: { createdAt: 'desc' },
         });
-        return this.filterByGuestCountTotal(items, search);
+        return this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search);
     }
     async findByMawkibOwner(ownerUserId, search) {
         const mawkibs = await this.prisma.mawkib.findMany({
@@ -143,7 +170,15 @@ let ReservationsService = class ReservationsService {
             include: reservationInclude,
             orderBy: { createdAt: 'desc' },
         });
-        return this.filterByGuestCountTotal(items, search);
+        let filtered = this.filterByGuestCountTotal(items, search);
+        return this.filterReservationsByMobileSearch(filtered, search);
+    }
+    filterReservationsByMobileSearch(items, search) {
+        if (!search?.pilgrimMobile?.trim())
+            return items;
+        const searchDigits = (0, mobile_search_util_1.normalizeMobileDigits)(search.pilgrimMobile);
+        return items.filter((item) => (0, mobile_search_util_1.mobileDigitMatches)(searchDigits, item.pilgrimMobile) ||
+            (0, mobile_search_util_1.mobileDigitMatches)(searchDigits, item.pilgrim.mobileNumber));
     }
     async findOne(id) {
         const reservation = await this.prisma.reservation.findUnique({
@@ -174,6 +209,10 @@ let ReservationsService = class ReservationsService {
         if (!mobile) {
             throw new common_1.BadRequestException('شماره موبایل الزامی است');
         }
+        const patterns = (0, mobile_search_util_1.buildMobileSearchPatterns)(mobile);
+        if (patterns.length === 0) {
+            throw new common_1.BadRequestException('شماره موبایل نامعتبر است');
+        }
         const guestInclude = {
             mawkib: { select: { id: true, name: true, address: true } },
             pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
@@ -181,16 +220,22 @@ let ReservationsService = class ReservationsService {
         };
         const reservations = await this.prisma.reservation.findMany({
             where: {
-                OR: [{ pilgrimMobile: mobile }, { pilgrim: { mobileNumber: mobile } }],
+                OR: patterns.flatMap((pattern) => [
+                    { pilgrimMobile: { contains: pattern, mode: 'insensitive' } },
+                    { pilgrim: { mobileNumber: { contains: pattern, mode: 'insensitive' } } },
+                ]),
             },
             include: guestInclude,
             orderBy: { createdAt: 'desc' },
-            take: 2,
+            take: 10,
         });
-        if (reservations.length === 0) {
+        const searchDigits = (0, mobile_search_util_1.normalizeMobileDigits)(mobile);
+        const matched = reservations.filter((reservation) => (0, mobile_search_util_1.mobileDigitMatches)(searchDigits, reservation.pilgrimMobile) ||
+            (0, mobile_search_util_1.mobileDigitMatches)(searchDigits, reservation.pilgrim.mobileNumber));
+        if (matched.length === 0) {
             throw new common_1.NotFoundException('رزروی با این شماره موبایل یافت نشد');
         }
-        return reservations;
+        return matched.slice(0, 2);
     }
     async findOneForUser(id, currentUser) {
         const reservation = await this.findOne(id);
