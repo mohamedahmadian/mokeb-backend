@@ -15,6 +15,7 @@ import { MawkibsService } from './mawkibs.service';
 import {
   AdminSearchMawkibDto,
   CreateMawkibDto,
+  MawkibInventoryQueryDto,
   SearchMawkibDto,
   UpdateMawkibDto,
 } from './dto/mawkib.dto';
@@ -47,9 +48,39 @@ export class MawkibsController {
     return this.mawkibsService.findByOwner(user.id, search);
   }
 
+  @Get('inventory/horizon')
+  getInventoryHorizon() {
+    return this.mawkibsService.getInventoryHorizon();
+  }
+
+  @Get('public/:id/inventory')
+  findPublicInventory(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: MawkibInventoryQueryDto,
+  ) {
+    return this.mawkibsService.getInventoryRangeForViewer(id, query);
+  }
+
   @Get('public/:id')
   findOnePublic(@Param('id', ParseIntPipe) id: number) {
     return this.mawkibsService.findOnePublic(id);
+  }
+
+  @Get(':id/inventory')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.Pilgrim)
+  findInventory(
+    @Param('id', ParseIntPipe) id: number,
+    @Query() query: MawkibInventoryQueryDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    const isAdmin = user.roles.includes(RoleName.Admin);
+    return this.mawkibsService.getInventoryRangeForViewer(
+      id,
+      query,
+      user.id,
+      isAdmin,
+    );
   }
 
   @Get(':id/capacity')

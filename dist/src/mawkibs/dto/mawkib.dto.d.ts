@@ -4,6 +4,18 @@ export declare enum MawkibCapacityFilter {
     Available = "available",
     Full = "full"
 }
+export declare const MAWKIB_AMENITY_FILTER_KEYS: readonly ["breakfastReception", "lunchReception", "dinnerReception", "bathroom", "laundry", "parking", "internet", "familyFriendly"];
+export type MawkibAmenityFilterKey = (typeof MAWKIB_AMENITY_FILTER_KEYS)[number];
+export declare class MawkibAmenitySearchFields {
+    breakfastReception?: boolean;
+    lunchReception?: boolean;
+    dinnerReception?: boolean;
+    bathroom?: boolean;
+    laundry?: boolean;
+    parking?: boolean;
+    internet?: boolean;
+    familyFriendly?: boolean;
+}
 export declare class CreateMawkibDto {
     name: string;
     address: string;
@@ -78,11 +90,11 @@ export declare class UpdateMawkibDto {
     ownerUserId?: number;
     status?: MawkibStatus;
 }
-export declare class SearchMawkibDto {
+export declare class SearchMawkibDto extends MawkibAmenitySearchFields {
     q?: string;
     name?: string;
-    province?: string;
-    city?: string;
+    ownerName?: string;
+    country?: MawkibCountry;
     mawkibCity?: MawkibCity;
     reservationDate?: string;
     reservationDateFrom?: string;
@@ -96,14 +108,14 @@ export declare class SearchMawkibDto {
     serviceEndFrom?: string;
     serviceEndTo?: string;
 }
-export declare class AdminSearchMawkibDto {
+export declare class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
     name?: string;
     phoneNumber?: string;
     ownerName?: string;
     ownerUserId?: number;
     status?: MawkibStatus;
-    province?: string;
-    city?: string;
+    country?: MawkibCountry;
+    mawkibCity?: MawkibCity;
     serviceStartFrom?: string;
     serviceStartTo?: string;
     serviceEndFrom?: string;
@@ -115,4 +127,8 @@ export declare class AdminSearchMawkibDto {
     minAvailableMaleCapacity?: number;
     minAvailableFemaleCapacity?: number;
     hasAvailability?: boolean;
+}
+export declare class MawkibInventoryQueryDto {
+    startDate: string;
+    endDate: string;
 }

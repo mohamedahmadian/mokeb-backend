@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AdminSearchMawkibDto = exports.SearchMawkibDto = exports.UpdateMawkibDto = exports.CreateMawkibDto = exports.MawkibCapacityFilter = void 0;
+exports.MawkibInventoryQueryDto = exports.AdminSearchMawkibDto = exports.SearchMawkibDto = exports.UpdateMawkibDto = exports.CreateMawkibDto = exports.MawkibAmenitySearchFields = exports.MAWKIB_AMENITY_FILTER_KEYS = exports.MawkibCapacityFilter = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
@@ -19,6 +19,75 @@ var MawkibCapacityFilter;
     MawkibCapacityFilter["Available"] = "available";
     MawkibCapacityFilter["Full"] = "full";
 })(MawkibCapacityFilter || (exports.MawkibCapacityFilter = MawkibCapacityFilter = {}));
+exports.MAWKIB_AMENITY_FILTER_KEYS = [
+    'breakfastReception',
+    'lunchReception',
+    'dinnerReception',
+    'bathroom',
+    'laundry',
+    'parking',
+    'internet',
+    'familyFriendly',
+];
+class MawkibAmenitySearchFields {
+    breakfastReception;
+    lunchReception;
+    dinnerReception;
+    bathroom;
+    laundry;
+    parking;
+    internet;
+    familyFriendly;
+}
+exports.MawkibAmenitySearchFields = MawkibAmenitySearchFields;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "breakfastReception", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "lunchReception", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "dinnerReception", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "bathroom", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "laundry", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "parking", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "internet", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], MawkibAmenitySearchFields.prototype, "familyFriendly", void 0);
 class CreateMawkibDto {
     name;
     address;
@@ -463,11 +532,11 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.MawkibStatus),
     __metadata("design:type", String)
 ], UpdateMawkibDto.prototype, "status", void 0);
-class SearchMawkibDto {
+class SearchMawkibDto extends MawkibAmenitySearchFields {
     q;
     name;
-    province;
-    city;
+    ownerName;
+    country;
     mawkibCity;
     reservationDate;
     reservationDateFrom;
@@ -496,12 +565,12 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], SearchMawkibDto.prototype, "province", void 0);
+], SearchMawkibDto.prototype, "ownerName", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibCountry),
     __metadata("design:type", String)
-], SearchMawkibDto.prototype, "city", void 0);
+], SearchMawkibDto.prototype, "country", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.MawkibCity),
@@ -567,14 +636,14 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], SearchMawkibDto.prototype, "serviceEndTo", void 0);
-class AdminSearchMawkibDto {
+class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
     name;
     phoneNumber;
     ownerName;
     ownerUserId;
     status;
-    province;
-    city;
+    country;
+    mawkibCity;
     serviceStartFrom;
     serviceStartTo;
     serviceEndFrom;
@@ -616,14 +685,14 @@ __decorate([
 ], AdminSearchMawkibDto.prototype, "status", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibCountry),
     __metadata("design:type", String)
-], AdminSearchMawkibDto.prototype, "province", void 0);
+], AdminSearchMawkibDto.prototype, "country", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibCity),
     __metadata("design:type", String)
-], AdminSearchMawkibDto.prototype, "city", void 0);
+], AdminSearchMawkibDto.prototype, "mawkibCity", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
@@ -684,4 +753,17 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], AdminSearchMawkibDto.prototype, "hasAvailability", void 0);
+class MawkibInventoryQueryDto {
+    startDate;
+    endDate;
+}
+exports.MawkibInventoryQueryDto = MawkibInventoryQueryDto;
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], MawkibInventoryQueryDto.prototype, "startDate", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], MawkibInventoryQueryDto.prototype, "endDate", void 0);
 //# sourceMappingURL=mawkib.dto.js.map

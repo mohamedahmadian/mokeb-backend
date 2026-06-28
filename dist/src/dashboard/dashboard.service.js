@@ -33,10 +33,11 @@ let DashboardService = class DashboardService {
         let totalFemaleCapacity = 0;
         let emptyMaleCapacity = 0;
         let emptyFemaleCapacity = 0;
+        const snapshots = await this.mawkibsService.getCapacitySnapshotsForMawkibs(mawkibs);
         for (const mawkib of mawkibs) {
             totalMaleCapacity += mawkib.maleCapacity;
             totalFemaleCapacity += mawkib.femaleCapacity;
-            const snapshot = await this.mawkibsService.getCapacitySnapshot(mawkib.id);
+            const snapshot = snapshots.get(mawkib.id);
             emptyMaleCapacity += snapshot.availableMale;
             emptyFemaleCapacity += snapshot.availableFemale;
         }

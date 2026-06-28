@@ -5,6 +5,8 @@ exports.isValidTimeString = isValidTimeString;
 exports.normalizeTimeString = normalizeTimeString;
 exports.resolvePlannedTimes = resolvePlannedTimes;
 exports.reservationOccupiesDay = reservationOccupiesDay;
+exports.reservationOccupiedDays = reservationOccupiedDays;
+exports.reservationDaysReleasedOnCheckout = reservationDaysReleasedOnCheckout;
 exports.reservationOverlapsDateRange = reservationOverlapsDateRange;
 const date_util_1 = require("../common/utils/date.util");
 exports.DEFAULT_CHECK_IN_TIME = '14:00';
@@ -36,14 +38,40 @@ function reservationOccupiesDay(reservation, day) {
     const start = (0, date_util_1.parseDateOnly)(reservation.reservationDate);
     const end = (0, date_util_1.parseDateOnly)(reservation.reservationEndDate);
     const d = (0, date_util_1.parseDateOnly)(day);
-    if (d < start)
+    if (d < start || d > end)
         return false;
     if (reservation.actualCheckOutAt) {
         const checkoutDay = (0, date_util_1.parseDateOnly)(reservation.actualCheckOutAt);
         if (d >= checkoutDay)
             return false;
     }
-    return d >= start && d < end;
+    return true;
+}
+function reservationOccupiedDays(reservation) {
+    const start = (0, date_util_1.parseDateOnly)(reservation.reservationDate);
+    const end = (0, date_util_1.parseDateOnly)(reservation.reservationEndDate);
+    const days = [];
+    const cursor = new Date(start);
+    while (cursor <= end) {
+        if (reservationOccupiesDay(reservation, cursor)) {
+            days.push(new Date(cursor));
+        }
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    return days;
+}
+function reservationDaysReleasedOnCheckout(reservation) {
+    if (!reservation.actualCheckOutAt)
+        return [];
+    const checkoutDay = (0, date_util_1.parseDateOnly)(reservation.actualCheckOutAt);
+    const end = (0, date_util_1.parseDateOnly)(reservation.reservationEndDate);
+    const days = [];
+    const cursor = new Date(checkoutDay);
+    while (cursor <= end) {
+        days.push(new Date(cursor));
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    return days;
 }
 function reservationOverlapsDateRange(reservation, startDate, endDate) {
     const rangeStart = (0, date_util_1.parseDateOnly)(startDate);

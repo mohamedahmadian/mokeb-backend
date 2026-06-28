@@ -450,13 +450,22 @@ export class ReservationsService {
       reservationEndDate,
     );
 
-    await this.mawkibsService.assertCapacityInRange(
-      dto.mawkibId,
-      dto.maleGuestCount,
-      dto.femaleGuestCount,
-      reservationDate,
-      reservationEndDate,
-    );
+    const skipCapacity =
+      dto.skipCapacityCheck === true && (isAdmin || isOwner);
+
+    if (dto.skipCapacityCheck === true && !isAdmin && !isOwner) {
+      throw new ForbiddenException('شما مجوز ثبت رزرو بدون بررسی ظرفیت را ندارید');
+    }
+
+    if (!skipCapacity) {
+      await this.mawkibsService.assertCapacityInRange(
+        dto.mawkibId,
+        dto.maleGuestCount,
+        dto.femaleGuestCount,
+        reservationDate,
+        reservationEndDate,
+      );
+    }
 
     let pilgrimUserId: number;
 
@@ -491,7 +500,7 @@ export class ReservationsService {
 
     const plannedTimes = resolvePlannedTimes(dto, mawkib);
 
-    return this.createWithTrackingCode({
+    const reservation = await this.createWithTrackingCode({
       mawkibId: dto.mawkibId,
       pilgrimUserId,
       reservedByUserId: currentUser.id,
@@ -504,8 +513,14 @@ export class ReservationsService {
       pilgrimMobile: dto.pilgrimMobile,
       description: dto.description,
       companions: dto.companions?.trim() || undefined,
-      status: isAdmin ? ReservationStatus.Confirmed : ReservationStatus.Pending,
+      status: isAdmin || isOwner ? ReservationStatus.Confirmed : ReservationStatus.Pending,
     });
+
+    if (reservation.status === ReservationStatus.Confirmed) {
+      await this.mawkibsService.syncInventoryOnReservationConfirmed(reservation);
+    }
+
+    return reservation;
   }
 
   async createGuest(dto: CreateGuestReservationDto) {
@@ -658,11 +673,20 @@ export class ReservationsService {
       );
     }
 
-    return this.prisma.reservation.update({
+    const updated = await this.prisma.reservation.update({
       where: { id },
       data: { status: dto.status },
       include: reservationInclude,
     });
+
+    if (
+      dto.status === ReservationStatus.Confirmed &&
+      reservation.status === ReservationStatus.Pending
+    ) {
+      await this.mawkibsService.syncInventoryOnReservationConfirmed(updated);
+    }
+
+    return updated;
   }
 
   async cancel(id: number, dto: CancelReservationDto, currentUser: AuthUser) {
@@ -696,6 +720,10 @@ export class ReservationsService {
 
     const note = dto.note?.trim() || undefined;
 
+    if (reservation.status === ReservationStatus.Confirmed) {
+      await this.mawkibsService.syncInventoryOnReservationCancelled(reservation);
+    }
+
     return this.prisma.reservation.update({
       where: { id },
       data: {
@@ -708,6 +736,11 @@ export class ReservationsService {
 
   async remove(id: number) {
     const reservation = await this.findOne(id);
+
+    if (reservation.status === ReservationStatus.Confirmed) {
+      await this.mawkibsService.syncInventoryOnReservationCancelled(reservation);
+    }
+
     await this.prisma.reservation.delete({ where: { id: reservation.id } });
     return { id, message: 'رزرو با موفقیت حذف شد' };
   }
@@ -790,7 +823,7 @@ export class ReservationsService {
       throw new BadRequestException('خروج این رزرو قبلاً ثبت شده است');
     }
 
-    return this.prisma.reservation.update({
+    const updated = await this.prisma.reservation.update({
       where: { id },
       data: {
         actualCheckOutAt: new Date(),
@@ -798,6 +831,10 @@ export class ReservationsService {
       },
       include: reservationInclude,
     });
+
+    await this.mawkibsService.syncInventoryOnEarlyCheckout(updated);
+
+    return updated;
   }
 
   async checkInGuest(trackingCode: string) {
@@ -831,7 +868,7 @@ export class ReservationsService {
       throw new BadRequestException('خروج این رزرو قبلاً ثبت شده است');
     }
 
-    return this.prisma.reservation.update({
+    const updated = await this.prisma.reservation.update({
       where: { id: reservation.id },
       data: {
         actualCheckOutAt: new Date(),
@@ -839,6 +876,10 @@ export class ReservationsService {
       },
       include: reservationInclude,
     });
+
+    await this.mawkibsService.syncInventoryOnEarlyCheckout(updated);
+
+    return updated;
   }
 
   private assertCanReviewReservation(

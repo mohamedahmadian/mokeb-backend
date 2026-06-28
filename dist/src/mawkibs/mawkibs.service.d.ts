@@ -1,13 +1,17 @@
 import { MawkibStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { AdminSearchMawkibDto, CreateMawkibDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
+import { AdminSearchMawkibDto, CreateMawkibDto, MawkibInventoryQueryDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
 import { MawkibCapacitySnapshot } from '../common/types/capacity.types';
+import { MawkibInventoryService } from './mawkib-inventory.service';
 export declare class MawkibsService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private inventoryService;
+    constructor(prisma: PrismaService, inventoryService: MawkibInventoryService);
+    private applyAmenityFilters;
     private buildAdminWhere;
     private filterByCapacityView;
-    private hasAvailabilitySearchParams;
+    private enrichWithTodayCapacity;
+    private hasReservationAvailabilitySearch;
     private enrichAndFilterByAvailability;
     findAll(search?: SearchMawkibDto): Promise<({
         owner: {
@@ -55,10 +59,11 @@ export declare class MawkibsService {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
-    })[]>;
-    findAllAdmin(search?: AdminSearchMawkibDto): Promise<{
+    } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
+    })[]>;
+    findAllAdmin(search?: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
         };
@@ -69,6 +74,7 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -106,7 +112,10 @@ export declare class MawkibsService {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
-    }[]>;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+    })[]>;
     findByOwner(ownerUserId: number, search?: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
@@ -161,8 +170,6 @@ export declare class MawkibsService {
         availableFemaleCapacity: number;
     })[]>;
     findOnePublic(id: number): Promise<{
-        availableMaleCapacity: number;
-        availableFemaleCapacity: number;
         _count: {
             reservations: number;
         };
@@ -173,6 +180,7 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -210,10 +218,11 @@ export declare class MawkibsService {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
     }>;
     findOne(id: number, userId?: number, isAdmin?: boolean): Promise<{
-        availableMaleCapacity: number;
-        availableFemaleCapacity: number;
         _count: {
             reservations: number;
         };
@@ -224,6 +233,7 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -261,6 +271,9 @@ export declare class MawkibsService {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
     }>;
     create(dto: CreateMawkibDto, actingUserId?: number, isAdmin?: boolean): Promise<{
         _count: {
@@ -467,9 +480,40 @@ export declare class MawkibsService {
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
+    getInventoryHorizon(): Promise<import("./mawkib-inventory.service").MawkibInventoryHorizonMeta>;
+    getCapacitySnapshotsForMawkibs(mawkibs: Array<{
+        id: number;
+        maleCapacity: number;
+        femaleCapacity: number;
+    }>, day?: Date | string): Promise<Map<number, MawkibCapacitySnapshot>>;
+    getInventoryRange(mawkibId: number, query: MawkibInventoryQueryDto): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
+    getInventoryRangeForViewer(mawkibId: number, query: MawkibInventoryQueryDto, userId?: number, isAdmin?: boolean): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
+    syncInventoryOnReservationConfirmed(reservation: {
+        mawkibId: number;
+        reservationDate: Date;
+        reservationEndDate: Date;
+        actualCheckOutAt: Date | null;
+        maleGuestCount: number;
+        femaleGuestCount: number;
+    }): Promise<void>;
+    syncInventoryOnReservationCancelled(reservation: {
+        mawkibId: number;
+        reservationDate: Date;
+        reservationEndDate: Date;
+        actualCheckOutAt: Date | null;
+        maleGuestCount: number;
+        femaleGuestCount: number;
+    }): Promise<void>;
+    syncInventoryOnEarlyCheckout(reservation: {
+        mawkibId: number;
+        reservationEndDate: Date;
+        actualCheckOutAt: Date | null;
+        maleGuestCount: number;
+        femaleGuestCount: number;
+    }): Promise<void>;
     getCapacitySnapshot(mawkibId: number, reservationDate?: Date | string): Promise<MawkibCapacitySnapshot>;
-    getAvailableCapacity(mawkibId: number, reservationDate?: Date | string): Promise<number>;
     getMinCapacityInRange(mawkibId: number, startDate: Date | string, endDate: Date | string): Promise<MawkibCapacitySnapshot>;
+    getAvailableCapacity(mawkibId: number, reservationDate?: Date | string): Promise<number>;
     getMinAvailableCapacityInRange(mawkibId: number, startDate: Date | string, endDate: Date | string): Promise<number>;
     assertGuestCountWithinMawkibCapacity(mawkibId: number, maleGuestCount: number, femaleGuestCount: number): Promise<void>;
     assertCapacity(mawkibId: number, maleGuestCount: number, femaleGuestCount: number, reservationDate: Date | string): Promise<void>;

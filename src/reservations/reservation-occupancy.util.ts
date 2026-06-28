@@ -34,7 +34,7 @@ export function resolvePlannedTimes(
   };
 }
 
-/** Night-stay model: checkout day is exclusive; actual checkout frees from that day onward. */
+/** Calendar-day occupancy — reservation end date is the last occupied day (inclusive). */
 export function reservationOccupiesDay(
   reservation: {
     reservationDate: Date;
@@ -47,14 +47,54 @@ export function reservationOccupiesDay(
   const end = parseDateOnly(reservation.reservationEndDate);
   const d = parseDateOnly(day);
 
-  if (d < start) return false;
+  if (d < start || d > end) return false;
 
   if (reservation.actualCheckOutAt) {
     const checkoutDay = parseDateOnly(reservation.actualCheckOutAt);
     if (d >= checkoutDay) return false;
   }
 
-  return d >= start && d < end;
+  return true;
+}
+
+export function reservationOccupiedDays(reservation: {
+  reservationDate: Date;
+  reservationEndDate: Date;
+  actualCheckOutAt: Date | null;
+}): Date[] {
+  const start = parseDateOnly(reservation.reservationDate);
+  const end = parseDateOnly(reservation.reservationEndDate);
+  const days: Date[] = [];
+  const cursor = new Date(start);
+
+  while (cursor <= end) {
+    if (reservationOccupiesDay(reservation, cursor)) {
+      days.push(new Date(cursor));
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return days;
+}
+
+/** Days freed when guest checks out before planned reservation end. */
+export function reservationDaysReleasedOnCheckout(reservation: {
+  reservationEndDate: Date;
+  actualCheckOutAt: Date | null;
+}): Date[] {
+  if (!reservation.actualCheckOutAt) return [];
+
+  const checkoutDay = parseDateOnly(reservation.actualCheckOutAt);
+  const end = parseDateOnly(reservation.reservationEndDate);
+  const days: Date[] = [];
+  const cursor = new Date(checkoutDay);
+
+  while (cursor <= end) {
+    days.push(new Date(cursor));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+
+  return days;
 }
 
 export function reservationOverlapsDateRange(

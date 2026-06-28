@@ -1,6 +1,6 @@
 import { MawkibStatus } from '@prisma/client';
 import { MawkibsService } from './mawkibs.service';
-import { AdminSearchMawkibDto, CreateMawkibDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
+import { AdminSearchMawkibDto, CreateMawkibDto, MawkibInventoryQueryDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
 export declare class MawkibsController {
     private mawkibsService;
@@ -51,10 +51,11 @@ export declare class MawkibsController {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
-    })[]>;
-    findAllAdmin(search: AdminSearchMawkibDto): Promise<{
+    } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
+    })[]>;
+    findAllAdmin(search: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
         };
@@ -65,6 +66,7 @@ export declare class MawkibsController {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -102,7 +104,10 @@ export declare class MawkibsController {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
-    }[]>;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+    })[]>;
     findMy(user: AuthUser, search: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
@@ -156,9 +161,9 @@ export declare class MawkibsController {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
     })[]>;
+    getInventoryHorizon(): Promise<import("./mawkib-inventory.service").MawkibInventoryHorizonMeta>;
+    findPublicInventory(id: number, query: MawkibInventoryQueryDto): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
     findOnePublic(id: number): Promise<{
-        availableMaleCapacity: number;
-        availableFemaleCapacity: number;
         _count: {
             reservations: number;
         };
@@ -169,6 +174,7 @@ export declare class MawkibsController {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -206,11 +212,13 @@ export declare class MawkibsController {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
     }>;
+    findInventory(id: number, query: MawkibInventoryQueryDto, user: AuthUser): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
     getCapacity(id: number, date?: string): Promise<import("../common/types/capacity.types").MawkibCapacitySnapshot>;
     findOne(id: number, user: AuthUser): Promise<{
-        availableMaleCapacity: number;
-        availableFemaleCapacity: number;
         _count: {
             reservations: number;
         };
@@ -221,6 +229,7 @@ export declare class MawkibsController {
             province: string | null;
             city: string | null;
         };
+    } & {
         id: number;
         name: string;
         description: string | null;
@@ -258,6 +267,9 @@ export declare class MawkibsController {
         defaultCheckOutTime: string;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
     }>;
     create(dto: CreateMawkibDto, user: AuthUser): Promise<{
         _count: {

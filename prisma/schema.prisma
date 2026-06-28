@@ -158,10 +158,26 @@ model Mawkib {
 
   owner        User          @relation("MawkibOwner", fields: [ownerUserId], references: [id])
   reservations Reservation[]
+  dailyInventory MawkibDailyInventory[]
   honoraryVolunteerApplications HonoraryVolunteerApplication[]
   feedbacks    MawkibFeedback[]
 
   @@map("mawkibs")
+}
+
+model MawkibDailyInventory {
+  id             Int      @id @default(autoincrement())
+  mawkibId       Int
+  date           DateTime @db.Date
+  reservedMale   Int      @default(0)
+  reservedFemale Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  mawkib Mawkib @relation(fields: [mawkibId], references: [id], onDelete: Cascade)
+
+  @@unique([mawkibId, date])
+  @@index([mawkibId, date])
+  @@map("mawkib_daily_inventory")
 }
 
 model Reservation {

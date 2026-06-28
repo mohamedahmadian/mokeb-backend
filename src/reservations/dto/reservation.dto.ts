@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsInt,
@@ -79,6 +80,11 @@ export class CreateReservationDto {
     message: 'ساعت خروج باید به فرمت HH:mm باشد',
   })
   plannedCheckOutTime?: string;
+
+  /** Admin / mawkib owner only — skips capacity validation on create. */
+  @IsOptional()
+  @IsBoolean()
+  skipCapacityCheck?: boolean;
 }
 
 export class CreateGuestReservationDto {

@@ -46,6 +46,10 @@ export class MawkibFeedbackService {
       where.mawkibId = filters.mawkibId;
     }
 
+    if (filters.authorUserId) {
+      where.authorUserId = filters.authorUserId;
+    }
+
     if (filters.replyStatus === 'replied') {
       where.ownerReply = { not: null };
     } else if (filters.replyStatus === 'pending') {
@@ -67,8 +71,6 @@ export class MawkibFeedbackService {
       where.OR = [
         { content: { contains: search, mode: 'insensitive' } },
         { ownerReply: { contains: search, mode: 'insensitive' } },
-        { mawkib: { name: { contains: search, mode: 'insensitive' } } },
-        { author: { fullName: { contains: search, mode: 'insensitive' } } },
       ];
     }
 

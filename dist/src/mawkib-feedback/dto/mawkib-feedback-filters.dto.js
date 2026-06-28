@@ -15,6 +15,7 @@ const class_transformer_1 = require("class-transformer");
 class MawkibFeedbackFiltersDto {
     search;
     mawkibId;
+    authorUserId;
     replyStatus;
     createdFrom;
     createdTo;
@@ -31,6 +32,12 @@ __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], MawkibFeedbackFiltersDto.prototype, "mawkibId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], MawkibFeedbackFiltersDto.prototype, "authorUserId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsIn)(['all', 'replied', 'pending']),

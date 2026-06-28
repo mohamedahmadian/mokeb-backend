@@ -17,6 +17,15 @@ export declare function reservationOccupiesDay(reservation: {
     reservationEndDate: Date;
     actualCheckOutAt: Date | null;
 }, day: Date | string): boolean;
+export declare function reservationOccupiedDays(reservation: {
+    reservationDate: Date;
+    reservationEndDate: Date;
+    actualCheckOutAt: Date | null;
+}): Date[];
+export declare function reservationDaysReleasedOnCheckout(reservation: {
+    reservationEndDate: Date;
+    actualCheckOutAt: Date | null;
+}): Date[];
 export declare function reservationOverlapsDateRange(reservation: {
     reservationDate: Date;
     reservationEndDate: Date;

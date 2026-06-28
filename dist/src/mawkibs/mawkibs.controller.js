@@ -35,8 +35,18 @@ let MawkibsController = class MawkibsController {
     findMy(user, search) {
         return this.mawkibsService.findByOwner(user.id, search);
     }
+    getInventoryHorizon() {
+        return this.mawkibsService.getInventoryHorizon();
+    }
+    findPublicInventory(id, query) {
+        return this.mawkibsService.getInventoryRangeForViewer(id, query);
+    }
     findOnePublic(id) {
         return this.mawkibsService.findOnePublic(id);
+    }
+    findInventory(id, query, user) {
+        const isAdmin = user.roles.includes(client_1.RoleName.Admin);
+        return this.mawkibsService.getInventoryRangeForViewer(id, query, user.id, isAdmin);
     }
     getCapacity(id, date) {
         return this.mawkibsService.getCapacitySnapshot(id, date ? new Date(date) : undefined);
@@ -88,12 +98,37 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MawkibsController.prototype, "findMy", null);
 __decorate([
+    (0, common_1.Get)('inventory/horizon'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], MawkibsController.prototype, "getInventoryHorizon", null);
+__decorate([
+    (0, common_1.Get)('public/:id/inventory'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, mawkib_dto_1.MawkibInventoryQueryDto]),
+    __metadata("design:returntype", void 0)
+], MawkibsController.prototype, "findPublicInventory", null);
+__decorate([
     (0, common_1.Get)('public/:id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Number]),
     __metadata("design:returntype", void 0)
 ], MawkibsController.prototype, "findOnePublic", null);
+__decorate([
+    (0, common_1.Get)(':id/inventory'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Query)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, mawkib_dto_1.MawkibInventoryQueryDto, Object]),
+    __metadata("design:returntype", void 0)
+], MawkibsController.prototype, "findInventory", null);
 __decorate([
     (0, common_1.Get)(':id/capacity'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

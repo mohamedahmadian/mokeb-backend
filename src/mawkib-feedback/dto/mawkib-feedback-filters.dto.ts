@@ -12,6 +12,11 @@ export class MawkibFeedbackFiltersDto {
   mawkibId?: number;
 
   @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  authorUserId?: number;
+
+  @IsOptional()
   @IsIn(['all', 'replied', 'pending'])
   replyStatus?: 'all' | 'replied' | 'pending';
 

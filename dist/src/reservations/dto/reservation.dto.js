@@ -38,6 +38,7 @@ class CreateReservationDto {
     companions;
     plannedCheckInTime;
     plannedCheckOutTime;
+    skipCapacityCheck;
 }
 exports.CreateReservationDto = CreateReservationDto;
 __decorate([
@@ -103,6 +104,11 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], CreateReservationDto.prototype, "plannedCheckOutTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateReservationDto.prototype, "skipCapacityCheck", void 0);
 class CreateGuestReservationDto {
     firstName;
     lastName;

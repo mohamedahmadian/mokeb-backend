@@ -41,6 +41,9 @@ let MawkibFeedbackService = class MawkibFeedbackService {
         if (filters.mawkibId) {
             where.mawkibId = filters.mawkibId;
         }
+        if (filters.authorUserId) {
+            where.authorUserId = filters.authorUserId;
+        }
         if (filters.replyStatus === 'replied') {
             where.ownerReply = { not: null };
         }
@@ -61,8 +64,6 @@ let MawkibFeedbackService = class MawkibFeedbackService {
             where.OR = [
                 { content: { contains: search, mode: 'insensitive' } },
                 { ownerReply: { contains: search, mode: 'insensitive' } },
-                { mawkib: { name: { contains: search, mode: 'insensitive' } } },
-                { author: { fullName: { contains: search, mode: 'insensitive' } } },
             ];
         }
         return where;

@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const logging_middleware_1 = require("./common/middleware/logging.middleware");
 const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./auth/auth.module");
 const users_module_1 = require("./users/users.module");
@@ -20,6 +21,9 @@ const dashboard_module_1 = require("./dashboard/dashboard.module");
 const mawkib_feedback_module_1 = require("./mawkib-feedback/mawkib-feedback.module");
 const locations_module_1 = require("./locations/locations.module");
 let AppModule = class AppModule {
+    configure(consumer) {
+        consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
+    }
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([

@@ -19,6 +19,61 @@ export enum MawkibCapacityFilter {
   Full = 'full',
 }
 
+export const MAWKIB_AMENITY_FILTER_KEYS = [
+  'breakfastReception',
+  'lunchReception',
+  'dinnerReception',
+  'bathroom',
+  'laundry',
+  'parking',
+  'internet',
+  'familyFriendly',
+] as const;
+
+export type MawkibAmenityFilterKey = (typeof MAWKIB_AMENITY_FILTER_KEYS)[number];
+
+export class MawkibAmenitySearchFields {
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  breakfastReception?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  lunchReception?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  dinnerReception?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  bathroom?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  laundry?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  parking?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  internet?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  familyFriendly?: boolean;
+}
+
 export class CreateMawkibDto {
   @IsString()
   @IsNotEmpty()
@@ -321,7 +376,7 @@ export class UpdateMawkibDto {
   status?: MawkibStatus;
 }
 
-export class SearchMawkibDto {
+export class SearchMawkibDto extends MawkibAmenitySearchFields {
   @IsOptional()
   @IsString()
   q?: string;
@@ -332,11 +387,11 @@ export class SearchMawkibDto {
 
   @IsOptional()
   @IsString()
-  province?: string;
+  ownerName?: string;
 
   @IsOptional()
-  @IsString()
-  city?: string;
+  @IsEnum(MawkibCountry)
+  country?: MawkibCountry;
 
   @IsOptional()
   @IsEnum(MawkibCity)
@@ -392,7 +447,7 @@ export class SearchMawkibDto {
   serviceEndTo?: string;
 }
 
-export class AdminSearchMawkibDto {
+export class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
   @IsOptional()
   @IsString()
   name?: string;
@@ -415,12 +470,12 @@ export class AdminSearchMawkibDto {
   status?: MawkibStatus;
 
   @IsOptional()
-  @IsString()
-  province?: string;
+  @IsEnum(MawkibCountry)
+  country?: MawkibCountry;
 
   @IsOptional()
-  @IsString()
-  city?: string;
+  @IsEnum(MawkibCity)
+  mawkibCity?: MawkibCity;
 
   @IsOptional()
   @IsDateString()
@@ -470,4 +525,12 @@ export class AdminSearchMawkibDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   hasAvailability?: boolean;
+}
+
+export class MawkibInventoryQueryDto {
+  @IsDateString()
+  startDate: string;
+
+  @IsDateString()
+  endDate: string;
 }

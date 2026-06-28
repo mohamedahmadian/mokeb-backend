@@ -12,6 +12,7 @@ export declare class CreateReservationDto {
     companions?: string;
     plannedCheckInTime?: string;
     plannedCheckOutTime?: string;
+    skipCapacityCheck?: boolean;
 }
 export declare class CreateGuestReservationDto {
     firstName: string;
