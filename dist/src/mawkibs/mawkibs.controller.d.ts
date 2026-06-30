@@ -49,6 +49,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -102,6 +103,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -155,6 +157,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -210,6 +213,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -265,6 +269,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -318,6 +323,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -368,6 +374,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -419,6 +426,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } | {
@@ -473,6 +481,7 @@ export declare class MawkibsController {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;

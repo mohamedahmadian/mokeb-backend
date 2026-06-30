@@ -1,5 +1,5 @@
 import { ReservationsService } from './reservations.service';
-import { CreateGuestReservationDto, TrackByMobileDto, TrackReservationDto } from './dto/reservation.dto';
+import { CreateGuestReservationDto, GuestRecordAttendanceDto, TrackByMobileDto, TrackReservationDto } from './dto/reservation.dto';
 export declare class GuestReservationsController {
     private reservationsService;
     constructor(reservationsService: ReservationsService);
@@ -14,50 +14,74 @@ export declare class GuestReservationsController {
         maleGuestCount: number;
         femaleGuestCount: number;
     }>;
-    checkInGuest(body: TrackReservationDto): Promise<{
+    checkInGuest(body: GuestRecordAttendanceDto): Promise<{
         mawkib: {
             id: number;
             name: string;
             address: string;
+            latitude: number | null;
+            longitude: number | null;
+            phoneNumber: string;
+            imageUrl: string | null;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
+            owner: {
+                fullName: string;
+                mobileNumber: string;
+            };
+        };
+        pilgrim: {
+            id: number;
+            fullName: string;
+            mobileNumber: string;
         };
         reservedBy: {
             id: number;
-            mobileNumber: string;
             fullName: string;
+            mobileNumber: string;
         };
         review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
             repliedBy: {
                 id: number;
                 fullName: string;
             } | null;
-            author: {
+        } & {
+            id: number;
+            createdAt: Date;
+            reservationId: number;
+            authorUserId: number;
+            content: string;
+            adminReply: string | null;
+            repliedAt: Date | null;
+            repliedByUserId: number | null;
+            updatedAt: Date;
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
                 id: number;
                 fullName: string;
             };
         } & {
             id: number;
+            description: string | null;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
             createdAt: Date;
-            content: string;
-            adminReply: string | null;
-            repliedAt: Date | null;
-            updatedAt: Date;
             reservationId: number;
-            repliedByUserId: number | null;
-            authorUserId: number;
-        }) | null;
-        pilgrim: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        };
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
     } & {
         id: number;
-        description: string | null;
-        createdAt: Date;
         mawkibId: number;
-        status: import("@prisma/client").$Enums.ReservationStatus;
+        pilgrimUserId: number;
+        reservedByUserId: number;
         reservationDate: Date;
         reservationEndDate: Date;
         plannedCheckInTime: string | null;
@@ -69,54 +93,79 @@ export declare class GuestReservationsController {
         trackingCode: string;
         pilgrimMobile: string;
         companions: string | null;
+        description: string | null;
         cancellationNote: string | null;
-        reservedByUserId: number;
-        pilgrimUserId: number;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        createdAt: Date;
     }>;
-    checkOutGuest(body: TrackReservationDto): Promise<{
+    checkOutGuest(body: GuestRecordAttendanceDto): Promise<{
         mawkib: {
             id: number;
             name: string;
             address: string;
+            latitude: number | null;
+            longitude: number | null;
+            phoneNumber: string;
+            imageUrl: string | null;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
+            owner: {
+                fullName: string;
+                mobileNumber: string;
+            };
+        };
+        pilgrim: {
+            id: number;
+            fullName: string;
+            mobileNumber: string;
         };
         reservedBy: {
             id: number;
-            mobileNumber: string;
             fullName: string;
+            mobileNumber: string;
         };
         review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
             repliedBy: {
                 id: number;
                 fullName: string;
             } | null;
-            author: {
+        } & {
+            id: number;
+            createdAt: Date;
+            reservationId: number;
+            authorUserId: number;
+            content: string;
+            adminReply: string | null;
+            repliedAt: Date | null;
+            repliedByUserId: number | null;
+            updatedAt: Date;
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
                 id: number;
                 fullName: string;
             };
         } & {
             id: number;
+            description: string | null;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
             createdAt: Date;
-            content: string;
-            adminReply: string | null;
-            repliedAt: Date | null;
-            updatedAt: Date;
             reservationId: number;
-            repliedByUserId: number | null;
-            authorUserId: number;
-        }) | null;
-        pilgrim: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        };
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
     } & {
         id: number;
-        description: string | null;
-        createdAt: Date;
         mawkibId: number;
-        status: import("@prisma/client").$Enums.ReservationStatus;
+        pilgrimUserId: number;
+        reservedByUserId: number;
         reservationDate: Date;
         reservationEndDate: Date;
         plannedCheckInTime: string | null;
@@ -128,54 +177,79 @@ export declare class GuestReservationsController {
         trackingCode: string;
         pilgrimMobile: string;
         companions: string | null;
+        description: string | null;
         cancellationNote: string | null;
-        reservedByUserId: number;
-        pilgrimUserId: number;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        createdAt: Date;
     }>;
     track(query: TrackReservationDto): Promise<{
         mawkib: {
             id: number;
             name: string;
             address: string;
+            latitude: number | null;
+            longitude: number | null;
+            phoneNumber: string;
+            imageUrl: string | null;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
+            owner: {
+                fullName: string;
+                mobileNumber: string;
+            };
+        };
+        pilgrim: {
+            id: number;
+            fullName: string;
+            mobileNumber: string;
         };
         reservedBy: {
             id: number;
-            mobileNumber: string;
             fullName: string;
+            mobileNumber: string;
         };
         review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
             repliedBy: {
                 id: number;
                 fullName: string;
             } | null;
-            author: {
+        } & {
+            id: number;
+            createdAt: Date;
+            reservationId: number;
+            authorUserId: number;
+            content: string;
+            adminReply: string | null;
+            repliedAt: Date | null;
+            repliedByUserId: number | null;
+            updatedAt: Date;
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
                 id: number;
                 fullName: string;
             };
         } & {
             id: number;
+            description: string | null;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
             createdAt: Date;
-            content: string;
-            adminReply: string | null;
-            repliedAt: Date | null;
-            updatedAt: Date;
             reservationId: number;
-            repliedByUserId: number | null;
-            authorUserId: number;
-        }) | null;
-        pilgrim: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        };
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
     } & {
         id: number;
-        description: string | null;
-        createdAt: Date;
         mawkibId: number;
-        status: import("@prisma/client").$Enums.ReservationStatus;
+        pilgrimUserId: number;
+        reservedByUserId: number;
         reservationDate: Date;
         reservationEndDate: Date;
         plannedCheckInTime: string | null;
@@ -187,32 +261,50 @@ export declare class GuestReservationsController {
         trackingCode: string;
         pilgrimMobile: string;
         companions: string | null;
+        description: string | null;
         cancellationNote: string | null;
-        reservedByUserId: number;
-        pilgrimUserId: number;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        createdAt: Date;
     }>;
     trackByMobile(query: TrackByMobileDto): Promise<({
         mawkib: {
             id: number;
             name: string;
             address: string;
-        };
-        reservedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
+            phoneNumber: string;
         };
         pilgrim: {
             id: number;
-            mobileNumber: string;
             fullName: string;
+            mobileNumber: string;
         };
+        reservedBy: {
+            id: number;
+            fullName: string;
+            mobileNumber: string;
+        };
+        deliveredItems: ({
+            recordedBy: {
+                id: number;
+                fullName: string;
+            };
+        } & {
+            id: number;
+            description: string | null;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
+            createdAt: Date;
+            reservationId: number;
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
     } & {
         id: number;
-        description: string | null;
-        createdAt: Date;
         mawkibId: number;
-        status: import("@prisma/client").$Enums.ReservationStatus;
+        pilgrimUserId: number;
+        reservedByUserId: number;
         reservationDate: Date;
         reservationEndDate: Date;
         plannedCheckInTime: string | null;
@@ -224,8 +316,9 @@ export declare class GuestReservationsController {
         trackingCode: string;
         pilgrimMobile: string;
         companions: string | null;
+        description: string | null;
         cancellationNote: string | null;
-        reservedByUserId: number;
-        pilgrimUserId: number;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        createdAt: Date;
     })[]>;
 }

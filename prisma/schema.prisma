@@ -27,6 +27,11 @@ enum ReservationStatus {
   Completed
 }
 
+enum ReservationDeliveredItemStatus {
+  DeliveredToGuest
+  ReceivedFromGuest
+}
+
 enum RegistrationRequestStatus {
   Pending
   Approved
@@ -79,6 +84,7 @@ model User {
   submittedHonoraryVolunteerApplications HonoraryVolunteerApplication[] @relation("SubmittedHonoraryVolunteerApplications")
   reservationReviewsAuthored           ReservationReview[] @relation("ReservationReviewAuthor")
   reservationReviewsReplied              ReservationReview[] @relation("ReservationReviewReplier")
+  reservationDeliveredItemsRecorded      ReservationDeliveredItem[] @relation("ReservationDeliveredItemRecorder")
   mawkibFeedbacksAuthored              MawkibFeedback[] @relation("MawkibFeedbackAuthor")
   mawkibFeedbacksReplied               MawkibFeedback[] @relation("MawkibFeedbackReplier")
 
@@ -152,6 +158,7 @@ model Mawkib {
   websiteUrl           String?
   defaultCheckInTime   String       @default("14:00")
   defaultCheckOutTime  String       @default("11:00")
+  onlineReservationEnabled Boolean  @default(true)
   ownerUserId      Int
   status           MawkibStatus @default(Pending)
   createdAt        DateTime     @default(now())
@@ -204,10 +211,30 @@ model Reservation {
   mawkib      Mawkib @relation(fields: [mawkibId], references: [id])
   pilgrim     User   @relation("Pilgrim", fields: [pilgrimUserId], references: [id])
   reservedBy  User   @relation("ReservedBy", fields: [reservedByUserId], references: [id])
-  review      ReservationReview?
+  review          ReservationReview?
+  deliveredItems  ReservationDeliveredItem[]
 
   @@index([mawkibId, reservationDate])
   @@map("reservations")
+}
+
+model ReservationDeliveredItem {
+  id               Int                            @id @default(autoincrement())
+  reservationId    Int
+  itemName         String
+  quantity         Int
+  description      String?
+  status           ReservationDeliveredItemStatus
+  recordedByUserId Int
+  createdAt        DateTime                       @default(now())
+  receivedAt       DateTime?
+  updatedAt        DateTime                       @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  recordedBy  User        @relation("ReservationDeliveredItemRecorder", fields: [recordedByUserId], references: [id])
+
+  @@index([reservationId])
+  @@map("reservation_delivered_items")
 }
 
 model ReservationReview {

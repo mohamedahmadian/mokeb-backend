@@ -215,6 +215,10 @@ export class CreateMawkibDto {
   })
   defaultCheckOutTime?: string;
 
+  @IsOptional()
+  @IsBoolean()
+  onlineReservationEnabled?: boolean;
+
   @IsInt()
   ownerUserId: number;
 
@@ -366,6 +370,10 @@ export class UpdateMawkibDto {
     message: 'ساعت خروج پیش‌فرض باید به فرمت HH:mm باشد',
   })
   defaultCheckOutTime?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  onlineReservationEnabled?: boolean;
 
   @IsOptional()
   @IsInt()

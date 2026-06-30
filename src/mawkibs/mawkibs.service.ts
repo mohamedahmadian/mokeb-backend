@@ -4,8 +4,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MawkibStatus, Prisma, ReservationStatus } from '@prisma/client';
+import { MawkibStatus, Prisma, ReservationStatus, RoleName } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import type { AuthUser } from '../common/decorators/current-user.decorator';
 import {
   matchMawkibCitiesFromQuery,
   matchMawkibCountriesFromQuery,
@@ -831,5 +832,29 @@ export class MawkibsService {
     }
 
     return mawkib;
+  }
+
+  assertOnlineReservationAllowed(
+    mawkib: { onlineReservationEnabled: boolean; ownerUserId: number },
+    currentUser?: AuthUser,
+  ) {
+    if (mawkib.onlineReservationEnabled) {
+      return;
+    }
+
+    if (!currentUser) {
+      throw new BadRequestException('امکان رزرو آنلاین این موکب غیرفعال است');
+    }
+
+    const isAdmin = currentUser.roles.includes(RoleName.Admin);
+    const isOwner =
+      currentUser.roles.includes(RoleName.MawkibOwner) &&
+      mawkib.ownerUserId === currentUser.id;
+
+    if (isAdmin || isOwner) {
+      return;
+    }
+
+    throw new BadRequestException('امکان رزرو آنلاین این موکب غیرفعال است');
   }
 }

@@ -30,8 +30,13 @@ const reservationInclude = {
             id: true,
             name: true,
             address: true,
+            phoneNumber: true,
+            imageUrl: true,
+            latitude: true,
+            longitude: true,
             defaultCheckInTime: true,
             defaultCheckOutTime: true,
+            owner: { select: { fullName: true, mobileNumber: true } },
         },
     },
     pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
@@ -41,6 +46,12 @@ const reservationInclude = {
             author: { select: reviewUserSelect },
             repliedBy: { select: reviewUserSelect },
         },
+    },
+    deliveredItems: {
+        include: {
+            recordedBy: { select: reviewUserSelect },
+        },
+        orderBy: { createdAt: 'desc' },
     },
 };
 let ReservationsService = class ReservationsService {
@@ -214,9 +225,15 @@ let ReservationsService = class ReservationsService {
             throw new common_1.BadRequestException('شماره موبایل نامعتبر است');
         }
         const guestInclude = {
-            mawkib: { select: { id: true, name: true, address: true } },
+            mawkib: { select: { id: true, name: true, address: true, phoneNumber: true } },
             pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
             reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
+            deliveredItems: {
+                include: {
+                    recordedBy: { select: reviewUserSelect },
+                },
+                orderBy: { createdAt: 'desc' },
+            },
         };
         const reservations = await this.prisma.reservation.findMany({
             where: {
@@ -320,6 +337,7 @@ let ReservationsService = class ReservationsService {
         if (!mawkib || mawkib.status !== client_1.MawkibStatus.Approved) {
             throw new common_1.BadRequestException('موکب یافت نشد یا تایید نشده است');
         }
+        this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
         const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
         if (!isAdmin && isOwner) {
@@ -394,6 +412,7 @@ let ReservationsService = class ReservationsService {
         if (!mawkib || mawkib.status !== client_1.MawkibStatus.Approved) {
             throw new common_1.BadRequestException('موکب یافت نشد یا تایید نشده است');
         }
+        this.mawkibsService.assertOnlineReservationAllowed(mawkib);
         const reservationDate = (0, date_util_1.parseDateOnly)(dto.reservationDate);
         const reservationEndDate = (0, date_util_1.parseDateOnly)(dto.reservationEndDate ?? dto.reservationDate);
         if (reservationEndDate < reservationDate) {
@@ -547,7 +566,16 @@ let ReservationsService = class ReservationsService {
             throw new common_1.BadRequestException('تا زمان تایید رزرو، امکان ثبت ورود یا خروج وجود ندارد');
         }
     }
-    async checkIn(id, currentUser) {
+    resolveRecordedAt(recordedAt) {
+        if (!recordedAt)
+            return new Date();
+        const date = new Date(recordedAt);
+        if (Number.isNaN(date.getTime())) {
+            throw new common_1.BadRequestException('زمان ثبت نامعتبر است');
+        }
+        return date;
+    }
+    async checkIn(id, currentUser, dto) {
         const reservation = await this.findOneForUser(id, currentUser);
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
         const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
@@ -565,13 +593,14 @@ let ReservationsService = class ReservationsService {
         if (reservation.actualCheckOutAt) {
             throw new common_1.BadRequestException('این رزرو قبلاً خروج خورده است');
         }
+        const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
         return this.prisma.reservation.update({
             where: { id },
-            data: { actualCheckInAt: new Date() },
+            data: { actualCheckInAt: recordedAt },
             include: reservationInclude,
         });
     }
-    async checkOut(id, currentUser) {
+    async checkOut(id, currentUser, dto) {
         const reservation = await this.findOneForUser(id, currentUser);
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
         const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
@@ -589,10 +618,14 @@ let ReservationsService = class ReservationsService {
         if (reservation.actualCheckOutAt) {
             throw new common_1.BadRequestException('خروج این رزرو قبلاً ثبت شده است');
         }
+        const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
+        if (recordedAt < reservation.actualCheckInAt) {
+            throw new common_1.BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
+        }
         const updated = await this.prisma.reservation.update({
             where: { id },
             data: {
-                actualCheckOutAt: new Date(),
+                actualCheckOutAt: recordedAt,
                 status: client_1.ReservationStatus.Completed,
             },
             include: reservationInclude,
@@ -600,7 +633,55 @@ let ReservationsService = class ReservationsService {
         await this.mawkibsService.syncInventoryOnEarlyCheckout(updated);
         return updated;
     }
-    async checkInGuest(trackingCode) {
+    async assertCanManageAttendance(reservation, currentUser) {
+        const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
+        const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
+        if (!isAdmin && !isOwner) {
+            throw new common_1.ForbiddenException('فقط مدیر یا مسئول موکب می‌تواند ساعت ورود/خروج را ویرایش کند');
+        }
+        if (isOwner && !isAdmin) {
+            await this.mawkibsService.assertOwnerAccess(reservation.mawkibId, currentUser.id);
+        }
+    }
+    async updateCheckIn(id, currentUser, dto) {
+        const reservation = await this.findOneForUser(id, currentUser);
+        await this.assertCanManageAttendance(reservation, currentUser);
+        this.assertCanRecordAttendance(reservation);
+        if (!reservation.actualCheckInAt) {
+            throw new common_1.BadRequestException('ورودی برای ویرایش ثبت نشده است');
+        }
+        const recordedAt = this.resolveRecordedAt(dto.recordedAt);
+        if (reservation.actualCheckOutAt &&
+            recordedAt > reservation.actualCheckOutAt) {
+            throw new common_1.BadRequestException('ساعت ورود نمی‌تواند بعد از خروج باشد');
+        }
+        return this.prisma.reservation.update({
+            where: { id },
+            data: { actualCheckInAt: recordedAt },
+            include: reservationInclude,
+        });
+    }
+    async updateCheckOut(id, currentUser, dto) {
+        const reservation = await this.findOneForUser(id, currentUser);
+        await this.assertCanManageAttendance(reservation, currentUser);
+        this.assertCanRecordAttendance(reservation);
+        if (!reservation.actualCheckInAt) {
+            throw new common_1.BadRequestException('ابتدا باید ورود ثبت شود');
+        }
+        if (!reservation.actualCheckOutAt) {
+            throw new common_1.BadRequestException('خروجی برای ویرایش ثبت نشده است');
+        }
+        const recordedAt = this.resolveRecordedAt(dto.recordedAt);
+        if (recordedAt < reservation.actualCheckInAt) {
+            throw new common_1.BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
+        }
+        return this.prisma.reservation.update({
+            where: { id },
+            data: { actualCheckOutAt: recordedAt },
+            include: reservationInclude,
+        });
+    }
+    async checkInGuest(trackingCode, dto) {
         const reservation = await this.findByTrackingCode(trackingCode);
         this.assertCanRecordAttendance(reservation);
         if (reservation.actualCheckInAt) {
@@ -609,13 +690,14 @@ let ReservationsService = class ReservationsService {
         if (reservation.actualCheckOutAt) {
             throw new common_1.BadRequestException('این رزرو قبلاً خروج خورده است');
         }
+        const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
         return this.prisma.reservation.update({
             where: { id: reservation.id },
-            data: { actualCheckInAt: new Date() },
+            data: { actualCheckInAt: recordedAt },
             include: reservationInclude,
         });
     }
-    async checkOutGuest(trackingCode) {
+    async checkOutGuest(trackingCode, dto) {
         const reservation = await this.findByTrackingCode(trackingCode);
         this.assertCanRecordAttendance(reservation);
         if (!reservation.actualCheckInAt) {
@@ -624,10 +706,14 @@ let ReservationsService = class ReservationsService {
         if (reservation.actualCheckOutAt) {
             throw new common_1.BadRequestException('خروج این رزرو قبلاً ثبت شده است');
         }
+        const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
+        if (recordedAt < reservation.actualCheckInAt) {
+            throw new common_1.BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
+        }
         const updated = await this.prisma.reservation.update({
             where: { id: reservation.id },
             data: {
-                actualCheckOutAt: new Date(),
+                actualCheckOutAt: recordedAt,
                 status: client_1.ReservationStatus.Completed,
             },
             include: reservationInclude,
@@ -704,6 +790,93 @@ let ReservationsService = class ReservationsService {
                 repliedByUserId: currentUser.id,
             },
         });
+        return this.findOne(reservationId);
+    }
+    assertReservationEligibleForDeliveredItems(reservation) {
+        if (reservation.status !== client_1.ReservationStatus.Confirmed &&
+            reservation.status !== client_1.ReservationStatus.Completed) {
+            throw new common_1.BadRequestException('فقط برای رزروهای تایید شده یا تکمیل شده می‌توان کالا ثبت کرد');
+        }
+    }
+    async assertCanManageDeliveredItems(reservation, currentUser) {
+        const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
+        const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
+        if (!isAdmin && !isOwner) {
+            throw new common_1.ForbiddenException('فقط مدیر یا مسئول موکب می‌تواند کالاهای تحویلی را مدیریت کند');
+        }
+        if (isOwner && !isAdmin) {
+            await this.mawkibsService.assertOwnerAccess(reservation.mawkibId, currentUser.id);
+        }
+        this.assertReservationEligibleForDeliveredItems(reservation);
+    }
+    async createDeliveredItem(reservationId, dto, currentUser) {
+        const reservation = await this.findOneForUser(reservationId, currentUser);
+        await this.assertCanManageDeliveredItems(reservation, currentUser);
+        await this.prisma.reservationDeliveredItem.create({
+            data: {
+                reservationId,
+                itemName: dto.itemName.trim(),
+                quantity: dto.quantity,
+                description: dto.description?.trim() || null,
+                status: client_1.ReservationDeliveredItemStatus.DeliveredToGuest,
+                recordedByUserId: currentUser.id,
+            },
+        });
+        return this.findOne(reservationId);
+    }
+    async updateDeliveredItem(reservationId, itemId, dto, currentUser) {
+        const reservation = await this.findOneForUser(reservationId, currentUser);
+        await this.assertCanManageDeliveredItems(reservation, currentUser);
+        const item = await this.prisma.reservationDeliveredItem.findFirst({
+            where: { id: itemId, reservationId },
+        });
+        if (!item) {
+            throw new common_1.NotFoundException('رکورد کالا یافت نشد');
+        }
+        if (item.status !== client_1.ReservationDeliveredItemStatus.DeliveredToGuest) {
+            throw new common_1.BadRequestException('فقط کالاهای تحویل‌داده‌شده قابل ویرایش هستند');
+        }
+        await this.prisma.reservationDeliveredItem.update({
+            where: { id: itemId },
+            data: {
+                itemName: dto.itemName.trim(),
+                quantity: dto.quantity,
+                description: dto.description?.trim() || null,
+            },
+        });
+        return this.findOne(reservationId);
+    }
+    async receiveDeliveredItem(reservationId, itemId, currentUser) {
+        const reservation = await this.findOneForUser(reservationId, currentUser);
+        await this.assertCanManageDeliveredItems(reservation, currentUser);
+        const item = await this.prisma.reservationDeliveredItem.findFirst({
+            where: { id: itemId, reservationId },
+        });
+        if (!item) {
+            throw new common_1.NotFoundException('رکورد کالا یافت نشد');
+        }
+        if (item.status !== client_1.ReservationDeliveredItemStatus.DeliveredToGuest) {
+            throw new common_1.BadRequestException('این کالا قبلاً تحویل گرفته شده است');
+        }
+        await this.prisma.reservationDeliveredItem.update({
+            where: { id: itemId },
+            data: {
+                status: client_1.ReservationDeliveredItemStatus.ReceivedFromGuest,
+                receivedAt: new Date(),
+            },
+        });
+        return this.findOne(reservationId);
+    }
+    async removeDeliveredItem(reservationId, itemId, currentUser) {
+        const reservation = await this.findOneForUser(reservationId, currentUser);
+        await this.assertCanManageDeliveredItems(reservation, currentUser);
+        const item = await this.prisma.reservationDeliveredItem.findFirst({
+            where: { id: itemId, reservationId },
+        });
+        if (!item) {
+            throw new common_1.NotFoundException('رکورد کالا یافت نشد');
+        }
+        await this.prisma.reservationDeliveredItem.delete({ where: { id: itemId } });
         return this.findOne(reservationId);
     }
 };

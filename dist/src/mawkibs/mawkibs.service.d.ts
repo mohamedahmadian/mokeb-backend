@@ -1,5 +1,6 @@
 import { MawkibStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import type { AuthUser } from '../common/decorators/current-user.decorator';
 import { AdminSearchMawkibDto, CreateMawkibDto, MawkibInventoryQueryDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
 import { MawkibCapacitySnapshot } from '../common/types/capacity.types';
 import { MawkibInventoryService } from './mawkib-inventory.service';
@@ -57,6 +58,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -110,6 +112,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -163,6 +166,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -216,6 +220,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -269,6 +274,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } & {
@@ -322,6 +328,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -372,6 +379,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -423,6 +431,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     } | {
@@ -477,6 +486,7 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
@@ -556,7 +566,12 @@ export declare class MawkibsService {
         websiteUrl: string | null;
         defaultCheckInTime: string;
         defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
         ownerUserId: number;
         status: import("@prisma/client").$Enums.MawkibStatus;
     }>;
+    assertOnlineReservationAllowed(mawkib: {
+        onlineReservationEnabled: boolean;
+        ownerUserId: number;
+    }, currentUser?: AuthUser): void;
 }

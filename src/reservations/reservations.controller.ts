@@ -15,6 +15,8 @@ import { ReservationsService } from './reservations.service';
 import {
   CancelReservationDto,
   CreateReservationDto,
+  GuestRecordAttendanceDto,
+  RecordReservationAttendanceDto,
   SearchReservationDto,
   UpdateReservationStatusDto,
 } from './dto/reservation.dto';
@@ -22,6 +24,10 @@ import {
   CreateReservationReviewDto,
   ReplyReservationReviewDto,
 } from './dto/reservation-review.dto';
+import {
+  CreateReservationDeliveredItemDto,
+  UpdateReservationDeliveredItemDto,
+} from './dto/reservation-delivered-item.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -87,17 +93,41 @@ export class ReservationsController {
   @Post(':id/check-in')
   checkIn(
     @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RecordReservationAttendanceDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.reservationsService.checkIn(id, user);
+    return this.reservationsService.checkIn(id, user, dto);
   }
 
   @Post(':id/check-out')
   checkOut(
     @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RecordReservationAttendanceDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.reservationsService.checkOut(id, user);
+    return this.reservationsService.checkOut(id, user, dto);
+  }
+
+  @Patch(':id/check-in')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  updateCheckIn(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RecordReservationAttendanceDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.updateCheckIn(id, user, dto);
+  }
+
+  @Patch(':id/check-out')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  updateCheckOut(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RecordReservationAttendanceDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.updateCheckOut(id, user, dto);
   }
 
   @Post(':id/review')
@@ -127,6 +157,51 @@ export class ReservationsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.reservationsService.replyToReview(id, dto, user);
+  }
+
+  @Post(':id/delivered-items')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  createDeliveredItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CreateReservationDeliveredItemDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.createDeliveredItem(id, dto, user);
+  }
+
+  @Patch(':id/delivered-items/:itemId')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  updateDeliveredItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @Body() dto: UpdateReservationDeliveredItemDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.updateDeliveredItem(id, itemId, dto, user);
+  }
+
+  @Patch(':id/delivered-items/:itemId/receive')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  receiveDeliveredItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.receiveDeliveredItem(id, itemId, user);
+  }
+
+  @Delete(':id/delivered-items/:itemId')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  removeDeliveredItem(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.removeDeliveredItem(id, itemId, user);
   }
 
   @Delete(':id')

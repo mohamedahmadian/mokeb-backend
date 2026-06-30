@@ -229,3 +229,15 @@ export class TrackByMobileDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   mobileNumber: string;
 }
+
+export class RecordReservationAttendanceDto {
+  @IsOptional()
+  @IsDateString()
+  recordedAt?: string;
+}
+
+export class GuestRecordAttendanceDto extends TrackReservationDto {
+  @IsOptional()
+  @IsDateString()
+  recordedAt?: string;
+}

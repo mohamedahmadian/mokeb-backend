@@ -142,6 +142,7 @@ export declare class RegistrationRequestsController {
             websiteUrl: string | null;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
+            onlineReservationEnabled: boolean;
             ownerUserId: number;
             status: import("@prisma/client").$Enums.MawkibStatus;
         };

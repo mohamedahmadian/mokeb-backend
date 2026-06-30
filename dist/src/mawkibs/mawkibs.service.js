@@ -534,6 +534,21 @@ let MawkibsService = class MawkibsService {
         }
         return mawkib;
     }
+    assertOnlineReservationAllowed(mawkib, currentUser) {
+        if (mawkib.onlineReservationEnabled) {
+            return;
+        }
+        if (!currentUser) {
+            throw new common_1.BadRequestException('امکان رزرو آنلاین این موکب غیرفعال است');
+        }
+        const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
+        const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner) &&
+            mawkib.ownerUserId === currentUser.id;
+        if (isAdmin || isOwner) {
+            return;
+        }
+        throw new common_1.BadRequestException('امکان رزرو آنلاین این موکب غیرفعال است');
+    }
 };
 exports.MawkibsService = MawkibsService;
 exports.MawkibsService = MawkibsService = __decorate([

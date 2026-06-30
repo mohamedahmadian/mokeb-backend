@@ -122,6 +122,7 @@ class CreateMawkibDto {
     websiteUrl;
     defaultCheckInTime;
     defaultCheckOutTime;
+    onlineReservationEnabled;
     ownerUserId;
     status;
 }
@@ -300,6 +301,11 @@ __decorate([
     __metadata("design:type", String)
 ], CreateMawkibDto.prototype, "defaultCheckOutTime", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "onlineReservationEnabled", void 0);
+__decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateMawkibDto.prototype, "ownerUserId", void 0);
@@ -342,6 +348,7 @@ class UpdateMawkibDto {
     websiteUrl;
     defaultCheckInTime;
     defaultCheckOutTime;
+    onlineReservationEnabled;
     ownerUserId;
     status;
 }
@@ -522,6 +529,11 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], UpdateMawkibDto.prototype, "defaultCheckOutTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "onlineReservationEnabled", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),

@@ -56,3 +56,9 @@ export declare class TrackReservationDto {
 export declare class TrackByMobileDto {
     mobileNumber: string;
 }
+export declare class RecordReservationAttendanceDto {
+    recordedAt?: string;
+}
+export declare class GuestRecordAttendanceDto extends TrackReservationDto {
+    recordedAt?: string;
+}

@@ -25,10 +25,10 @@ let GuestReservationsController = class GuestReservationsController {
         return this.reservationsService.createGuest(dto);
     }
     checkInGuest(body) {
-        return this.reservationsService.checkInGuest(body.trackingCode);
+        return this.reservationsService.checkInGuest(body.trackingCode, body);
     }
     checkOutGuest(body) {
-        return this.reservationsService.checkOutGuest(body.trackingCode);
+        return this.reservationsService.checkOutGuest(body.trackingCode, body);
     }
     track(query) {
         return this.reservationsService.findByTrackingCode(query.trackingCode);
@@ -49,14 +49,14 @@ __decorate([
     (0, common_1.Post)('guest/check-in'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [reservation_dto_1.TrackReservationDto]),
+    __metadata("design:paramtypes", [reservation_dto_1.GuestRecordAttendanceDto]),
     __metadata("design:returntype", void 0)
 ], GuestReservationsController.prototype, "checkInGuest", null);
 __decorate([
     (0, common_1.Post)('guest/check-out'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [reservation_dto_1.TrackReservationDto]),
+    __metadata("design:paramtypes", [reservation_dto_1.GuestRecordAttendanceDto]),
     __metadata("design:returntype", void 0)
 ], GuestReservationsController.prototype, "checkOutGuest", null);
 __decorate([

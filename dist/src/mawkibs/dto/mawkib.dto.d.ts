@@ -50,6 +50,7 @@ export declare class CreateMawkibDto {
     websiteUrl?: string;
     defaultCheckInTime?: string;
     defaultCheckOutTime?: string;
+    onlineReservationEnabled?: boolean;
     ownerUserId: number;
     status?: MawkibStatus;
 }
@@ -87,6 +88,7 @@ export declare class UpdateMawkibDto {
     websiteUrl?: string;
     defaultCheckInTime?: string;
     defaultCheckOutTime?: string;
+    onlineReservationEnabled?: boolean;
     ownerUserId?: number;
     status?: MawkibStatus;
 }

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ReservationsService } from './reservations.service';
 import {
   CreateGuestReservationDto,
+  GuestRecordAttendanceDto,
   TrackByMobileDto,
   TrackReservationDto,
 } from './dto/reservation.dto';
@@ -16,13 +17,13 @@ export class GuestReservationsController {
   }
 
   @Post('guest/check-in')
-  checkInGuest(@Body() body: TrackReservationDto) {
-    return this.reservationsService.checkInGuest(body.trackingCode);
+  checkInGuest(@Body() body: GuestRecordAttendanceDto) {
+    return this.reservationsService.checkInGuest(body.trackingCode, body);
   }
 
   @Post('guest/check-out')
-  checkOutGuest(@Body() body: TrackReservationDto) {
-    return this.reservationsService.checkOutGuest(body.trackingCode);
+  checkOutGuest(@Body() body: GuestRecordAttendanceDto) {
+    return this.reservationsService.checkOutGuest(body.trackingCode, body);
   }
 
   @Get('guest/track')
