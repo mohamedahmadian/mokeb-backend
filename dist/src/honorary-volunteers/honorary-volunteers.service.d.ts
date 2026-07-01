@@ -26,21 +26,21 @@ export declare class HonoraryVolunteersService {
             roles: string[];
         };
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -52,10 +52,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -64,27 +65,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;
     createVolunteerForAuthenticatedUser(dto: CreateAuthenticatedVolunteerApplicationDto, user: AuthUser): Promise<{
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -97,10 +97,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -109,27 +110,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;
     createMawkibNeed(dto: CreateMawkibNeedDto, ownerUserId: number): Promise<{
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -142,10 +142,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -154,27 +155,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;
     findPublicNeeds(filters: HonoraryVolunteerFiltersDto): Prisma.PrismaPromise<({
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -187,10 +187,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -199,27 +200,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     })[]>;
     findAll(filters: HonoraryVolunteerFiltersDto): Prisma.PrismaPromise<({
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -232,10 +232,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -244,27 +245,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     })[]>;
     findByUser(user: AuthUser): Prisma.PrismaPromise<({
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -277,10 +277,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -289,27 +290,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     })[]>;
     findByTrackingCode(trackingCode: string): Promise<{
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -322,10 +322,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -334,27 +335,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;
     findByMobileForGuest(mobileNumber: string): Prisma.PrismaPromise<({
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -367,10 +367,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -379,27 +380,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     })[]>;
     findOne(id: number): Promise<{
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -412,10 +412,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -424,28 +425,27 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;
     private assertCanManageOwn;
     updateOwn(id: number, dto: UpdateHonoraryVolunteerApplicationDto, user: AuthUser): Promise<{
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -458,10 +458,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -470,27 +471,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;
     cancelOwn(id: number, user: AuthUser): Promise<{
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -503,10 +503,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -515,27 +516,26 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;
     review(id: number, dto: ReviewHonoraryVolunteerApplicationDto, reviewerUserId: number): Promise<{
         mawkib: {
-            name: string;
             id: number;
+            name: string;
             address: string;
             phoneNumber: string;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             owner: {
                 id: number;
-                fullName: string;
                 mobileNumber: string;
+                fullName: string;
             };
         } | null;
         submittedBy: {
             id: number;
-            fullName: string;
             mobileNumber: string;
+            fullName: string;
         } | null;
         reviewedBy: {
             id: number;
@@ -548,10 +548,11 @@ export declare class HonoraryVolunteersService {
         city: string | null;
         description: string | null;
         createdAt: Date;
+        firstName: string;
+        lastName: string;
+        mawkibId: number | null;
         status: import("@prisma/client").$Enums.HonoraryVolunteerApplicationStatus;
         trackingCode: string;
-        lastName: string;
-        firstName: string;
         applicantType: import("@prisma/client").$Enums.HonoraryVolunteerApplicantType;
         serviceTypes: import("@prisma/client").$Enums.HonoraryVolunteerServiceType[];
         serviceDescription: string | null;
@@ -560,7 +561,6 @@ export declare class HonoraryVolunteersService {
         availabilityDescription: string | null;
         reviewNote: string | null;
         reviewedAt: Date | null;
-        mawkibId: number | null;
         submittedByUserId: number | null;
         reviewedByUserId: number | null;
     }>;

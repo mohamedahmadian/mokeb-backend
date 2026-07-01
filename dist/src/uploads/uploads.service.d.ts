@@ -10,6 +10,4 @@ export declare class UploadsService {
         url: string;
     }>;
     private saveImage;
-    private encodeImage;
-    private compressToMaxSize;
 }
