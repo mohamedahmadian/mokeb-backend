@@ -7,10 +7,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Max,
+  Min,
   MinLength,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { RoleName } from '@prisma/client';
+import { RoleName, UserGender } from '@prisma/client';
 
 export class CreateUserDto {
   @IsString()
@@ -20,6 +22,18 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   mobileNumber: string;
+
+  @IsOptional()
+  @IsString()
+  nationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  nationalIdCardImageUrl?: string;
+
+  @IsOptional()
+  @IsEnum(UserGender)
+  gender?: UserGender;
 
   @IsString()
   @MinLength(4)
@@ -67,6 +81,22 @@ export class UpdateUserDto {
   @IsString()
   @IsNotEmpty()
   fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  nationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  nationalIdCardImageUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string | null;
+
+  @IsOptional()
+  @IsEnum(UserGender)
+  gender?: UserGender | null;
 
   @IsOptional()
   @IsString()
@@ -136,6 +166,18 @@ export class CreateQuickPilgrimDto {
 
   @IsOptional()
   @IsString()
+  nationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  nationalIdCardImageUrl?: string;
+
+  @IsOptional()
+  @IsEnum(UserGender)
+  gender?: UserGender;
+
+  @IsOptional()
+  @IsString()
   province?: string;
 
   @IsOptional()
@@ -187,6 +229,10 @@ export class ListUsersDto {
 
   @IsOptional()
   @IsString()
+  nationalId?: string;
+
+  @IsOptional()
+  @IsString()
   province?: string;
 
   @IsOptional()
@@ -217,6 +263,24 @@ export class ListPilgrimsDto extends ListUsersDto {
   @Type(() => Number)
   @IsInt()
   mawkibId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  all?: boolean;
 }
 
 /** @deprecated use ListPilgrimsDto */

@@ -2,6 +2,8 @@ export declare class RegisterPilgrimDto {
     firstName: string;
     lastName: string;
     mobileNumber: string;
+    nationalId?: string;
+    nationalIdCardImageUrl?: string;
     password: string;
     province?: string;
     city?: string;
@@ -15,6 +17,7 @@ export declare class RegisterPilgrimDto {
 export declare class RegisterMawkibOwnerDto {
     fullName: string;
     mobileNumber: string;
+    nationalId?: string;
     password: string;
     province?: string;
     city?: string;

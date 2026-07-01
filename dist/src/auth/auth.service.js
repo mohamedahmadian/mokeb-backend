@@ -75,6 +75,8 @@ let AuthService = class AuthService {
         const user = await this.usersService.create({
             fullName: `${dto.firstName.trim()} ${dto.lastName.trim()}`,
             mobileNumber: dto.mobileNumber.trim(),
+            nationalId: dto.nationalId?.trim() || undefined,
+            nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || undefined,
             password: dto.password,
             province: dto.province?.trim() || undefined,
             city: dto.city?.trim() || undefined,
@@ -92,6 +94,7 @@ let AuthService = class AuthService {
         const user = await this.usersService.create({
             fullName: dto.fullName.trim(),
             mobileNumber: dto.mobileNumber.trim(),
+            nationalId: dto.nationalId?.trim() || undefined,
             password: dto.password,
             province: dto.province?.trim() || undefined,
             city: dto.city?.trim() || undefined,
@@ -218,6 +221,17 @@ let AuthService = class AuthService {
             mobileNumber: user.mobileNumber,
             roles: user.roles.map((ur) => ur.role.name),
         };
+    }
+    async isMobileRegistered(mobileNumber) {
+        const trimmed = mobileNumber.trim();
+        if (!trimmed) {
+            return { registered: false };
+        }
+        const user = await this.prisma.user.findUnique({
+            where: { mobileNumber: trimmed },
+            select: { id: true },
+        });
+        return { registered: Boolean(user) };
     }
     buildAuthResponseFromCreated(user) {
         return this.buildAuthResponse({

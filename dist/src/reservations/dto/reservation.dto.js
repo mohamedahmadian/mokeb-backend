@@ -116,6 +116,8 @@ class CreateGuestReservationDto {
     province;
     city;
     password;
+    nationalId;
+    nationalIdCardImageUrl;
     mawkibId;
     reservationDate;
     reservationEndDate;
@@ -159,6 +161,16 @@ __decorate([
     (0, class_validator_1.MinLength)(4, { message: 'رمز عبور باید حداقل ۴ کاراکتر باشد' }),
     __metadata("design:type", String)
 ], CreateGuestReservationDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGuestReservationDto.prototype, "nationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateGuestReservationDto.prototype, "nationalIdCardImageUrl", void 0);
 __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
@@ -235,10 +247,14 @@ class SearchReservationDto {
     reservationDateTo;
     pilgrimName;
     pilgrimMobile;
+    pilgrimNationalId;
     trackingCode;
     pilgrimUserId;
     guestCountMin;
     guestCountMax;
+    page;
+    pageSize;
+    all;
 }
 exports.SearchReservationDto = SearchReservationDto;
 __decorate([
@@ -277,6 +293,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
     __metadata("design:type", String)
+], SearchReservationDto.prototype, "pilgrimNationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
 ], SearchReservationDto.prototype, "trackingCode", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
@@ -298,6 +320,27 @@ __decorate([
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], SearchReservationDto.prototype, "guestCountMax", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], SearchReservationDto.prototype, "page", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(100),
+    __metadata("design:type", Number)
+], SearchReservationDto.prototype, "pageSize", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], SearchReservationDto.prototype, "all", void 0);
 class TrackReservationDto {
     trackingCode;
 }

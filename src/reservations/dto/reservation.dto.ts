@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  Max,
   Min,
   MinLength,
   Validate,
@@ -20,7 +21,10 @@ import { Type, Transform } from 'class-transformer';
 @ValidatorConstraint({ name: 'hasGuestCount', async: false })
 class HasGuestCountConstraint implements ValidatorConstraintInterface {
   validate(_: unknown, args: ValidationArguments) {
-    const obj = args.object as { maleGuestCount?: number; femaleGuestCount?: number };
+    const obj = args.object as {
+      maleGuestCount?: number;
+      femaleGuestCount?: number;
+    };
     return (obj.maleGuestCount ?? 0) + (obj.femaleGuestCount ?? 0) > 0;
   }
 
@@ -113,6 +117,14 @@ export class CreateGuestReservationDto {
   @MinLength(4, { message: 'رمز عبور باید حداقل ۴ کاراکتر باشد' })
   password?: string;
 
+  @IsOptional()
+  @IsString()
+  nationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  nationalIdCardImageUrl?: string;
+
   @IsInt()
   mawkibId: number;
 
@@ -196,6 +208,11 @@ export class SearchReservationDto {
   @IsOptional()
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  pilgrimNationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   trackingCode?: string;
 
   @IsOptional()
@@ -214,6 +231,24 @@ export class SearchReservationDto {
   @IsInt()
   @Min(0)
   guestCountMax?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  all?: boolean;
 }
 
 export class TrackReservationDto {

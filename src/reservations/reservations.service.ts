@@ -80,6 +80,14 @@ const reservationInclude = {
   },
 } satisfies Prisma.ReservationInclude;
 
+export interface PaginatedReservationsResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 @Injectable()
 export class ReservationsService {
   constructor(
@@ -120,7 +128,7 @@ export class ReservationsService {
         mode: 'insensitive',
       };
     }
-    if (search.pilgrimName || search.pilgrimMobile) {
+    if (search.pilgrimName || search.pilgrimMobile || search.pilgrimNationalId) {
       const pilgrimFilters: Prisma.ReservationWhereInput[] = [];
 
       if (search.pilgrimName) {
@@ -145,6 +153,17 @@ export class ReservationsService {
             ]),
           });
         }
+      }
+
+      if (search.pilgrimNationalId?.trim()) {
+        pilgrimFilters.push({
+          pilgrim: {
+            nationalId: {
+              contains: search.pilgrimNationalId.trim(),
+              mode: 'insensitive',
+            },
+          },
+        });
       }
 
       if (pilgrimFilters.length === 1) {
@@ -178,16 +197,43 @@ export class ReservationsService {
     });
   }
 
+  private applyListPagination<T>(
+    items: T[],
+    search?: SearchReservationDto,
+  ): T[] | PaginatedReservationsResult<T> {
+    if (search?.all) {
+      return items;
+    }
+
+    if (search?.page === undefined) {
+      return items;
+    }
+
+    const pageSize = search.pageSize ?? 10;
+    const page = search.page;
+    const total = items.length;
+    const skip = (page - 1) * pageSize;
+
+    return {
+      items: items.slice(skip, skip + pageSize),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+
   async findAllAdmin(search?: SearchReservationDto) {
     const items = await this.prisma.reservation.findMany({
       where: this.buildSearchWhere(search),
       include: reservationInclude,
       orderBy: { createdAt: 'desc' },
     });
-    return this.filterReservationsByMobileSearch(
+    const filtered = this.filterReservationsByMobileSearch(
       this.filterByGuestCountTotal(items, search),
       search,
     );
+    return this.applyListPagination(filtered, search);
   }
 
   async findByPilgrim(pilgrimUserId: number, search?: SearchReservationDto) {
@@ -199,10 +245,11 @@ export class ReservationsService {
       include: reservationInclude,
       orderBy: { createdAt: 'desc' },
     });
-    return this.filterReservationsByMobileSearch(
+    const filtered = this.filterReservationsByMobileSearch(
       this.filterByGuestCountTotal(items, search),
       search,
     );
+    return this.applyListPagination(filtered, search);
   }
 
   async findByMawkibOwner(ownerUserId: number, search?: SearchReservationDto) {
@@ -214,7 +261,7 @@ export class ReservationsService {
     const mawkibIds = mawkibs.map((m) => m.id);
 
     if (search?.mawkibId && !mawkibIds.includes(search.mawkibId)) {
-      return [];
+      return this.applyListPagination([], search);
     }
 
     const { mawkibId, ...rest } = search ?? {};
@@ -227,9 +274,11 @@ export class ReservationsService {
       include: reservationInclude,
       orderBy: { createdAt: 'desc' },
     });
-    let filtered = this.filterByGuestCountTotal(items, search);
-
-    return this.filterReservationsByMobileSearch(filtered, search);
+    const filtered = this.filterReservationsByMobileSearch(
+      this.filterByGuestCountTotal(items, search),
+      search,
+    );
+    return this.applyListPagination(filtered, search);
   }
 
   private filterReservationsByMobileSearch<
@@ -595,6 +644,8 @@ export class ReservationsService {
       province: dto.province,
       city: dto.city,
       password: dto.password?.trim() || undefined,
+      nationalId: dto.nationalId,
+      nationalIdCardImageUrl: dto.nationalIdCardImageUrl,
     });
 
     await this.assertNoConflictingReservation({

@@ -4,6 +4,13 @@ import type { AuthUser } from '../common/decorators/current-user.decorator';
 import { AdminSearchMawkibDto, CreateMawkibDto, MawkibInventoryQueryDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
 import { MawkibCapacitySnapshot } from '../common/types/capacity.types';
 import { MawkibInventoryService } from './mawkib-inventory.service';
+export interface PaginatedMawkibsResult<T> {
+    items: T[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+}
 export declare class MawkibsService {
     private prisma;
     private inventoryService;
@@ -14,6 +21,7 @@ export declare class MawkibsService {
     private enrichWithTodayCapacity;
     private hasReservationAvailabilitySearch;
     private enrichAndFilterByAvailability;
+    private applyListPagination;
     findAll(search?: SearchMawkibDto): Promise<({
         owner: {
             id: number;
@@ -22,9 +30,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -40,7 +56,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -51,6 +66,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -64,7 +80,65 @@ export declare class MawkibsService {
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
-    })[]>;
+    })[] | PaginatedMawkibsResult<{
+        owner: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            province: string | null;
+            city: string | null;
+        };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
+    } & {
+        id: number;
+        name: string;
+        imageUrl: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        createdAt: Date;
+        address: string;
+        latitude: number | null;
+        longitude: number | null;
+        phoneNumber: string;
+        facilities: string | null;
+        services: string | null;
+        serviceStartDate: Date | null;
+        serviceEndDate: Date | null;
+        maleCapacity: number;
+        femaleCapacity: number;
+        distanceToShrine: string | null;
+        lunchReception: boolean;
+        breakfastReception: boolean;
+        dinnerReception: boolean;
+        bathroom: boolean;
+        laundry: boolean;
+        parking: boolean;
+        internet: boolean;
+        familyFriendly: boolean;
+        maxReservationDays: number | null;
+        defaultReservationDays: number | null;
+        country: import("@prisma/client").$Enums.MawkibCountry;
+        mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
+        rules: string | null;
+        telegramChannel: string | null;
+        websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
+        ownerUserId: number;
+        status: import("@prisma/client").$Enums.MawkibStatus;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+    }>>;
     findAllAdmin(search?: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
@@ -76,9 +150,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -94,7 +176,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -105,6 +186,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -118,7 +200,68 @@ export declare class MawkibsService {
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
-    })[]>;
+    })[] | PaginatedMawkibsResult<{
+        _count: {
+            reservations: number;
+        };
+        owner: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            province: string | null;
+            city: string | null;
+        };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
+    } & {
+        id: number;
+        name: string;
+        imageUrl: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        createdAt: Date;
+        address: string;
+        latitude: number | null;
+        longitude: number | null;
+        phoneNumber: string;
+        facilities: string | null;
+        services: string | null;
+        serviceStartDate: Date | null;
+        serviceEndDate: Date | null;
+        maleCapacity: number;
+        femaleCapacity: number;
+        distanceToShrine: string | null;
+        lunchReception: boolean;
+        breakfastReception: boolean;
+        dinnerReception: boolean;
+        bathroom: boolean;
+        laundry: boolean;
+        parking: boolean;
+        internet: boolean;
+        familyFriendly: boolean;
+        maxReservationDays: number | null;
+        defaultReservationDays: number | null;
+        country: import("@prisma/client").$Enums.MawkibCountry;
+        mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
+        rules: string | null;
+        telegramChannel: string | null;
+        websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
+        ownerUserId: number;
+        status: import("@prisma/client").$Enums.MawkibStatus;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+    }>>;
     findByOwner(ownerUserId: number, search?: AdminSearchMawkibDto): Promise<({
         _count: {
             reservations: number;
@@ -130,9 +273,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -148,7 +299,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -159,6 +309,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -172,8 +323,7 @@ export declare class MawkibsService {
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
-    })[]>;
-    findOnePublic(id: number): Promise<{
+    })[] | PaginatedMawkibsResult<{
         _count: {
             reservations: number;
         };
@@ -184,9 +334,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -202,7 +360,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -213,6 +370,70 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
+        country: import("@prisma/client").$Enums.MawkibCountry;
+        mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
+        rules: string | null;
+        telegramChannel: string | null;
+        websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
+        ownerUserId: number;
+        status: import("@prisma/client").$Enums.MawkibStatus;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+    }>>;
+    private syncGalleryImages;
+    findOnePublic(id: number): Promise<{
+        _count: {
+            reservations: number;
+        };
+        owner: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            province: string | null;
+            city: string | null;
+        };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
+    } & {
+        id: number;
+        name: string;
+        imageUrl: string | null;
+        description: string | null;
+        whatsapp: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        createdAt: Date;
+        address: string;
+        latitude: number | null;
+        longitude: number | null;
+        phoneNumber: string;
+        facilities: string | null;
+        services: string | null;
+        serviceStartDate: Date | null;
+        serviceEndDate: Date | null;
+        maleCapacity: number;
+        femaleCapacity: number;
+        distanceToShrine: string | null;
+        lunchReception: boolean;
+        breakfastReception: boolean;
+        dinnerReception: boolean;
+        bathroom: boolean;
+        laundry: boolean;
+        parking: boolean;
+        internet: boolean;
+        familyFriendly: boolean;
+        maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -238,9 +459,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -256,7 +485,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -267,6 +495,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -292,9 +521,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -310,7 +547,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -321,6 +557,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -343,9 +580,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -361,7 +606,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -372,6 +616,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -396,8 +641,16 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -413,7 +666,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -424,6 +676,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -450,9 +703,17 @@ export declare class MawkibsService {
             province: string | null;
             city: string | null;
         };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
     } & {
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -468,7 +729,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -479,6 +739,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;
@@ -533,6 +794,7 @@ export declare class MawkibsService {
     assertOwnerAccess(mawkibId: number, userId: number): Promise<{
         id: number;
         name: string;
+        imageUrl: string | null;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
@@ -548,7 +810,6 @@ export declare class MawkibsService {
         serviceEndDate: Date | null;
         maleCapacity: number;
         femaleCapacity: number;
-        imageUrl: string | null;
         distanceToShrine: string | null;
         lunchReception: boolean;
         breakfastReception: boolean;
@@ -559,6 +820,7 @@ export declare class MawkibsService {
         internet: boolean;
         familyFriendly: boolean;
         maxReservationDays: number | null;
+        defaultReservationDays: number | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
         mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
         rules: string | null;

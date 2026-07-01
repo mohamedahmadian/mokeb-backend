@@ -30,7 +30,22 @@ import { MawkibInventoryService } from './mawkib-inventory.service';
 const mawkibInclude = {
   owner: { select: { id: true, fullName: true, mobileNumber: true, province: true, city: true } },
   _count: { select: { reservations: true } },
+  images: { orderBy: { sortOrder: 'asc' as const } },
 } satisfies Prisma.MawkibInclude;
+
+export interface PaginatedMawkibsResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+type MawkibListQuery = {
+  page?: number;
+  pageSize?: number;
+  all?: boolean;
+};
 
 @Injectable()
 export class MawkibsService {
@@ -270,6 +285,32 @@ export class MawkibsService {
     });
   }
 
+  private applyListPagination<T>(
+    items: T[],
+    search?: MawkibListQuery,
+  ): T[] | PaginatedMawkibsResult<T> {
+    if (search?.all) {
+      return items;
+    }
+
+    if (search?.page === undefined) {
+      return items;
+    }
+
+    const pageSize = search.pageSize ?? 10;
+    const page = search.page;
+    const total = items.length;
+    const skip = (page - 1) * pageSize;
+
+    return {
+      items: items.slice(skip, skip + pageSize),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    };
+  }
+
   async findAll(search?: SearchMawkibDto) {
     const where: Prisma.MawkibWhereInput = {
       status: MawkibStatus.Approved,
@@ -332,16 +373,19 @@ export class MawkibsService {
         owner: {
           select: { id: true, fullName: true, mobileNumber: true, province: true, city: true },
         },
+        images: { orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     });
 
     if (!this.hasReservationAvailabilitySearch(search)) {
       const enriched = await this.enrichWithTodayCapacity(mawkibs);
-      return this.filterByCapacityView(enriched, search?.capacityFilter);
+      const filtered = this.filterByCapacityView(enriched, search?.capacityFilter);
+      return this.applyListPagination(filtered, search);
     }
 
-    return this.enrichAndFilterByAvailability(mawkibs, search!);
+    const filtered = await this.enrichAndFilterByAvailability(mawkibs, search!);
+    return this.applyListPagination(filtered, search);
   }
 
   async findAllAdmin(search?: AdminSearchMawkibDto) {
@@ -352,8 +396,9 @@ export class MawkibsService {
     });
 
     const enriched = await this.enrichWithTodayCapacity(mawkibs);
+    const filtered = this.filterByCapacityView(enriched, search?.capacityFilter);
 
-    return this.filterByCapacityView(enriched, search?.capacityFilter);
+    return this.applyListPagination(filtered, search);
   }
 
   async findByOwner(ownerUserId: number, search?: AdminSearchMawkibDto) {
@@ -367,12 +412,50 @@ export class MawkibsService {
     });
 
     if (this.hasReservationAvailabilitySearch(search)) {
-      return this.enrichAndFilterByAvailability(mawkibs, search!);
+      const filtered = await this.enrichAndFilterByAvailability(mawkibs, search!);
+      return this.applyListPagination(filtered, search);
     }
 
     const enriched = await this.enrichWithTodayCapacity(mawkibs);
+    const filtered = this.filterByCapacityView(enriched, search?.capacityFilter);
 
-    return this.filterByCapacityView(enriched, search?.capacityFilter);
+    return this.applyListPagination(filtered, search);
+  }
+
+  private async syncGalleryImages(mawkibId: number, urls?: string[]) {
+    if (urls === undefined) return;
+
+    const normalized = urls.map((url) => url.trim()).filter(Boolean);
+    const existing = await this.prisma.mawkibImage.findMany({
+      where: { mawkibId },
+    });
+    const desiredUrls = new Set(normalized);
+
+    const toDelete = existing.filter((item) => !desiredUrls.has(item.url));
+    if (toDelete.length > 0) {
+      await this.prisma.mawkibImage.deleteMany({
+        where: { id: { in: toDelete.map((item) => item.id) } },
+      });
+    }
+
+    for (let index = 0; index < normalized.length; index += 1) {
+      const url = normalized[index];
+      const record = existing.find((item) => item.url === url);
+
+      if (record) {
+        if (record.sortOrder !== index) {
+          await this.prisma.mawkibImage.update({
+            where: { id: record.id },
+            data: { sortOrder: index },
+          });
+        }
+        continue;
+      }
+
+      await this.prisma.mawkibImage.create({
+        data: { mawkibId, url, sortOrder: index },
+      });
+    }
   }
 
   async findOnePublic(id: number) {
@@ -431,6 +514,7 @@ export class MawkibsService {
       serviceStartDate,
       serviceEndDate,
       status,
+      galleryImageUrls,
       ...fields
     } = dto;
 
@@ -446,7 +530,12 @@ export class MawkibsService {
     });
 
     await this.inventoryService.seedHorizonForMawkib(created.id);
-    return created;
+    await this.syncGalleryImages(created.id, galleryImageUrls);
+
+    return this.prisma.mawkib.findUniqueOrThrow({
+      where: { id: created.id },
+      include: mawkibInclude,
+    });
   }
 
   async update(
@@ -474,6 +563,7 @@ export class MawkibsService {
       status: _s,
       serviceStartDate,
       serviceEndDate,
+      galleryImageUrls,
       ...fields
     } = dto;
 
@@ -500,11 +590,22 @@ export class MawkibsService {
       }
     }
 
-    return this.prisma.mawkib.update({
+    const updated = await this.prisma.mawkib.update({
       where: { id },
       data,
       include: mawkibInclude,
     });
+
+    await this.syncGalleryImages(id, galleryImageUrls);
+
+    if (galleryImageUrls !== undefined) {
+      return this.prisma.mawkib.findUniqueOrThrow({
+        where: { id },
+        include: mawkibInclude,
+      });
+    }
+
+    return updated;
   }
 
   async remove(id: number) {

@@ -20,6 +20,7 @@ const honorary_volunteers_module_1 = require("./honorary-volunteers/honorary-vol
 const dashboard_module_1 = require("./dashboard/dashboard.module");
 const mawkib_feedback_module_1 = require("./mawkib-feedback/mawkib-feedback.module");
 const locations_module_1 = require("./locations/locations.module");
+const uploads_module_1 = require("./uploads/uploads.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
@@ -40,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
             dashboard_module_1.DashboardModule,
             mawkib_feedback_module_1.MawkibFeedbackModule,
             locations_module_1.LocationsModule,
+            uploads_module_1.UploadsModule,
         ],
     })
 ], AppModule);

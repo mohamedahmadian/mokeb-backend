@@ -21,6 +21,8 @@ export declare class CreateGuestReservationDto {
     province?: string;
     city?: string;
     password?: string;
+    nationalId?: string;
+    nationalIdCardImageUrl?: string;
     mawkibId: number;
     reservationDate: string;
     reservationEndDate: string;
@@ -45,10 +47,14 @@ export declare class SearchReservationDto {
     reservationDateTo?: string;
     pilgrimName?: string;
     pilgrimMobile?: string;
+    pilgrimNationalId?: string;
     trackingCode?: string;
     pilgrimUserId?: number;
     guestCountMin?: number;
     guestCountMax?: number;
+    page?: number;
+    pageSize?: number;
+    all?: boolean;
 }
 export declare class TrackReservationDto {
     trackingCode: string;

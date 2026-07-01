@@ -73,6 +73,9 @@ export declare class AuthService {
         mobileNumber: string;
         roles: import("@prisma/client").$Enums.RoleName[];
     } | null>;
+    isMobileRegistered(mobileNumber: string): Promise<{
+        registered: boolean;
+    }>;
     private buildAuthResponseFromCreated;
     private buildAuthResponse;
 }

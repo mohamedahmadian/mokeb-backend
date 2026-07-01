@@ -43,6 +43,9 @@ export declare class AuthController {
             roles: string[];
         };
     }>;
+    checkMobileRegistered(mobileNumber?: string): Promise<{
+        registered: boolean;
+    }>;
     me(user: AuthUser): AuthUser;
     changePassword(user: AuthUser, dto: ChangePasswordDto): Promise<{
         message: string;

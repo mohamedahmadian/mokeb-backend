@@ -16,6 +16,8 @@ class RegisterPilgrimDto {
     firstName;
     lastName;
     mobileNumber;
+    nationalId;
+    nationalIdCardImageUrl;
     password;
     province;
     city;
@@ -42,6 +44,16 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], RegisterPilgrimDto.prototype, "mobileNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RegisterPilgrimDto.prototype, "nationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RegisterPilgrimDto.prototype, "nationalIdCardImageUrl", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, pin_password_validator_1.IsPinPassword)(),
@@ -90,6 +102,7 @@ __decorate([
 class RegisterMawkibOwnerDto {
     fullName;
     mobileNumber;
+    nationalId;
     password;
     province;
     city;
@@ -111,6 +124,11 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], RegisterMawkibOwnerDto.prototype, "mobileNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RegisterMawkibOwnerDto.prototype, "nationalId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, pin_password_validator_1.IsPinPassword)(),

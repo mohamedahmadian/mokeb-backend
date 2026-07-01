@@ -109,6 +109,7 @@ export declare class RegistrationRequestsController {
         mawkib: {
             id: number;
             name: string;
+            imageUrl: string | null;
             description: string | null;
             whatsapp: string | null;
             bale: string | null;
@@ -124,7 +125,6 @@ export declare class RegistrationRequestsController {
             serviceEndDate: Date | null;
             maleCapacity: number;
             femaleCapacity: number;
-            imageUrl: string | null;
             distanceToShrine: string | null;
             lunchReception: boolean;
             breakfastReception: boolean;
@@ -135,6 +135,7 @@ export declare class RegistrationRequestsController {
             internet: boolean;
             familyFriendly: boolean;
             maxReservationDays: number | null;
+            defaultReservationDays: number | null;
             country: import("@prisma/client").$Enums.MawkibCountry;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             rules: string | null;

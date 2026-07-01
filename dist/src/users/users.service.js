@@ -81,6 +81,9 @@ let UsersService = class UsersService {
                 where.mobileNumber = { contains: filters.mobileNumber.trim(), mode: 'insensitive' };
             }
         }
+        if (filters.nationalId?.trim()) {
+            where.nationalId = { contains: filters.nationalId.trim(), mode: 'insensitive' };
+        }
         if (filters.province?.trim()) {
             where.province = { contains: filters.province.trim(), mode: 'insensitive' };
         }
@@ -138,6 +141,9 @@ let UsersService = class UsersService {
             data: {
                 fullName: dto.fullName,
                 mobileNumber: dto.mobileNumber,
+                nationalId: dto.nationalId?.trim() || null,
+                nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || null,
+                gender: dto.gender ?? undefined,
                 passwordHash,
                 province: dto.province,
                 city: dto.city,
@@ -155,40 +161,63 @@ let UsersService = class UsersService {
         });
         return this.sanitize(user);
     }
+    async isPilgrimLinkedToOwner(pilgrimUserId, ownerUserId) {
+        const count = await this.prisma.user.count({
+            where: {
+                id: pilgrimUserId,
+                isActive: true,
+                roles: { some: { role: { name: client_1.RoleName.Pilgrim } } },
+                pilgrimReservations: { some: { mawkib: { ownerUserId } } },
+            },
+        });
+        return count > 0;
+    }
+    stripProfileImageUnlessSelf(dto, actorUserId, targetUserId) {
+        if (actorUserId === targetUserId || dto.imageUrl === undefined) {
+            return dto;
+        }
+        const { imageUrl: _, ...rest } = dto;
+        return rest;
+    }
     async findOneForUser(id, user) {
         const isAdmin = user.roles.includes(client_1.RoleName.Admin);
         if (isAdmin || user.id === id) {
             return this.findOne(id);
         }
         const isMawkibOwner = user.roles.includes(client_1.RoleName.MawkibOwner);
-        if (isMawkibOwner) {
-            const pilgrim = await this.prisma.user.findFirst({
-                where: {
-                    id,
-                    isActive: true,
-                    roles: { some: { role: { name: client_1.RoleName.Pilgrim } } },
-                },
-                include: userInclude,
-            });
-            if (pilgrim) {
-                return this.sanitize(pilgrim);
-            }
+        if (isMawkibOwner && (await this.isPilgrimLinkedToOwner(id, user.id))) {
+            return this.findOne(id);
         }
         throw new common_1.ForbiddenException('شما مجوز مشاهده این کاربر را ندارید');
     }
     async updateForUser(id, dto, user) {
         const isAdmin = user.roles.includes(client_1.RoleName.Admin);
-        if (!isAdmin && user.id !== id) {
-            throw new common_1.ForbiddenException('شما مجوز ویرایش این کاربر را ندارید');
+        if (isAdmin) {
+            return this.update(id, this.stripProfileImageUnlessSelf(dto, user.id, id));
         }
-        if (!isAdmin) {
+        if (user.id === id) {
             const { roles, isActive, ...selfFields } = dto;
             if (roles !== undefined || isActive !== undefined) {
                 throw new common_1.ForbiddenException('شما مجوز تغییر نقش یا وضعیت را ندارید');
             }
             return this.update(id, selfFields);
         }
-        return this.update(id, dto);
+        const isMawkibOwner = user.roles.includes(client_1.RoleName.MawkibOwner);
+        if (isMawkibOwner) {
+            if (!(await this.isPilgrimLinkedToOwner(id, user.id))) {
+                throw new common_1.ForbiddenException('شما مجوز ویرایش این زائر را ندارید');
+            }
+            const { roles, imageUrl, ...pilgrimFields } = dto;
+            if (roles !== undefined &&
+                !(roles.length === 1 && roles[0] === client_1.RoleName.Pilgrim)) {
+                throw new common_1.ForbiddenException('شما مجوز تغییر نقش را ندارید');
+            }
+            if (imageUrl !== undefined) {
+                throw new common_1.ForbiddenException('شما مجوز تغییر عکس پروفایل زائر را ندارید');
+            }
+            return this.update(id, pilgrimFields);
+        }
+        throw new common_1.ForbiddenException('شما مجوز ویرایش این کاربر را ندارید');
     }
     buildPilgrimWhere(query, ownerUserId) {
         const term = query.search?.trim();
@@ -200,6 +229,9 @@ let UsersService = class UsersService {
             }),
             ...(query.mobileNumber?.trim() && {
                 mobileNumber: { contains: query.mobileNumber.trim(), mode: 'insensitive' },
+            }),
+            ...(query.nationalId?.trim() && {
+                nationalId: { contains: query.nationalId.trim(), mode: 'insensitive' },
             }),
             ...(query.province?.trim() && {
                 province: { contains: query.province.trim(), mode: 'insensitive' },
@@ -242,6 +274,7 @@ let UsersService = class UsersService {
         const isQuickSearch = !!query.search?.trim() &&
             !query.fullName?.trim() &&
             !query.mobileNumber?.trim() &&
+            !query.nationalId?.trim() &&
             !query.province?.trim() &&
             !query.city?.trim() &&
             query.isActive === undefined &&
@@ -270,10 +303,42 @@ let UsersService = class UsersService {
                 take: 50,
             });
         }
+        const orderBy = { fullName: 'asc' };
+        if (query.all) {
+            const users = await this.prisma.user.findMany({
+                where,
+                include: userInclude,
+                orderBy,
+            });
+            return users.map((user) => this.sanitize(user));
+        }
+        if (query.page !== undefined) {
+            const pageSize = query.pageSize ?? 10;
+            const page = query.page;
+            const skip = (page - 1) * pageSize;
+            const [users, total] = await Promise.all([
+                this.prisma.user.findMany({
+                    where,
+                    include: userInclude,
+                    orderBy,
+                    skip,
+                    take: pageSize,
+                }),
+                this.prisma.user.count({ where }),
+            ]);
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            return {
+                items: users.map((user) => this.sanitize(user)),
+                total,
+                page,
+                pageSize,
+                totalPages,
+            };
+        }
         const users = await this.prisma.user.findMany({
             where,
             include: userInclude,
-            orderBy: { fullName: 'asc' },
+            orderBy,
         });
         return users.map((user) => this.sanitize(user));
     }
@@ -284,6 +349,15 @@ let UsersService = class UsersService {
             include: userInclude,
         });
         if (existing) {
+            const imageUrl = dto.nationalIdCardImageUrl?.trim();
+            if (imageUrl) {
+                const updated = await this.prisma.user.update({
+                    where: { id: existing.id },
+                    data: { nationalIdCardImageUrl: imageUrl },
+                    include: userInclude,
+                });
+                return this.sanitize(updated);
+            }
             return this.sanitize(existing);
         }
         const digits = mobileNumber.replace(/\D/g, '');
@@ -295,6 +369,9 @@ let UsersService = class UsersService {
         return this.create({
             fullName,
             mobileNumber,
+            nationalId: dto.nationalId?.trim() || undefined,
+            nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || undefined,
+            gender: dto.gender,
             password,
             province: dto.province?.trim() || undefined,
             city: dto.city?.trim() || undefined,
@@ -311,6 +388,18 @@ let UsersService = class UsersService {
         await this.findOne(id);
         const { password, roles, ...fields } = dto;
         const data = { ...fields };
+        if (fields.nationalId !== undefined) {
+            data.nationalId = fields.nationalId.trim() || null;
+        }
+        if (fields.nationalIdCardImageUrl !== undefined) {
+            data.nationalIdCardImageUrl = fields.nationalIdCardImageUrl?.trim() || null;
+        }
+        if (fields.imageUrl !== undefined) {
+            data.imageUrl = fields.imageUrl?.trim() || null;
+        }
+        if (fields.gender !== undefined) {
+            data.gender = fields.gender;
+        }
         if (password) {
             data.passwordHash = await bcrypt.hash(password, 10);
         }

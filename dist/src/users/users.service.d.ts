@@ -18,6 +18,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -42,6 +46,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -66,6 +74,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -77,6 +89,8 @@ export declare class UsersService {
         isActive: boolean;
         createdAt: Date;
     }>;
+    private isPilgrimLinkedToOwner;
+    private stripProfileImageUnlessSelf;
     findOneForUser(id: number, user: AuthUser): Promise<{
         roles: ({
             role: {
@@ -90,6 +104,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -114,6 +132,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -131,7 +153,40 @@ export declare class UsersService {
         mobileNumber: string;
         fullName: string;
         city: string | null;
-    }[]>;
+    }[] | {
+        items: {
+            roles: ({
+                role: {
+                    id: number;
+                    name: import("@prisma/client").$Enums.RoleName;
+                };
+            } & {
+                roleId: number;
+                userId: number;
+            })[];
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            nationalId: string | null;
+            nationalIdCardImageUrl: string | null;
+            imageUrl: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
+            province: string | null;
+            city: string | null;
+            description: string | null;
+            whatsapp: string | null;
+            telegram: string | null;
+            bale: string | null;
+            eitaa: string | null;
+            email: string | null;
+            isActive: boolean;
+            createdAt: Date;
+        }[];
+        total: number;
+        page: number;
+        pageSize: number;
+        totalPages: number;
+    }>;
     createQuickPilgrim(dto: CreateQuickPilgrimDto): Promise<{
         roles: ({
             role: {
@@ -145,6 +200,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -169,6 +228,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -195,6 +258,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -223,6 +290,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -247,6 +318,10 @@ export declare class UsersService {
         id: number;
         mobileNumber: string;
         fullName: string;
+        nationalId: string | null;
+        nationalIdCardImageUrl: string | null;
+        imageUrl: string | null;
+        gender: import("@prisma/client").$Enums.UserGender | null;
         province: string | null;
         city: string | null;
         description: string | null;

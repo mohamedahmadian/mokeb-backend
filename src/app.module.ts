@@ -11,6 +11,7 @@ import { HonoraryVolunteersModule } from './honorary-volunteers/honorary-volunte
 import { DashboardModule } from './dashboard/dashboard.module';
 import { MawkibFeedbackModule } from './mawkib-feedback/mawkib-feedback.module';
 import { LocationsModule } from './locations/locations.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { LocationsModule } from './locations/locations.module';
     DashboardModule,
     MawkibFeedbackModule,
     LocationsModule,
+    UploadsModule,
   ],
 })
 export class AppModule implements NestModule {

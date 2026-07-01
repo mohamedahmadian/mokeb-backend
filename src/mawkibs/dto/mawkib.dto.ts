@@ -3,12 +3,15 @@ import {
   IsDateString,
   IsEnum,
   IsInt,
+  IsArray,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Matches,
+  Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { MawkibCity, MawkibCountry, MawkibStatus } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
@@ -128,6 +131,11 @@ export class CreateMawkibDto {
   imageUrl?: string;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImageUrls?: string[];
+
+  @IsOptional()
   @IsString()
   distanceToShrine?: string;
 
@@ -168,6 +176,12 @@ export class CreateMawkibDto {
   @IsInt()
   @Min(1)
   maxReservationDays?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  defaultReservationDays?: number;
 
   @IsOptional()
   @IsEnum(MawkibCountry)
@@ -280,8 +294,14 @@ export class UpdateMawkibDto {
   femaleCapacity?: number;
 
   @IsOptional()
+  @ValidateIf((_obj, value) => value !== null)
   @IsString()
-  imageUrl?: string;
+  imageUrl?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  galleryImageUrls?: string[];
 
   @IsOptional()
   @IsString()
@@ -324,6 +344,12 @@ export class UpdateMawkibDto {
   @IsInt()
   @Min(1)
   maxReservationDays?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  defaultReservationDays?: number;
 
   @IsOptional()
   @IsEnum(MawkibCountry)
@@ -453,6 +479,24 @@ export class SearchMawkibDto extends MawkibAmenitySearchFields {
   @IsOptional()
   @IsDateString()
   serviceEndTo?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  all?: boolean;
 }
 
 export class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
@@ -533,6 +577,24 @@ export class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   hasAvailability?: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  all?: boolean;
 }
 
 export class MawkibInventoryQueryDto {

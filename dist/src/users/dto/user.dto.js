@@ -16,6 +16,9 @@ const client_1 = require("@prisma/client");
 class CreateUserDto {
     fullName;
     mobileNumber;
+    nationalId;
+    nationalIdCardImageUrl;
+    gender;
     password;
     province;
     city;
@@ -38,6 +41,21 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "mobileNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "nationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "nationalIdCardImageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.UserGender),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "gender", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(4),
@@ -90,6 +108,10 @@ __decorate([
 ], CreateUserDto.prototype, "roles", void 0);
 class UpdateUserDto {
     fullName;
+    nationalId;
+    nationalIdCardImageUrl;
+    imageUrl;
+    gender;
     province;
     city;
     description;
@@ -109,6 +131,26 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "fullName", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "nationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", Object)
+], UpdateUserDto.prototype, "nationalIdCardImageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", Object)
+], UpdateUserDto.prototype, "imageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.UserGender),
+    __metadata("design:type", Object)
+], UpdateUserDto.prototype, "gender", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -179,6 +221,9 @@ class CreateQuickPilgrimDto {
     firstName;
     lastName;
     mobileNumber;
+    nationalId;
+    nationalIdCardImageUrl;
+    gender;
     province;
     city;
     password;
@@ -205,6 +250,21 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateQuickPilgrimDto.prototype, "mobileNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "nationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "nationalIdCardImageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.UserGender),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "gender", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -255,6 +315,7 @@ class ListUsersDto {
     role;
     fullName;
     mobileNumber;
+    nationalId;
     province;
     city;
     isActive;
@@ -276,6 +337,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], ListUsersDto.prototype, "mobileNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ListUsersDto.prototype, "nationalId", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -305,6 +371,9 @@ var PilgrimListScope;
 class ListPilgrimsDto extends ListUsersDto {
     scope;
     mawkibId;
+    page;
+    pageSize;
+    all;
 }
 exports.ListPilgrimsDto = ListPilgrimsDto;
 __decorate([
@@ -318,6 +387,27 @@ __decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], ListPilgrimsDto.prototype, "mawkibId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], ListPilgrimsDto.prototype, "page", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(100),
+    __metadata("design:type", Number)
+], ListPilgrimsDto.prototype, "pageSize", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], ListPilgrimsDto.prototype, "all", void 0);
 class SearchPilgrimDto {
     search;
 }

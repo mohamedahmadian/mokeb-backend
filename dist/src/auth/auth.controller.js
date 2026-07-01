@@ -38,6 +38,9 @@ let AuthController = class AuthController {
     login(dto) {
         return this.authService.login(dto);
     }
+    checkMobileRegistered(mobileNumber) {
+        return this.authService.isMobileRegistered(mobileNumber ?? '');
+    }
     me(user) {
         return user;
     }
@@ -74,6 +77,13 @@ __decorate([
     __metadata("design:paramtypes", [login_dto_1.LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Get)('mobile-registered'),
+    __param(0, (0, common_1.Query)('mobileNumber')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "checkMobileRegistered", null);
 __decorate([
     (0, common_1.Get)('me'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

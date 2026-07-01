@@ -21,6 +21,7 @@ const mawkib_inventory_service_1 = require("./mawkib-inventory.service");
 const mawkibInclude = {
     owner: { select: { id: true, fullName: true, mobileNumber: true, province: true, city: true } },
     _count: { select: { reservations: true } },
+    images: { orderBy: { sortOrder: 'asc' } },
 };
 let MawkibsService = class MawkibsService {
     prisma;
@@ -178,6 +179,25 @@ let MawkibsService = class MawkibsService {
             return true;
         });
     }
+    applyListPagination(items, search) {
+        if (search?.all) {
+            return items;
+        }
+        if (search?.page === undefined) {
+            return items;
+        }
+        const pageSize = search.pageSize ?? 10;
+        const page = search.page;
+        const total = items.length;
+        const skip = (page - 1) * pageSize;
+        return {
+            items: items.slice(skip, skip + pageSize),
+            total,
+            page,
+            pageSize,
+            totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        };
+    }
     async findAll(search) {
         const where = {
             status: client_1.MawkibStatus.Approved,
@@ -237,14 +257,17 @@ let MawkibsService = class MawkibsService {
                 owner: {
                     select: { id: true, fullName: true, mobileNumber: true, province: true, city: true },
                 },
+                images: { orderBy: { sortOrder: 'asc' } },
             },
             orderBy: { createdAt: 'desc' },
         });
         if (!this.hasReservationAvailabilitySearch(search)) {
             const enriched = await this.enrichWithTodayCapacity(mawkibs);
-            return this.filterByCapacityView(enriched, search?.capacityFilter);
+            const filtered = this.filterByCapacityView(enriched, search?.capacityFilter);
+            return this.applyListPagination(filtered, search);
         }
-        return this.enrichAndFilterByAvailability(mawkibs, search);
+        const filtered = await this.enrichAndFilterByAvailability(mawkibs, search);
+        return this.applyListPagination(filtered, search);
     }
     async findAllAdmin(search) {
         const mawkibs = await this.prisma.mawkib.findMany({
@@ -253,7 +276,8 @@ let MawkibsService = class MawkibsService {
             orderBy: { createdAt: 'desc' },
         });
         const enriched = await this.enrichWithTodayCapacity(mawkibs);
-        return this.filterByCapacityView(enriched, search?.capacityFilter);
+        const filtered = this.filterByCapacityView(enriched, search?.capacityFilter);
+        return this.applyListPagination(filtered, search);
     }
     async findByOwner(ownerUserId, search) {
         const mawkibs = await this.prisma.mawkib.findMany({
@@ -265,10 +289,43 @@ let MawkibsService = class MawkibsService {
             orderBy: { createdAt: 'desc' },
         });
         if (this.hasReservationAvailabilitySearch(search)) {
-            return this.enrichAndFilterByAvailability(mawkibs, search);
+            const filtered = await this.enrichAndFilterByAvailability(mawkibs, search);
+            return this.applyListPagination(filtered, search);
         }
         const enriched = await this.enrichWithTodayCapacity(mawkibs);
-        return this.filterByCapacityView(enriched, search?.capacityFilter);
+        const filtered = this.filterByCapacityView(enriched, search?.capacityFilter);
+        return this.applyListPagination(filtered, search);
+    }
+    async syncGalleryImages(mawkibId, urls) {
+        if (urls === undefined)
+            return;
+        const normalized = urls.map((url) => url.trim()).filter(Boolean);
+        const existing = await this.prisma.mawkibImage.findMany({
+            where: { mawkibId },
+        });
+        const desiredUrls = new Set(normalized);
+        const toDelete = existing.filter((item) => !desiredUrls.has(item.url));
+        if (toDelete.length > 0) {
+            await this.prisma.mawkibImage.deleteMany({
+                where: { id: { in: toDelete.map((item) => item.id) } },
+            });
+        }
+        for (let index = 0; index < normalized.length; index += 1) {
+            const url = normalized[index];
+            const record = existing.find((item) => item.url === url);
+            if (record) {
+                if (record.sortOrder !== index) {
+                    await this.prisma.mawkibImage.update({
+                        where: { id: record.id },
+                        data: { sortOrder: index },
+                    });
+                }
+                continue;
+            }
+            await this.prisma.mawkibImage.create({
+                data: { mawkibId, url, sortOrder: index },
+            });
+        }
     }
     async findOnePublic(id) {
         const mawkib = await this.prisma.mawkib.findFirst({
@@ -309,7 +366,7 @@ let MawkibsService = class MawkibsService {
         if (!owner) {
             throw new common_1.NotFoundException('مسئول موکب یافت نشد');
         }
-        const { ownerUserId: _ownerUserId, serviceStartDate, serviceEndDate, status, ...fields } = dto;
+        const { ownerUserId: _ownerUserId, serviceStartDate, serviceEndDate, status, galleryImageUrls, ...fields } = dto;
         const created = await this.prisma.mawkib.create({
             data: {
                 ...fields,
@@ -321,7 +378,11 @@ let MawkibsService = class MawkibsService {
             include: mawkibInclude,
         });
         await this.inventoryService.seedHorizonForMawkib(created.id);
-        return created;
+        await this.syncGalleryImages(created.id, galleryImageUrls);
+        return this.prisma.mawkib.findUniqueOrThrow({
+            where: { id: created.id },
+            include: mawkibInclude,
+        });
     }
     async update(id, dto, userId, isAdmin = true) {
         const mawkib = await this.prisma.mawkib.findUnique({ where: { id } });
@@ -335,7 +396,7 @@ let MawkibsService = class MawkibsService {
         }
         const ownerUserId = isAdmin ? dto.ownerUserId : undefined;
         const status = isAdmin ? dto.status : undefined;
-        const { ownerUserId: _o, status: _s, serviceStartDate, serviceEndDate, ...fields } = dto;
+        const { ownerUserId: _o, status: _s, serviceStartDate, serviceEndDate, galleryImageUrls, ...fields } = dto;
         const data = {
             ...fields,
             ...(serviceStartDate !== undefined && {
@@ -358,11 +419,19 @@ let MawkibsService = class MawkibsService {
                 data.owner = { connect: { id: ownerUserId } };
             }
         }
-        return this.prisma.mawkib.update({
+        const updated = await this.prisma.mawkib.update({
             where: { id },
             data,
             include: mawkibInclude,
         });
+        await this.syncGalleryImages(id, galleryImageUrls);
+        if (galleryImageUrls !== undefined) {
+            return this.prisma.mawkib.findUniqueOrThrow({
+                where: { id },
+                include: mawkibInclude,
+            });
+        }
+        return updated;
     }
     async remove(id) {
         await this.findOne(id);

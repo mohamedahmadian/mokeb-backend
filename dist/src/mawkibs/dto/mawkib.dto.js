@@ -102,6 +102,7 @@ class CreateMawkibDto {
     maleCapacity;
     femaleCapacity;
     imageUrl;
+    galleryImageUrls;
     distanceToShrine;
     lunchReception;
     breakfastReception;
@@ -112,6 +113,7 @@ class CreateMawkibDto {
     internet;
     familyFriendly;
     maxReservationDays;
+    defaultReservationDays;
     country;
     mawkibCity;
     rules;
@@ -194,6 +196,12 @@ __decorate([
 ], CreateMawkibDto.prototype, "imageUrl", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], CreateMawkibDto.prototype, "galleryImageUrls", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateMawkibDto.prototype, "distanceToShrine", void 0);
@@ -244,6 +252,13 @@ __decorate([
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateMawkibDto.prototype, "maxReservationDays", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], CreateMawkibDto.prototype, "defaultReservationDays", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.MawkibCountry),
@@ -328,6 +343,7 @@ class UpdateMawkibDto {
     maleCapacity;
     femaleCapacity;
     imageUrl;
+    galleryImageUrls;
     distanceToShrine;
     lunchReception;
     breakfastReception;
@@ -338,6 +354,7 @@ class UpdateMawkibDto {
     internet;
     familyFriendly;
     maxReservationDays;
+    defaultReservationDays;
     country;
     mawkibCity;
     rules;
@@ -418,9 +435,16 @@ __decorate([
 ], UpdateMawkibDto.prototype, "femaleCapacity", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.ValidateIf)((_obj, value) => value !== null),
     (0, class_validator_1.IsString)(),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], UpdateMawkibDto.prototype, "imageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], UpdateMawkibDto.prototype, "galleryImageUrls", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -473,6 +497,13 @@ __decorate([
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], UpdateMawkibDto.prototype, "maxReservationDays", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], UpdateMawkibDto.prototype, "defaultReservationDays", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(client_1.MawkibCountry),
@@ -561,6 +592,9 @@ class SearchMawkibDto extends MawkibAmenitySearchFields {
     serviceStartTo;
     serviceEndFrom;
     serviceEndTo;
+    page;
+    pageSize;
+    all;
 }
 exports.SearchMawkibDto = SearchMawkibDto;
 __decorate([
@@ -648,6 +682,27 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], SearchMawkibDto.prototype, "serviceEndTo", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], SearchMawkibDto.prototype, "page", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(100),
+    __metadata("design:type", Number)
+], SearchMawkibDto.prototype, "pageSize", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], SearchMawkibDto.prototype, "all", void 0);
 class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
     name;
     phoneNumber;
@@ -667,6 +722,9 @@ class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
     minAvailableMaleCapacity;
     minAvailableFemaleCapacity;
     hasAvailability;
+    page;
+    pageSize;
+    all;
 }
 exports.AdminSearchMawkibDto = AdminSearchMawkibDto;
 __decorate([
@@ -765,6 +823,27 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], AdminSearchMawkibDto.prototype, "hasAvailability", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], AdminSearchMawkibDto.prototype, "page", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(100),
+    __metadata("design:type", Number)
+], AdminSearchMawkibDto.prototype, "pageSize", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], AdminSearchMawkibDto.prototype, "all", void 0);
 class MawkibInventoryQueryDto {
     startDate;
     endDate;

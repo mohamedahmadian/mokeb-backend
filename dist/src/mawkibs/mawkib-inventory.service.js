@@ -124,6 +124,22 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
             throw new common_1.BadRequestException(`بازه درخواستی از محدوده ${horizon.horizonDays} روز آینده فراتر می‌رود. آخرین تاریخ مجاز: ${horizon.maxDate}`);
         }
     }
+    assertDateRangeForMawkib(startDate, endDate, serviceStartDate, serviceEndDate) {
+        const start = (0, date_util_1.parseDateOnly)(startDate);
+        const end = (0, date_util_1.parseDateOnly)(endDate);
+        if (end < start) {
+            throw new common_1.BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
+        }
+        if (serviceStartDate && serviceEndDate) {
+            const svcStart = (0, date_util_1.parseDateOnly)(serviceStartDate);
+            const svcEnd = (0, date_util_1.parseDateOnly)(serviceEndDate);
+            if (start < svcStart || end > svcEnd) {
+                throw new common_1.BadRequestException(`بازه درخواستی باید در محدوده ارائه خدمت موکب باشد: ${(0, date_util_1.formatDateOnly)(svcStart)} تا ${(0, date_util_1.formatDateOnly)(svcEnd)}`);
+            }
+            return;
+        }
+        this.assertDateRangeWithinHorizon(startDate, endDate);
+    }
     async ensureInitialized(mawkibId) {
         const count = await this.prisma.mawkibDailyInventory.count({
             where: { mawkibId },
@@ -247,12 +263,19 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
     async getInventoryRange(mawkibId, startDate, endDate) {
         const mawkib = await this.prisma.mawkib.findUnique({
             where: { id: mawkibId },
-            select: { id: true, name: true, maleCapacity: true, femaleCapacity: true },
+            select: {
+                id: true,
+                name: true,
+                maleCapacity: true,
+                femaleCapacity: true,
+                serviceStartDate: true,
+                serviceEndDate: true,
+            },
         });
         if (!mawkib) {
             throw new common_1.NotFoundException('موکب یافت نشد');
         }
-        this.assertDateRangeWithinHorizon(startDate, endDate);
+        this.assertDateRangeForMawkib(startDate, endDate, mawkib.serviceStartDate, mawkib.serviceEndDate);
         const start = (0, date_util_1.parseDateOnly)(startDate);
         const end = (0, date_util_1.parseDateOnly)(endDate);
         await this.ensureInitialized(mawkibId);

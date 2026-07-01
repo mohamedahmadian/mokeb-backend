@@ -187,6 +187,34 @@ export class MawkibInventoryService implements OnModuleInit {
     }
   }
 
+  assertDateRangeForMawkib(
+    startDate: Date | string,
+    endDate: Date | string,
+    serviceStartDate: Date | null,
+    serviceEndDate: Date | null,
+  ) {
+    const start = parseDateOnly(startDate);
+    const end = parseDateOnly(endDate);
+
+    if (end < start) {
+      throw new BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
+    }
+
+    if (serviceStartDate && serviceEndDate) {
+      const svcStart = parseDateOnly(serviceStartDate);
+      const svcEnd = parseDateOnly(serviceEndDate);
+
+      if (start < svcStart || end > svcEnd) {
+        throw new BadRequestException(
+          `بازه درخواستی باید در محدوده ارائه خدمت موکب باشد: ${formatDateOnly(svcStart)} تا ${formatDateOnly(svcEnd)}`,
+        );
+      }
+      return;
+    }
+
+    this.assertDateRangeWithinHorizon(startDate, endDate);
+  }
+
   async ensureInitialized(mawkibId: number) {
     const count = await this.prisma.mawkibDailyInventory.count({
       where: { mawkibId },
@@ -380,14 +408,26 @@ export class MawkibInventoryService implements OnModuleInit {
   ): Promise<MawkibInventoryRangeResult> {
     const mawkib = await this.prisma.mawkib.findUnique({
       where: { id: mawkibId },
-      select: { id: true, name: true, maleCapacity: true, femaleCapacity: true },
+      select: {
+        id: true,
+        name: true,
+        maleCapacity: true,
+        femaleCapacity: true,
+        serviceStartDate: true,
+        serviceEndDate: true,
+      },
     });
 
     if (!mawkib) {
       throw new NotFoundException('موکب یافت نشد');
     }
 
-    this.assertDateRangeWithinHorizon(startDate, endDate);
+    this.assertDateRangeForMawkib(
+      startDate,
+      endDate,
+      mawkib.serviceStartDate,
+      mawkib.serviceEndDate,
+    );
 
     const start = parseDateOnly(startDate);
     const end = parseDateOnly(endDate);

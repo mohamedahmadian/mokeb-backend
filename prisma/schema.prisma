@@ -59,10 +59,19 @@ enum HonoraryVolunteerApplicantType {
   MawkibOwner
 }
 
+enum UserGender {
+  Male
+  Female
+}
+
 model User {
-  id           Int      @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   fullName     String
-  mobileNumber String   @unique
+  mobileNumber String      @unique
+  nationalId   String?
+  nationalIdCardImageUrl String?
+  imageUrl             String?
+  gender       UserGender?
   passwordHash String
   province     String?
   city         String?
@@ -148,6 +157,7 @@ model Mawkib {
   internet             Boolean  @default(false)
   familyFriendly       Boolean  @default(false)
   maxReservationDays   Int?
+  defaultReservationDays Int?
   country              MawkibCountry @default(Iran)
   mawkibCity           MawkibCity?
   rules                String?
@@ -168,8 +178,22 @@ model Mawkib {
   dailyInventory MawkibDailyInventory[]
   honoraryVolunteerApplications HonoraryVolunteerApplication[]
   feedbacks    MawkibFeedback[]
+  images       MawkibImage[]
 
   @@map("mawkibs")
+}
+
+model MawkibImage {
+  id        Int      @id @default(autoincrement())
+  mawkibId  Int
+  url       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  mawkib Mawkib @relation(fields: [mawkibId], references: [id], onDelete: Cascade)
+
+  @@index([mawkibId, sortOrder])
+  @@map("mawkib_images")
 }
 
 model MawkibDailyInventory {

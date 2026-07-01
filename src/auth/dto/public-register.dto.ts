@@ -19,6 +19,14 @@ export class RegisterPilgrimDto {
   @IsNotEmpty()
   mobileNumber: string;
 
+  @IsOptional()
+  @IsString()
+  nationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  nationalIdCardImageUrl?: string;
+
   @IsString()
   @IsPinPassword()
   password: string;
@@ -64,6 +72,10 @@ export class RegisterMawkibOwnerDto {
   @IsString()
   @IsNotEmpty()
   mobileNumber: string;
+
+  @IsOptional()
+  @IsString()
+  nationalId?: string;
 
   @IsString()
   @IsPinPassword()

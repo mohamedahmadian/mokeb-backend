@@ -92,7 +92,7 @@ let ReservationsService = class ReservationsService {
                 mode: 'insensitive',
             };
         }
-        if (search.pilgrimName || search.pilgrimMobile) {
+        if (search.pilgrimName || search.pilgrimMobile || search.pilgrimNationalId) {
             const pilgrimFilters = [];
             if (search.pilgrimName) {
                 pilgrimFilters.push({
@@ -115,6 +115,16 @@ let ReservationsService = class ReservationsService {
                         ]),
                     });
                 }
+            }
+            if (search.pilgrimNationalId?.trim()) {
+                pilgrimFilters.push({
+                    pilgrim: {
+                        nationalId: {
+                            contains: search.pilgrimNationalId.trim(),
+                            mode: 'insensitive',
+                        },
+                    },
+                });
             }
             if (pilgrimFilters.length === 1) {
                 Object.assign(where, pilgrimFilters[0]);
@@ -144,13 +154,33 @@ let ReservationsService = class ReservationsService {
             return true;
         });
     }
+    applyListPagination(items, search) {
+        if (search?.all) {
+            return items;
+        }
+        if (search?.page === undefined) {
+            return items;
+        }
+        const pageSize = search.pageSize ?? 10;
+        const page = search.page;
+        const total = items.length;
+        const skip = (page - 1) * pageSize;
+        return {
+            items: items.slice(skip, skip + pageSize),
+            total,
+            page,
+            pageSize,
+            totalPages: Math.max(1, Math.ceil(total / pageSize)),
+        };
+    }
     async findAllAdmin(search) {
         const items = await this.prisma.reservation.findMany({
             where: this.buildSearchWhere(search),
             include: reservationInclude,
             orderBy: { createdAt: 'desc' },
         });
-        return this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search);
+        const filtered = this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search);
+        return this.applyListPagination(filtered, search);
     }
     async findByPilgrim(pilgrimUserId, search) {
         const items = await this.prisma.reservation.findMany({
@@ -161,7 +191,8 @@ let ReservationsService = class ReservationsService {
             include: reservationInclude,
             orderBy: { createdAt: 'desc' },
         });
-        return this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search);
+        const filtered = this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search);
+        return this.applyListPagination(filtered, search);
     }
     async findByMawkibOwner(ownerUserId, search) {
         const mawkibs = await this.prisma.mawkib.findMany({
@@ -170,7 +201,7 @@ let ReservationsService = class ReservationsService {
         });
         const mawkibIds = mawkibs.map((m) => m.id);
         if (search?.mawkibId && !mawkibIds.includes(search.mawkibId)) {
-            return [];
+            return this.applyListPagination([], search);
         }
         const { mawkibId, ...rest } = search ?? {};
         const items = await this.prisma.reservation.findMany({
@@ -181,8 +212,8 @@ let ReservationsService = class ReservationsService {
             include: reservationInclude,
             orderBy: { createdAt: 'desc' },
         });
-        let filtered = this.filterByGuestCountTotal(items, search);
-        return this.filterReservationsByMobileSearch(filtered, search);
+        const filtered = this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search);
+        return this.applyListPagination(filtered, search);
     }
     filterReservationsByMobileSearch(items, search) {
         if (!search?.pilgrimMobile?.trim())
@@ -429,6 +460,8 @@ let ReservationsService = class ReservationsService {
             province: dto.province,
             city: dto.city,
             password: dto.password?.trim() || undefined,
+            nationalId: dto.nationalId,
+            nationalIdCardImageUrl: dto.nationalIdCardImageUrl,
         });
         await this.assertNoConflictingReservation({
             pilgrimUserId: pilgrim.id,

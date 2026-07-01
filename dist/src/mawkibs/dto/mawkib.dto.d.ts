@@ -30,6 +30,7 @@ export declare class CreateMawkibDto {
     maleCapacity: number;
     femaleCapacity: number;
     imageUrl?: string;
+    galleryImageUrls?: string[];
     distanceToShrine?: string;
     lunchReception?: boolean;
     breakfastReception?: boolean;
@@ -40,6 +41,7 @@ export declare class CreateMawkibDto {
     internet?: boolean;
     familyFriendly?: boolean;
     maxReservationDays?: number;
+    defaultReservationDays?: number;
     country?: MawkibCountry;
     mawkibCity?: MawkibCity;
     rules?: string;
@@ -67,7 +69,8 @@ export declare class UpdateMawkibDto {
     serviceEndDate?: string;
     maleCapacity?: number;
     femaleCapacity?: number;
-    imageUrl?: string;
+    imageUrl?: string | null;
+    galleryImageUrls?: string[];
     distanceToShrine?: string;
     lunchReception?: boolean;
     breakfastReception?: boolean;
@@ -78,6 +81,7 @@ export declare class UpdateMawkibDto {
     internet?: boolean;
     familyFriendly?: boolean;
     maxReservationDays?: number;
+    defaultReservationDays?: number;
     country?: MawkibCountry;
     mawkibCity?: MawkibCity;
     rules?: string;
@@ -109,6 +113,9 @@ export declare class SearchMawkibDto extends MawkibAmenitySearchFields {
     serviceStartTo?: string;
     serviceEndFrom?: string;
     serviceEndTo?: string;
+    page?: number;
+    pageSize?: number;
+    all?: boolean;
 }
 export declare class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
     name?: string;
@@ -129,6 +136,9 @@ export declare class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
     minAvailableMaleCapacity?: number;
     minAvailableFemaleCapacity?: number;
     hasAvailability?: boolean;
+    page?: number;
+    pageSize?: number;
+    all?: boolean;
 }
 export declare class MawkibInventoryQueryDto {
     startDate: string;

@@ -49,6 +49,7 @@ export declare class MawkibInventoryService implements OnModuleInit {
     private isInventoryStale;
     getHorizonMeta(fromDate?: Date | string): MawkibInventoryHorizonMeta;
     assertDateRangeWithinHorizon(startDate: Date | string, endDate: Date | string): void;
+    assertDateRangeForMawkib(startDate: Date | string, endDate: Date | string, serviceStartDate: Date | null, serviceEndDate: Date | null): void;
     ensureInitialized(mawkibId: number): Promise<void>;
     ensureDayRows(mawkibId: number, startDate: Date, endDate: Date): Promise<void>;
     seedHorizonForMawkib(mawkibId: number): Promise<void>;

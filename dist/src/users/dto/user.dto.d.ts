@@ -1,7 +1,10 @@
-import { RoleName } from '@prisma/client';
+import { RoleName, UserGender } from '@prisma/client';
 export declare class CreateUserDto {
     fullName: string;
     mobileNumber: string;
+    nationalId?: string;
+    nationalIdCardImageUrl?: string;
+    gender?: UserGender;
     password: string;
     province?: string;
     city?: string;
@@ -15,6 +18,10 @@ export declare class CreateUserDto {
 }
 export declare class UpdateUserDto {
     fullName?: string;
+    nationalId?: string;
+    nationalIdCardImageUrl?: string | null;
+    imageUrl?: string | null;
+    gender?: UserGender | null;
     province?: string;
     city?: string;
     description?: string;
@@ -34,6 +41,9 @@ export declare class CreateQuickPilgrimDto {
     firstName: string;
     lastName: string;
     mobileNumber: string;
+    nationalId?: string;
+    nationalIdCardImageUrl?: string;
+    gender?: UserGender;
     province?: string;
     city?: string;
     password?: string;
@@ -48,6 +58,7 @@ export declare class ListUsersDto {
     role?: RoleName;
     fullName?: string;
     mobileNumber?: string;
+    nationalId?: string;
     province?: string;
     city?: string;
     isActive?: boolean;
@@ -60,6 +71,9 @@ export declare enum PilgrimListScope {
 export declare class ListPilgrimsDto extends ListUsersDto {
     scope?: PilgrimListScope;
     mawkibId?: number;
+    page?: number;
+    pageSize?: number;
+    all?: boolean;
 }
 export declare class SearchPilgrimDto {
     search?: string;
