@@ -4,8 +4,10 @@ exports.DEFAULT_CHECK_OUT_TIME = exports.DEFAULT_CHECK_IN_TIME = void 0;
 exports.isValidTimeString = isValidTimeString;
 exports.normalizeTimeString = normalizeTimeString;
 exports.resolvePlannedTimes = resolvePlannedTimes;
+exports.lastPlannedOccupiedDay = lastPlannedOccupiedDay;
 exports.reservationOccupiesDay = reservationOccupiesDay;
 exports.reservationOccupiedDays = reservationOccupiedDays;
+exports.occupancyDaysDeltaOnEndDateChange = occupancyDaysDeltaOnEndDateChange;
 exports.reservationDaysReleasedOnCheckout = reservationDaysReleasedOnCheckout;
 exports.reservationOverlapsDateRange = reservationOverlapsDateRange;
 const date_util_1 = require("../common/utils/date.util");
@@ -34,44 +36,56 @@ function resolvePlannedTimes(input, mawkib) {
             exports.DEFAULT_CHECK_OUT_TIME,
     };
 }
+function lastPlannedOccupiedDay(reservationDate, reservationEndDate) {
+    const start = (0, date_util_1.parseDateOnly)(reservationDate);
+    const end = (0, date_util_1.parseDateOnly)(reservationEndDate);
+    if (end <= start) {
+        if (end < start)
+            return start;
+        return (0, date_util_1.addDays)(start, -1);
+    }
+    return (0, date_util_1.addDays)(end, -1);
+}
 function reservationOccupiesDay(reservation, day) {
     const start = (0, date_util_1.parseDateOnly)(reservation.reservationDate);
     const end = (0, date_util_1.parseDateOnly)(reservation.reservationEndDate);
     const d = (0, date_util_1.parseDateOnly)(day);
-    if (d < start || d > end)
+    if (end < start)
         return false;
-    if (reservation.actualCheckOutAt) {
-        const checkoutDay = (0, date_util_1.parseDateOnly)(reservation.actualCheckOutAt);
-        if (d >= checkoutDay)
-            return false;
+    if (start.getTime() === end.getTime()) {
+        return false;
+    }
+    if (d < start || d >= end) {
+        return false;
     }
     return true;
 }
 function reservationOccupiedDays(reservation) {
-    const start = (0, date_util_1.parseDateOnly)(reservation.reservationDate);
-    const end = (0, date_util_1.parseDateOnly)(reservation.reservationEndDate);
-    const days = [];
-    const cursor = new Date(start);
-    while (cursor <= end) {
-        if (reservationOccupiesDay(reservation, cursor)) {
-            days.push(new Date(cursor));
+    return (0, date_util_1.eachOccupancyDayInStay)(reservation.reservationDate, reservation.reservationEndDate).map((day) => new Date(day));
+}
+function occupancyDaysDeltaOnEndDateChange(reservationDate, previousEndDate, newEndDate) {
+    const previousDays = new Set((0, date_util_1.eachOccupancyDayInStay)(reservationDate, previousEndDate).map((day) => day.toISOString()));
+    const newDays = new Set((0, date_util_1.eachOccupancyDayInStay)(reservationDate, newEndDate).map((day) => day.toISOString()));
+    const released = [];
+    const occupied = [];
+    for (const iso of previousDays) {
+        if (!newDays.has(iso)) {
+            released.push(new Date(iso));
         }
-        cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
-    return days;
+    for (const iso of newDays) {
+        if (!previousDays.has(iso)) {
+            occupied.push(new Date(iso));
+        }
+    }
+    return { released, occupied };
 }
 function reservationDaysReleasedOnCheckout(reservation) {
     if (!reservation.actualCheckOutAt)
         return [];
     const checkoutDay = (0, date_util_1.parseDateOnly)(reservation.actualCheckOutAt);
-    const end = (0, date_util_1.parseDateOnly)(reservation.reservationEndDate);
-    const days = [];
-    const cursor = new Date(checkoutDay);
-    while (cursor <= end) {
-        days.push(new Date(cursor));
-        cursor.setUTCDate(cursor.getUTCDate() + 1);
-    }
-    return days;
+    const { released } = occupancyDaysDeltaOnEndDateChange(reservation.reservationDate, reservation.reservationEndDate, checkoutDay);
+    return released;
 }
 function reservationOverlapsDateRange(reservation, startDate, endDate) {
     const rangeStart = (0, date_util_1.parseDateOnly)(startDate);

@@ -5,6 +5,9 @@ export declare class CreateUserDto {
     nationalId?: string;
     nationalIdCardImageUrl?: string;
     gender?: UserGender;
+    birthDate?: string;
+    country?: string;
+    passportNumber?: string;
     password: string;
     province?: string;
     city?: string;
@@ -22,6 +25,9 @@ export declare class UpdateUserDto {
     nationalIdCardImageUrl?: string | null;
     imageUrl?: string | null;
     gender?: UserGender | null;
+    birthDate?: string | null;
+    country?: string | null;
+    passportNumber?: string | null;
     province?: string;
     city?: string;
     description?: string;
@@ -44,6 +50,9 @@ export declare class CreateQuickPilgrimDto {
     nationalId?: string;
     nationalIdCardImageUrl?: string;
     gender?: UserGender;
+    birthDate?: string;
+    country?: string;
+    passportNumber?: string;
     province?: string;
     city?: string;
     password?: string;

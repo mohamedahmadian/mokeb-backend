@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
 const mawkib_search_utils_1 = require("./mawkib-search.utils");
+const mawkib_reservation_constants_1 = require("./mawkib-reservation.constants");
 const mawkib_dto_1 = require("./dto/mawkib.dto");
 const date_util_1 = require("../common/utils/date.util");
 const capacity_types_1 = require("../common/types/capacity.types");
@@ -90,7 +91,7 @@ let MawkibsService = class MawkibsService {
         }
         return items.filter((m) => m.availableMaleCapacity <= 0 && m.availableFemaleCapacity <= 0);
     }
-    async enrichWithTodayCapacity(mawkibs, day = new Date()) {
+    async enrichWithTodayCapacity(mawkibs, day = (0, date_util_1.startOfAppDay)()) {
         const snapshots = await this.inventoryService.getSnapshotsForMawkibsOnDate(mawkibs, day);
         return mawkibs.map((mawkib) => {
             const snapshot = snapshots.get(mawkib.id);
@@ -135,9 +136,10 @@ let MawkibsService = class MawkibsService {
             enriched = await this.enrichWithTodayCapacity(mawkibs);
         }
         return enriched.filter((m) => {
-            if (rangeStart && m.maxReservationDays) {
-                const dayCount = (0, date_util_1.eachDateInRange)((0, date_util_1.parseDateOnly)(rangeStart), (0, date_util_1.parseDateOnly)(rangeEnd ?? rangeStart)).length;
-                if (dayCount > m.maxReservationDays)
+            if (rangeStart) {
+                const maxDays = (0, mawkib_reservation_constants_1.effectiveMaxReservationDays)(m.maxReservationDays);
+                const stayDays = (0, date_util_1.reservationStayDayCount)((0, date_util_1.parseDateOnly)(rangeStart), (0, date_util_1.parseDateOnly)(rangeEnd ?? rangeStart));
+                if (stayDays > maxDays)
                     return false;
             }
             if (rangeStart && m.serviceStartDate) {
@@ -198,9 +200,16 @@ let MawkibsService = class MawkibsService {
             totalPages: Math.max(1, Math.ceil(total / pageSize)),
         };
     }
+    publicMawkibVisibilityWhere() {
+        return {
+            serviceStartDate: { not: null },
+            serviceEndDate: { not: null },
+        };
+    }
     async findAll(search) {
         const where = {
             status: client_1.MawkibStatus.Approved,
+            ...this.publicMawkibVisibilityWhere(),
             ...(search?.name && {
                 name: { contains: search.name, mode: 'insensitive' },
             }),
@@ -223,12 +232,14 @@ let MawkibsService = class MawkibsService {
         }
         if (search?.serviceStartFrom || search?.serviceStartTo) {
             where.serviceStartDate = {
+                not: null,
                 ...(search.serviceStartFrom && { gte: new Date(search.serviceStartFrom) }),
                 ...(search.serviceStartTo && { lte: new Date(search.serviceStartTo) }),
             };
         }
         if (search?.serviceEndFrom || search?.serviceEndTo) {
             where.serviceEndDate = {
+                not: null,
                 ...(search.serviceEndFrom && { gte: new Date(search.serviceEndFrom) }),
                 ...(search.serviceEndTo && { lte: new Date(search.serviceEndTo) }),
             };
@@ -329,7 +340,11 @@ let MawkibsService = class MawkibsService {
     }
     async findOnePublic(id) {
         const mawkib = await this.prisma.mawkib.findFirst({
-            where: { id, status: client_1.MawkibStatus.Approved },
+            where: {
+                id,
+                status: client_1.MawkibStatus.Approved,
+                ...this.publicMawkibVisibilityWhere(),
+            },
             include: mawkibInclude,
         });
         if (!mawkib) {
@@ -366,10 +381,15 @@ let MawkibsService = class MawkibsService {
         if (!owner) {
             throw new common_1.NotFoundException('مسئول موکب یافت نشد');
         }
-        const { ownerUserId: _ownerUserId, serviceStartDate, serviceEndDate, status, galleryImageUrls, ...fields } = dto;
+        const { ownerUserId: _ownerUserId, serviceStartDate, serviceEndDate, status, galleryImageUrls, maxReservationDays, defaultReservationDays, ...fields } = dto;
+        const reservationDayFields = (0, mawkib_reservation_constants_1.normalizeMawkibReservationDayFields)({
+            maxReservationDays,
+            defaultReservationDays,
+        });
         const created = await this.prisma.mawkib.create({
             data: {
                 ...fields,
+                ...reservationDayFields,
                 serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : undefined,
                 serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : undefined,
                 status: isAdmin ? (status ?? client_1.MawkibStatus.Approved) : client_1.MawkibStatus.Pending,
@@ -396,9 +416,16 @@ let MawkibsService = class MawkibsService {
         }
         const ownerUserId = isAdmin ? dto.ownerUserId : undefined;
         const status = isAdmin ? dto.status : undefined;
-        const { ownerUserId: _o, status: _s, serviceStartDate, serviceEndDate, galleryImageUrls, ...fields } = dto;
+        const { ownerUserId: _o, status: _s, serviceStartDate, serviceEndDate, galleryImageUrls, maxReservationDays, defaultReservationDays, ...fields } = dto;
+        const reservationDayFields = maxReservationDays !== undefined || defaultReservationDays !== undefined
+            ? (0, mawkib_reservation_constants_1.normalizeMawkibReservationDayFields)({
+                maxReservationDays: maxReservationDays ?? mawkib.maxReservationDays,
+                defaultReservationDays: defaultReservationDays ?? mawkib.defaultReservationDays,
+            })
+            : {};
         const data = {
             ...fields,
+            ...reservationDayFields,
             ...(serviceStartDate !== undefined && {
                 serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
             }),
@@ -465,7 +492,7 @@ let MawkibsService = class MawkibsService {
         });
     }
     async getInventoryHorizon() {
-        return this.inventoryService.getHorizonMeta(new Date());
+        return this.inventoryService.getHorizonMeta();
     }
     async getCapacitySnapshotsForMawkibs(mawkibs, day) {
         return this.inventoryService.getSnapshotsForMawkibsOnDate(mawkibs, day);
@@ -493,8 +520,8 @@ let MawkibsService = class MawkibsService {
     async syncInventoryOnReservationCancelled(reservation) {
         await this.inventoryService.applyReservationOccupancy(reservation, -1);
     }
-    async syncInventoryOnEarlyCheckout(reservation) {
-        await this.inventoryService.applyEarlyCheckoutRelease(reservation);
+    async syncInventoryOnEndDateChange(reservation, previousEndDate, newEndDate) {
+        await this.inventoryService.applyEndDateChange(reservation, previousEndDate, newEndDate);
     }
     async getCapacitySnapshot(mawkibId, reservationDate) {
         const mawkib = await this.prisma.mawkib.findUnique({
@@ -503,7 +530,7 @@ let MawkibsService = class MawkibsService {
         if (!mawkib) {
             throw new common_1.NotFoundException('موکب یافت نشد');
         }
-        const dateFilter = (0, date_util_1.parseDateOnly)(reservationDate ?? new Date());
+        const dateFilter = (0, date_util_1.parseDateOnly)(reservationDate ?? (0, date_util_1.startOfAppDay)());
         return this.inventoryService.getCapacitySnapshotFromInventory(mawkibId, dateFilter, mawkib.maleCapacity, mawkib.femaleCapacity);
     }
     async getMinCapacityInRange(mawkibId, startDate, endDate) {
@@ -584,11 +611,12 @@ let MawkibsService = class MawkibsService {
             where: { id: mawkibId },
             select: { maxReservationDays: true },
         });
-        if (!mawkib?.maxReservationDays)
+        if (!mawkib)
             return;
-        const days = (0, date_util_1.eachDateInRange)((0, date_util_1.parseDateOnly)(startDate), (0, date_util_1.parseDateOnly)(endDate)).length;
-        if (days > mawkib.maxReservationDays) {
-            throw new common_1.BadRequestException(`حداکثر بازه رزرو برای این موکب ${mawkib.maxReservationDays} روز است`);
+        const maxDays = (0, mawkib_reservation_constants_1.effectiveMaxReservationDays)(mawkib.maxReservationDays);
+        const stayDays = (0, date_util_1.reservationStayDayCount)((0, date_util_1.parseDateOnly)(startDate), (0, date_util_1.parseDateOnly)(endDate));
+        if (stayDays > maxDays) {
+            throw new common_1.BadRequestException(`حداکثر بازه رزرو برای این موکب ${maxDays} روز است`);
         }
     }
     async assertOwnerAccess(mawkibId, userId) {

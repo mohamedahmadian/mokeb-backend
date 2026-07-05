@@ -19,6 +19,9 @@ class CreateUserDto {
     nationalId;
     nationalIdCardImageUrl;
     gender;
+    birthDate;
+    country;
+    passportNumber;
     password;
     province;
     city;
@@ -56,6 +59,21 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.UserGender),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "gender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "country", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "passportNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(4),
@@ -112,6 +130,9 @@ class UpdateUserDto {
     nationalIdCardImageUrl;
     imageUrl;
     gender;
+    birthDate;
+    country;
+    passportNumber;
     province;
     city;
     description;
@@ -151,6 +172,21 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.UserGender),
     __metadata("design:type", Object)
 ], UpdateUserDto.prototype, "gender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", Object)
+], UpdateUserDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", Object)
+], UpdateUserDto.prototype, "country", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", Object)
+], UpdateUserDto.prototype, "passportNumber", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -224,6 +260,9 @@ class CreateQuickPilgrimDto {
     nationalId;
     nationalIdCardImageUrl;
     gender;
+    birthDate;
+    country;
+    passportNumber;
     province;
     city;
     password;
@@ -265,6 +304,21 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.UserGender),
     __metadata("design:type", String)
 ], CreateQuickPilgrimDto.prototype, "gender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "country", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "passportNumber", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

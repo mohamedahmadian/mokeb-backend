@@ -1,15 +1,36 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.APP_TIMEZONE = void 0;
 exports.parseDateOnly = parseDateOnly;
+exports.formatDateOnlyInAppTz = formatDateOnlyInAppTz;
+exports.startOfAppDay = startOfAppDay;
+exports.todayDateStringInAppTz = todayDateStringInAppTz;
 exports.addDays = addDays;
 exports.formatDateOnly = formatDateOnly;
 exports.eachDateInRange = eachDateInRange;
+exports.reservationStayDayCount = reservationStayDayCount;
+exports.eachOccupancyDayInStay = eachOccupancyDayInStay;
 function parseDateOnly(value) {
     if (value instanceof Date) {
         return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
     }
     const [y, m, d] = value.split('T')[0].split('-').map(Number);
     return new Date(Date.UTC(y, m - 1, d));
+}
+exports.APP_TIMEZONE = 'Asia/Tehran';
+function formatDateOnlyInAppTz(date, timeZone = exports.APP_TIMEZONE) {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(date);
+}
+function startOfAppDay(date = new Date(), timeZone = exports.APP_TIMEZONE) {
+    return parseDateOnly(formatDateOnlyInAppTz(date, timeZone));
+}
+function todayDateStringInAppTz(timeZone = exports.APP_TIMEZONE) {
+    return formatDateOnlyInAppTz(new Date(), timeZone);
 }
 function addDays(date, days) {
     const result = parseDateOnly(date);
@@ -31,5 +52,20 @@ function eachDateInRange(start, end) {
         cur.setUTCDate(cur.getUTCDate() + 1);
     }
     return dates;
+}
+function reservationStayDayCount(startDate, endDate) {
+    const start = parseDateOnly(startDate);
+    const end = parseDateOnly(endDate);
+    return Math.round((end.getTime() - start.getTime()) / 86_400_000);
+}
+function eachOccupancyDayInStay(startDate, endDate) {
+    const start = parseDateOnly(startDate);
+    const end = parseDateOnly(endDate);
+    if (end < start)
+        return [];
+    if (start.getTime() === end.getTime()) {
+        return [];
+    }
+    return eachDateInRange(start, addDays(end, -1));
 }
 //# sourceMappingURL=date.util.js.map

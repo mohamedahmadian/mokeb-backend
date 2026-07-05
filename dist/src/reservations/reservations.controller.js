@@ -37,6 +37,15 @@ let ReservationsController = class ReservationsController {
         }
         return this.reservationsService.findByPilgrim(user.id, search);
     }
+    getPendingCounts(user) {
+        return this.reservationsService.getPendingCountsByMawkib(user);
+    }
+    findLatestForPilgrimCard(pilgrimUserId, user, ownerScope) {
+        return this.reservationsService.findLatestForPilgrimCard(pilgrimUserId, user, ownerScope === 'true');
+    }
+    trackByMobile(query) {
+        return this.reservationsService.findRecentByMobileForGuest(query.mobileNumber);
+    }
     findOne(id, user) {
         return this.reservationsService.findOneForUser(id, user);
     }
@@ -48,6 +57,9 @@ let ReservationsController = class ReservationsController {
     }
     cancel(id, dto, user) {
         return this.reservationsService.cancel(id, dto, user);
+    }
+    extend(id, dto, user) {
+        return this.reservationsService.extend(id, dto, user);
     }
     checkIn(id, dto, user) {
         return this.reservationsService.checkIn(id, user, dto);
@@ -105,6 +117,33 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "findMy", null);
 __decorate([
+    (0, common_1.Get)('pending-counts'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "getPendingCounts", null);
+__decorate([
+    (0, common_1.Get)('pilgrim-card/:pilgrimUserId'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('pilgrimUserId', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Query)('ownerScope')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object, String]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "findLatestForPilgrimCard", null);
+__decorate([
+    (0, common_1.Get)('track-by-mobile'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [reservation_dto_1.TrackByMobileDto]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "trackByMobile", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
@@ -140,6 +179,15 @@ __decorate([
     __metadata("design:paramtypes", [Number, reservation_dto_1.CancelReservationDto, Object]),
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "cancel", null);
+__decorate([
+    (0, common_1.Post)(':id/extend'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, reservation_dto_1.ExtendReservationDto, Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "extend", null);
 __decorate([
     (0, common_1.Post)(':id/check-in'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

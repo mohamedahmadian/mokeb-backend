@@ -12,22 +12,25 @@ export declare function resolvePlannedTimes(input: {
     plannedCheckInTime: string;
     plannedCheckOutTime: string;
 };
+export declare function lastPlannedOccupiedDay(reservationDate: Date | string, reservationEndDate: Date | string): Date;
 export declare function reservationOccupiesDay(reservation: {
     reservationDate: Date;
     reservationEndDate: Date;
-    actualCheckOutAt: Date | null;
 }, day: Date | string): boolean;
 export declare function reservationOccupiedDays(reservation: {
     reservationDate: Date;
     reservationEndDate: Date;
-    actualCheckOutAt: Date | null;
 }): Date[];
+export declare function occupancyDaysDeltaOnEndDateChange(reservationDate: Date | string, previousEndDate: Date | string, newEndDate: Date | string): {
+    released: Date[];
+    occupied: Date[];
+};
 export declare function reservationDaysReleasedOnCheckout(reservation: {
+    reservationDate: Date;
     reservationEndDate: Date;
     actualCheckOutAt: Date | null;
 }): Date[];
 export declare function reservationOverlapsDateRange(reservation: {
     reservationDate: Date;
     reservationEndDate: Date;
-    actualCheckOutAt: Date | null;
 }, startDate: Date | string, endDate: Date | string): boolean;

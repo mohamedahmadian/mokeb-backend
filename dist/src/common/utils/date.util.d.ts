@@ -1,4 +1,10 @@
 export declare function parseDateOnly(value: string | Date): Date;
+export declare const APP_TIMEZONE = "Asia/Tehran";
+export declare function formatDateOnlyInAppTz(date: Date, timeZone?: string): string;
+export declare function startOfAppDay(date?: Date, timeZone?: string): Date;
+export declare function todayDateStringInAppTz(timeZone?: string): string;
 export declare function addDays(date: Date | string, days: number): Date;
 export declare function formatDateOnly(date: Date): string;
 export declare function eachDateInRange(start: Date, end: Date): Date[];
+export declare function reservationStayDayCount(startDate: Date | string, endDate: Date | string): number;
+export declare function eachOccupancyDayInStay(startDate: Date | string, endDate: Date | string): Date[];

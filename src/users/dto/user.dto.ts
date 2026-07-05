@@ -10,6 +10,7 @@ import {
   Max,
   Min,
   MinLength,
+  IsDateString,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { RoleName, UserGender } from '@prisma/client';
@@ -34,6 +35,18 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(UserGender)
   gender?: UserGender;
+
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  passportNumber?: string;
 
   @IsString()
   @MinLength(4)
@@ -97,6 +110,18 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(UserGender)
   gender?: UserGender | null;
+
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string | null;
+
+  @IsOptional()
+  @IsString()
+  country?: string | null;
+
+  @IsOptional()
+  @IsString()
+  passportNumber?: string | null;
 
   @IsOptional()
   @IsString()
@@ -175,6 +200,18 @@ export class CreateQuickPilgrimDto {
   @IsOptional()
   @IsEnum(UserGender)
   gender?: UserGender;
+
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  passportNumber?: string;
 
   @IsOptional()
   @IsString()

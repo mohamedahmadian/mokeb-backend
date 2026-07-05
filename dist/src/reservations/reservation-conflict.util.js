@@ -18,7 +18,7 @@ function reservationRangesOverlap(startA, endA, startB, endB) {
     const aEnd = (0, date_util_1.parseDateOnly)(endA);
     const bStart = (0, date_util_1.parseDateOnly)(startB);
     const bEnd = (0, date_util_1.parseDateOnly)(endB);
-    return aStart <= bEnd && bStart <= aEnd;
+    return aStart < bEnd && bStart < aEnd;
 }
 function isExactReservationDuplicate(existing, candidate) {
     return (existing.mawkibId === candidate.mawkibId &&

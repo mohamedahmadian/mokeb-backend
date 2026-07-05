@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
+const schedule_1 = require("@nestjs/schedule");
 const logging_middleware_1 = require("./common/middleware/logging.middleware");
 const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./auth/auth.module");
@@ -21,6 +22,8 @@ const dashboard_module_1 = require("./dashboard/dashboard.module");
 const mawkib_feedback_module_1 = require("./mawkib-feedback/mawkib-feedback.module");
 const locations_module_1 = require("./locations/locations.module");
 const uploads_module_1 = require("./uploads/uploads.module");
+const reports_module_1 = require("./reports/reports.module");
+const crons_module_1 = require("./crons/crons.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
@@ -31,6 +34,7 @@ exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
             config_1.ConfigModule.forRoot({ isGlobal: true }),
+            schedule_1.ScheduleModule.forRoot(),
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
@@ -42,6 +46,8 @@ exports.AppModule = AppModule = __decorate([
             mawkib_feedback_module_1.MawkibFeedbackModule,
             locations_module_1.LocationsModule,
             uploads_module_1.UploadsModule,
+            reports_module_1.ReportsModule,
+            crons_module_1.CronsModule,
         ],
     })
 ], AppModule);

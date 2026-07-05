@@ -15,9 +15,11 @@ import { ReservationsService } from './reservations.service';
 import {
   CancelReservationDto,
   CreateReservationDto,
+  ExtendReservationDto,
   GuestRecordAttendanceDto,
   RecordReservationAttendanceDto,
   SearchReservationDto,
+  TrackByMobileDto,
   UpdateReservationStatusDto,
 } from './dto/reservation.dto';
 import {
@@ -47,14 +49,40 @@ export class ReservationsController {
   }
 
   @Get('my')
-  findMy(
-    @CurrentUser() user: AuthUser,
-    @Query() search: SearchReservationDto,
-  ) {
+  findMy(@CurrentUser() user: AuthUser, @Query() search: SearchReservationDto) {
     if (user.roles.includes(RoleName.MawkibOwner)) {
       return this.reservationsService.findByMawkibOwner(user.id, search);
     }
     return this.reservationsService.findByPilgrim(user.id, search);
+  }
+
+  @Get('pending-counts')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  getPendingCounts(@CurrentUser() user: AuthUser) {
+    return this.reservationsService.getPendingCountsByMawkib(user);
+  }
+
+  @Get('pilgrim-card/:pilgrimUserId')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  findLatestForPilgrimCard(
+    @Param('pilgrimUserId', ParseIntPipe) pilgrimUserId: number,
+    @CurrentUser() user: AuthUser,
+    @Query('ownerScope') ownerScope?: string,
+  ) {
+    return this.reservationsService.findLatestForPilgrimCard(
+      pilgrimUserId,
+      user,
+      ownerScope === 'true',
+    );
+  }
+
+  @Get('track-by-mobile')
+  trackByMobile(@Query() query: TrackByMobileDto) {
+    return this.reservationsService.findRecentByMobileForGuest(
+      query.mobileNumber,
+    );
   }
 
   @Get(':id')
@@ -88,6 +116,15 @@ export class ReservationsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.reservationsService.cancel(id, dto, user);
+  }
+
+  @Post(':id/extend')
+  extend(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: ExtendReservationDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.extend(id, dto, user);
   }
 
   @Post(':id/check-in')

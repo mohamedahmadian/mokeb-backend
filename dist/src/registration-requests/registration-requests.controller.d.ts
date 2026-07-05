@@ -110,6 +110,7 @@ export declare class RegistrationRequestsController {
             id: number;
             name: string;
             imageUrl: string | null;
+            country: import("@prisma/client").$Enums.MawkibCountry;
             description: string | null;
             whatsapp: string | null;
             bale: string | null;
@@ -126,6 +127,8 @@ export declare class RegistrationRequestsController {
             maleCapacity: number;
             femaleCapacity: number;
             distanceToShrine: string | null;
+            distanceToBusStation: string | null;
+            distanceToMetro: string | null;
             lunchReception: boolean;
             breakfastReception: boolean;
             dinnerReception: boolean;
@@ -134,9 +137,10 @@ export declare class RegistrationRequestsController {
             parking: boolean;
             internet: boolean;
             familyFriendly: boolean;
-            maxReservationDays: number | null;
-            defaultReservationDays: number | null;
-            country: import("@prisma/client").$Enums.MawkibCountry;
+            elevator: boolean;
+            stairs: boolean;
+            maxReservationDays: number;
+            defaultReservationDays: number;
             mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
             rules: string | null;
             telegramChannel: string | null;
@@ -144,6 +148,9 @@ export declare class RegistrationRequestsController {
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
             onlineReservationEnabled: boolean;
+            autoApprovePilgrimReservations: boolean;
+            recordCheckInOnReservationConfirm: boolean;
+            skipCapacityCheckEnabled: boolean;
             ownerUserId: number;
             status: import("@prisma/client").$Enums.MawkibStatus;
         };

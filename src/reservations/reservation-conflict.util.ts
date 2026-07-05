@@ -11,6 +11,10 @@ export function sameDateOnly(a: Date, b: Date): boolean {
   return parseDateOnly(a).getTime() === parseDateOnly(b).getTime();
 }
 
+/**
+ * بازه‌های رزرو هم‌پوشانی دارند اگر حداقل یک روز مشترک اشغال شود.
+ * پایان یک رزرو در همان روز شروع رزرو بعدی (خروج صبح / ورود بعدازظهر) تداخل نیست.
+ */
 export function reservationRangesOverlap(
   startA: Date,
   endA: Date,
@@ -21,7 +25,7 @@ export function reservationRangesOverlap(
   const aEnd = parseDateOnly(endA);
   const bStart = parseDateOnly(startB);
   const bEnd = parseDateOnly(endB);
-  return aStart <= bEnd && bStart <= aEnd;
+  return aStart < bEnd && bStart < aEnd;
 }
 
 export function isExactReservationDuplicate(

@@ -1,4 +1,4 @@
-import { ReservationStatus } from '@prisma/client';
+import { ReservationStatus, UserGender } from '@prisma/client';
 export declare class CreateReservationDto {
     mawkibId: number;
     pilgrimUserId?: number;
@@ -6,9 +6,9 @@ export declare class CreateReservationDto {
     reservationEndDate?: string;
     maleGuestCount: number;
     femaleGuestCount: number;
-    private readonly _guestCheck?;
     pilgrimMobile: string;
     description?: string;
+    travelOrigin?: string;
     companions?: string;
     plannedCheckInTime?: string;
     plannedCheckOutTime?: string;
@@ -23,13 +23,17 @@ export declare class CreateGuestReservationDto {
     password?: string;
     nationalId?: string;
     nationalIdCardImageUrl?: string;
+    gender?: UserGender;
+    birthDate?: string;
+    country?: string;
+    passportNumber?: string;
     mawkibId: number;
     reservationDate: string;
     reservationEndDate: string;
     maleGuestCount: number;
     femaleGuestCount: number;
-    private readonly _guestCheck?;
     description?: string;
+    travelOrigin?: string;
     companions?: string;
     plannedCheckInTime?: string;
     plannedCheckOutTime?: string;
@@ -45,6 +49,10 @@ export declare class SearchReservationDto {
     status?: ReservationStatus;
     reservationDateFrom?: string;
     reservationDateTo?: string;
+    createdAtFrom?: string;
+    createdAtTo?: string;
+    mawkibName?: string;
+    sortOrder?: 'asc' | 'desc';
     pilgrimName?: string;
     pilgrimMobile?: string;
     pilgrimNationalId?: string;
@@ -61,6 +69,13 @@ export declare class TrackReservationDto {
 }
 export declare class TrackByMobileDto {
     mobileNumber: string;
+}
+export declare class TrackByExactMobileDto {
+    mobileNumber: string;
+}
+export declare class ExtendReservationDto {
+    reservationEndDate?: string;
+    stayDays?: number;
 }
 export declare class RecordReservationAttendanceDto {
     recordedAt?: string;

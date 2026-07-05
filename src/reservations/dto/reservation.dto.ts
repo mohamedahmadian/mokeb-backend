@@ -2,6 +2,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -15,8 +16,12 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { ReservationStatus } from '@prisma/client';
+import { ReservationStatus, UserGender } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
+import {
+  HAS_GUEST_COUNT_MESSAGE,
+  hasGuestCount,
+} from '../reservation-guest-count.util';
 
 @ValidatorConstraint({ name: 'hasGuestCount', async: false })
 class HasGuestCountConstraint implements ValidatorConstraintInterface {
@@ -25,11 +30,11 @@ class HasGuestCountConstraint implements ValidatorConstraintInterface {
       maleGuestCount?: number;
       femaleGuestCount?: number;
     };
-    return (obj.maleGuestCount ?? 0) + (obj.femaleGuestCount ?? 0) > 0;
+    return hasGuestCount(obj.maleGuestCount, obj.femaleGuestCount);
   }
 
   defaultMessage() {
-    return 'حداقل یک نفر (آقا یا بانو) باید برای رزرو وارد شود';
+    return HAS_GUEST_COUNT_MESSAGE;
   }
 }
 
@@ -50,14 +55,12 @@ export class CreateReservationDto {
 
   @IsInt()
   @Min(0)
+  @Validate(HasGuestCountConstraint)
   maleGuestCount: number;
 
   @IsInt()
   @Min(0)
   femaleGuestCount: number;
-
-  @Validate(HasGuestCountConstraint)
-  private readonly _guestCheck?: never;
 
   @IsString()
   @IsNotEmpty()
@@ -66,6 +69,10 @@ export class CreateReservationDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  travelOrigin?: string;
 
   @IsOptional()
   @IsString()
@@ -125,6 +132,22 @@ export class CreateGuestReservationDto {
   @IsString()
   nationalIdCardImageUrl?: string;
 
+  @IsOptional()
+  @IsEnum(UserGender)
+  gender?: UserGender;
+
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  passportNumber?: string;
+
   @IsInt()
   mawkibId: number;
 
@@ -136,18 +159,20 @@ export class CreateGuestReservationDto {
 
   @IsInt()
   @Min(0)
+  @Validate(HasGuestCountConstraint)
   maleGuestCount: number;
 
   @IsInt()
   @Min(0)
   femaleGuestCount: number;
 
-  @Validate(HasGuestCountConstraint)
-  private readonly _guestCheck?: never;
-
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  travelOrigin?: string;
 
   @IsOptional()
   @IsString()
@@ -196,6 +221,23 @@ export class SearchReservationDto {
   @IsOptional()
   @IsDateString()
   reservationDateTo?: string;
+
+  @IsOptional()
+  @IsDateString()
+  createdAtFrom?: string;
+
+  @IsOptional()
+  @IsDateString()
+  createdAtTo?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  mawkibName?: string;
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 
   @IsOptional()
   @IsString()
@@ -263,6 +305,28 @@ export class TrackByMobileDto {
   @IsNotEmpty({ message: 'شماره موبایل الزامی است' })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   mobileNumber: string;
+}
+
+export class TrackByExactMobileDto {
+  @IsString()
+  @IsNotEmpty({ message: 'شماره موبایل الزامی است' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  mobileNumber: string;
+}
+
+export class ExtendReservationDto {
+  /** End date of the extension stay (YYYY-MM-DD). Owner/admin only. */
+  @IsOptional()
+  @IsDateString()
+  reservationEndDate?: string;
+
+  /** Stay length in days from extension start. Owner/admin only. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(31)
+  stayDays?: number;
 }
 
 export class RecordReservationAttendanceDto {

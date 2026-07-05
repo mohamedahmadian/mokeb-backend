@@ -101,7 +101,7 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
         });
         return occupiedRows === 0;
     }
-    getHorizonMeta(fromDate = new Date()) {
+    getHorizonMeta(fromDate = (0, date_util_1.startOfAppDay)()) {
         const minDate = (0, date_util_1.parseDateOnly)(fromDate);
         const maxDate = (0, date_util_1.addDays)(minDate, mawkib_inventory_constants_1.MAWKIB_INVENTORY_HORIZON_DAYS - 1);
         return {
@@ -113,7 +113,7 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
     assertDateRangeWithinHorizon(startDate, endDate) {
         const start = (0, date_util_1.parseDateOnly)(startDate);
         const end = (0, date_util_1.parseDateOnly)(endDate);
-        const horizon = this.getHorizonMeta(new Date());
+        const horizon = this.getHorizonMeta();
         if (end < start) {
             throw new common_1.BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
         }
@@ -166,7 +166,7 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
         }
     }
     async seedHorizonForMawkib(mawkibId) {
-        const horizon = this.getHorizonMeta(new Date());
+        const horizon = this.getHorizonMeta();
         await this.ensureDayRows(mawkibId, (0, date_util_1.parseDateOnly)(horizon.minDate), (0, date_util_1.parseDateOnly)(horizon.maxDate));
     }
     async applyDeltaToDays(tx, mawkibId, days, maleGuestCount, femaleGuestCount, delta) {
@@ -210,12 +210,19 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
             await this.applyDeltaToDays(tx, reservation.mawkibId, days, reservation.maleGuestCount, reservation.femaleGuestCount, delta);
         });
     }
-    async applyEarlyCheckoutRelease(reservation) {
-        const days = (0, reservation_occupancy_util_1.reservationDaysReleasedOnCheckout)(reservation);
-        if (days.length === 0)
+    async applyEndDateChange(reservation, previousEndDate, newEndDate) {
+        const { released, occupied } = (0, reservation_occupancy_util_1.occupancyDaysDeltaOnEndDateChange)(reservation.reservationDate, previousEndDate, newEndDate);
+        if (released.length === 0 && occupied.length === 0)
             return;
+        const allDays = [...released, ...occupied];
+        await this.ensureDayRows(reservation.mawkibId, allDays[0], allDays[allDays.length - 1]);
         await this.prisma.$transaction(async (tx) => {
-            await this.applyDeltaToDays(tx, reservation.mawkibId, days, reservation.maleGuestCount, reservation.femaleGuestCount, -1);
+            if (released.length > 0) {
+                await this.applyDeltaToDays(tx, reservation.mawkibId, released, reservation.maleGuestCount, reservation.femaleGuestCount, -1);
+            }
+            if (occupied.length > 0) {
+                await this.applyDeltaToDays(tx, reservation.mawkibId, occupied, reservation.maleGuestCount, reservation.femaleGuestCount, 1);
+            }
         });
     }
     async rebuildMawkibInventory(mawkibId) {
@@ -226,7 +233,7 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
         if (!mawkib) {
             throw new common_1.NotFoundException('موکب یافت نشد');
         }
-        const horizon = this.getHorizonMeta(new Date());
+        const horizon = this.getHorizonMeta();
         const rangeStart = (0, date_util_1.parseDateOnly)(horizon.minDate);
         const rangeEnd = (0, date_util_1.parseDateOnly)(horizon.maxDate);
         await this.ensureDayRows(mawkibId, rangeStart, rangeEnd);
@@ -246,7 +253,6 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
                 mawkibId: true,
                 reservationDate: true,
                 reservationEndDate: true,
-                actualCheckOutAt: true,
                 maleGuestCount: true,
                 femaleGuestCount: true,
             },
@@ -308,11 +314,11 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
             mawkibName: mawkib.name,
             startDate: (0, date_util_1.formatDateOnly)(start),
             endDate: (0, date_util_1.formatDateOnly)(end),
-            horizon: this.getHorizonMeta(new Date()),
+            horizon: this.getHorizonMeta(),
             days,
         };
     }
-    async getSnapshotsForMawkibsOnDate(mawkibs, day = new Date()) {
+    async getSnapshotsForMawkibsOnDate(mawkibs, day = (0, date_util_1.startOfAppDay)()) {
         const result = new Map();
         if (mawkibs.length === 0)
             return result;
@@ -350,18 +356,30 @@ let MawkibInventoryService = MawkibInventoryService_1 = class MawkibInventorySer
     async getMinCapacityInRangeFromInventory(mawkibId, startDate, endDate, maleCapacity, femaleCapacity) {
         const start = (0, date_util_1.parseDateOnly)(startDate);
         const end = (0, date_util_1.parseDateOnly)(endDate);
+        const occupancyDays = (0, date_util_1.eachOccupancyDayInStay)(start, end);
+        if (occupancyDays.length === 0) {
+            return {
+                maleCapacity,
+                femaleCapacity,
+                availableMale: maleCapacity,
+                availableFemale: femaleCapacity,
+            };
+        }
         await this.ensureInitialized(mawkibId);
-        await this.ensureDayRows(mawkibId, start, end);
+        await this.ensureDayRows(mawkibId, occupancyDays[0], occupancyDays[occupancyDays.length - 1]);
         const rows = await this.prisma.mawkibDailyInventory.findMany({
             where: {
                 mawkibId,
-                date: { gte: start, lte: end },
+                date: {
+                    gte: occupancyDays[0],
+                    lte: occupancyDays[occupancyDays.length - 1],
+                },
             },
         });
         const rowByDate = new Map(rows.map((row) => [(0, date_util_1.formatDateOnly)(row.date), row]));
         let minMale = Number.POSITIVE_INFINITY;
         let minFemale = Number.POSITIVE_INFINITY;
-        for (const day of (0, date_util_1.eachDateInRange)(start, end)) {
+        for (const day of occupancyDays) {
             const row = rowByDate.get((0, date_util_1.formatDateOnly)(day));
             const reservedMale = row?.reservedMale ?? 0;
             const reservedFemale = row?.reservedFemale ?? 0;

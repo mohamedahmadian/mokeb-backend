@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -12,10 +13,13 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { MawkibFeedbackModule } from './mawkib-feedback/mawkib-feedback.module';
 import { LocationsModule } from './locations/locations.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { ReportsModule } from './reports/reports.module';
+import { CronsModule } from './crons/crons.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -27,6 +31,8 @@ import { UploadsModule } from './uploads/uploads.module';
     MawkibFeedbackModule,
     LocationsModule,
     UploadsModule,
+    ReportsModule,
+    CronsModule,
   ],
 })
 export class AppModule implements NestModule {

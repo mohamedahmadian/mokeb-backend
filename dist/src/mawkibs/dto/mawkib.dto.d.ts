@@ -32,6 +32,8 @@ export declare class CreateMawkibDto {
     imageUrl?: string;
     galleryImageUrls?: string[];
     distanceToShrine?: string;
+    distanceToBusStation?: string;
+    distanceToMetro?: string;
     lunchReception?: boolean;
     breakfastReception?: boolean;
     dinnerReception?: boolean;
@@ -40,6 +42,8 @@ export declare class CreateMawkibDto {
     parking?: boolean;
     internet?: boolean;
     familyFriendly?: boolean;
+    elevator?: boolean;
+    stairs?: boolean;
     maxReservationDays?: number;
     defaultReservationDays?: number;
     country?: MawkibCountry;
@@ -53,6 +57,9 @@ export declare class CreateMawkibDto {
     defaultCheckInTime?: string;
     defaultCheckOutTime?: string;
     onlineReservationEnabled?: boolean;
+    autoApprovePilgrimReservations?: boolean;
+    recordCheckInOnReservationConfirm?: boolean;
+    skipCapacityCheckEnabled?: boolean;
     ownerUserId: number;
     status?: MawkibStatus;
 }
@@ -72,6 +79,8 @@ export declare class UpdateMawkibDto {
     imageUrl?: string | null;
     galleryImageUrls?: string[];
     distanceToShrine?: string;
+    distanceToBusStation?: string;
+    distanceToMetro?: string;
     lunchReception?: boolean;
     breakfastReception?: boolean;
     dinnerReception?: boolean;
@@ -80,6 +89,8 @@ export declare class UpdateMawkibDto {
     parking?: boolean;
     internet?: boolean;
     familyFriendly?: boolean;
+    elevator?: boolean;
+    stairs?: boolean;
     maxReservationDays?: number;
     defaultReservationDays?: number;
     country?: MawkibCountry;
@@ -93,6 +104,9 @@ export declare class UpdateMawkibDto {
     defaultCheckInTime?: string;
     defaultCheckOutTime?: string;
     onlineReservationEnabled?: boolean;
+    autoApprovePilgrimReservations?: boolean;
+    recordCheckInOnReservationConfirm?: boolean;
+    skipCapacityCheckEnabled?: boolean;
     ownerUserId?: number;
     status?: MawkibStatus;
 }

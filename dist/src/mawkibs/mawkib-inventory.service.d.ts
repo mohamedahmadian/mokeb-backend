@@ -32,7 +32,6 @@ type ReservationInventoryShape = {
     mawkibId: number;
     reservationDate: Date;
     reservationEndDate: Date;
-    actualCheckOutAt: Date | null;
     maleGuestCount: number;
     femaleGuestCount: number;
 };
@@ -55,7 +54,7 @@ export declare class MawkibInventoryService implements OnModuleInit {
     seedHorizonForMawkib(mawkibId: number): Promise<void>;
     private applyDeltaToDays;
     applyReservationOccupancy(reservation: ReservationInventoryShape, delta: 1 | -1): Promise<void>;
-    applyEarlyCheckoutRelease(reservation: Pick<ReservationInventoryShape, 'mawkibId' | 'reservationEndDate' | 'actualCheckOutAt' | 'maleGuestCount' | 'femaleGuestCount'>): Promise<void>;
+    applyEndDateChange(reservation: Pick<ReservationInventoryShape, 'mawkibId' | 'reservationDate' | 'maleGuestCount' | 'femaleGuestCount'>, previousEndDate: Date | string, newEndDate: Date | string): Promise<void>;
     rebuildMawkibInventory(mawkibId: number): Promise<void>;
     getInventoryRange(mawkibId: number, startDate: Date | string, endDate: Date | string): Promise<MawkibInventoryRangeResult>;
     getSnapshotsForMawkibsOnDate(mawkibs: MawkibCapacitySource[], day?: Date | string): Promise<Map<number, MawkibCapacitySnapshot>>;

@@ -33,8 +33,8 @@ let GuestReservationsController = class GuestReservationsController {
     track(query) {
         return this.reservationsService.findByTrackingCode(query.trackingCode);
     }
-    trackByMobile(query) {
-        return this.reservationsService.findRecentByMobileForGuest(query.mobileNumber);
+    trackByExactMobile(query) {
+        return this.reservationsService.findRecentByExactMobileForGuest(query.mobileNumber);
     }
 };
 exports.GuestReservationsController = GuestReservationsController;
@@ -67,12 +67,12 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], GuestReservationsController.prototype, "track", null);
 __decorate([
-    (0, common_1.Get)('guest/track-by-mobile'),
+    (0, common_1.Get)('guest/track-by-exact-mobile'),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [reservation_dto_1.TrackByMobileDto]),
+    __metadata("design:paramtypes", [reservation_dto_1.TrackByExactMobileDto]),
     __metadata("design:returntype", void 0)
-], GuestReservationsController.prototype, "trackByMobile", null);
+], GuestReservationsController.prototype, "trackByExactMobile", null);
 exports.GuestReservationsController = GuestReservationsController = __decorate([
     (0, common_1.Controller)('reservations'),
     __metadata("design:paramtypes", [reservations_service_1.ReservationsService])

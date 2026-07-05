@@ -9,6 +9,7 @@ import { Prisma, RoleName } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { AuthUser } from '../common/decorators/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
+import { DEFAULT_USER_COUNTRY } from '../common/constants/user-country.constants';
 import { AssignRoleDto, CreateQuickPilgrimDto, CreateUserDto, ListPilgrimsDto, ListUsersDto, PilgrimListScope, UpdateUserDto } from './dto/user.dto';
 
 const MIN_PILGRIM_SEARCH_LENGTH = 2;
@@ -123,6 +124,9 @@ export class UsersService {
         nationalId: dto.nationalId?.trim() || null,
         nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || null,
         gender: dto.gender ?? undefined,
+        birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
+        country: dto.country?.trim() || DEFAULT_USER_COUNTRY,
+        passportNumber: dto.passportNumber?.trim() || null,
         passwordHash,
         province: dto.province,
         city: dto.city,
@@ -372,11 +376,27 @@ export class UsersService {
     });
 
     if (existing) {
+      const data: Prisma.UserUpdateInput = {};
       const imageUrl = dto.nationalIdCardImageUrl?.trim();
       if (imageUrl) {
+        data.nationalIdCardImageUrl = imageUrl;
+      }
+      if (dto.gender !== undefined) {
+        data.gender = dto.gender;
+      }
+      if (dto.birthDate !== undefined) {
+        data.birthDate = dto.birthDate ? new Date(dto.birthDate) : null;
+      }
+      if (dto.country !== undefined) {
+        data.country = dto.country.trim() || null;
+      }
+      if (dto.passportNumber !== undefined) {
+        data.passportNumber = dto.passportNumber.trim() || null;
+      }
+      if (Object.keys(data).length > 0) {
         const updated = await this.prisma.user.update({
           where: { id: existing.id },
-          data: { nationalIdCardImageUrl: imageUrl },
+          data,
           include: userInclude,
         });
         return this.sanitize(updated);
@@ -401,6 +421,9 @@ export class UsersService {
       nationalId: dto.nationalId?.trim() || undefined,
       nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || undefined,
       gender: dto.gender,
+      birthDate: dto.birthDate,
+      country: dto.country?.trim() || undefined,
+      passportNumber: dto.passportNumber?.trim() || undefined,
       password,
       province: dto.province?.trim() || undefined,
       city: dto.city?.trim() || undefined,
@@ -417,8 +440,20 @@ export class UsersService {
   async update(id: number, dto: UpdateUserDto) {
     await this.findOne(id);
 
-    const { password, roles, ...fields } = dto;
+    const { password, roles, birthDate, country, passportNumber, ...fields } = dto;
     const data: Prisma.UserUpdateInput = { ...fields };
+
+    if (birthDate !== undefined) {
+      data.birthDate = birthDate ? new Date(birthDate) : null;
+    }
+
+    if (country !== undefined) {
+      data.country = country?.trim() || null;
+    }
+
+    if (passportNumber !== undefined) {
+      data.passportNumber = passportNumber?.trim() || null;
+    }
 
     if (fields.nationalId !== undefined) {
       data.nationalId = fields.nationalId.trim() || null;

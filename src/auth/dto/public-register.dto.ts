@@ -1,9 +1,12 @@
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsDateString,
 } from 'class-validator';
+import { UserGender } from '@prisma/client';
 import { IsPinPassword } from '../../common/validators/pin-password.validator';
 
 export class RegisterPilgrimDto {
@@ -26,6 +29,22 @@ export class RegisterPilgrimDto {
   @IsOptional()
   @IsString()
   nationalIdCardImageUrl?: string;
+
+  @IsOptional()
+  @IsEnum(UserGender)
+  gender?: UserGender;
+
+  @IsOptional()
+  @IsDateString()
+  birthDate?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  passportNumber?: string;
 
   @IsString()
   @IsPinPassword()
@@ -76,6 +95,10 @@ export class RegisterMawkibOwnerDto {
   @IsOptional()
   @IsString()
   nationalId?: string;
+
+  @IsOptional()
+  @IsEnum(UserGender)
+  gender?: UserGender;
 
   @IsString()
   @IsPinPassword()

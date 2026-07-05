@@ -1,4 +1,4 @@
-import { parseDateOnly } from '../common/utils/date.util';
+import { addDays, eachOccupancyDayInStay, parseDateOnly } from '../common/utils/date.util';
 
 export const DEFAULT_CHECK_IN_TIME = '14:00';
 export const DEFAULT_CHECK_OUT_TIME = '11:00';
@@ -34,12 +34,25 @@ export function resolvePlannedTimes(
   };
 }
 
-/** Calendar-day occupancy — reservation end date is the last occupied day (inclusive). */
+/** Last calendar day that consumes inventory for a planned stay (checkout day is exclusive). */
+export function lastPlannedOccupiedDay(
+  reservationDate: Date | string,
+  reservationEndDate: Date | string,
+): Date {
+  const start = parseDateOnly(reservationDate);
+  const end = parseDateOnly(reservationEndDate);
+  if (end <= start) {
+    if (end < start) return start;
+    return addDays(start, -1);
+  }
+  return addDays(end, -1);
+}
+
+/** Nights from check-in through day before checkout — checkout day does not consume capacity. */
 export function reservationOccupiesDay(
   reservation: {
     reservationDate: Date;
     reservationEndDate: Date;
-    actualCheckOutAt: Date | null;
   },
   day: Date | string,
 ): boolean {
@@ -47,11 +60,14 @@ export function reservationOccupiesDay(
   const end = parseDateOnly(reservation.reservationEndDate);
   const d = parseDateOnly(day);
 
-  if (d < start || d > end) return false;
+  if (end < start) return false;
 
-  if (reservation.actualCheckOutAt) {
-    const checkoutDay = parseDateOnly(reservation.actualCheckOutAt);
-    if (d >= checkoutDay) return false;
+  if (start.getTime() === end.getTime()) {
+    return false;
+  }
+
+  if (d < start || d >= end) {
+    return false;
   }
 
   return true;
@@ -60,48 +76,69 @@ export function reservationOccupiesDay(
 export function reservationOccupiedDays(reservation: {
   reservationDate: Date;
   reservationEndDate: Date;
-  actualCheckOutAt: Date | null;
 }): Date[] {
-  const start = parseDateOnly(reservation.reservationDate);
-  const end = parseDateOnly(reservation.reservationEndDate);
-  const days: Date[] = [];
-  const cursor = new Date(start);
-
-  while (cursor <= end) {
-    if (reservationOccupiesDay(reservation, cursor)) {
-      days.push(new Date(cursor));
-    }
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-
-  return days;
+  return eachOccupancyDayInStay(
+    reservation.reservationDate,
+    reservation.reservationEndDate,
+  ).map((day) => new Date(day));
 }
 
-/** Days freed when guest checks out before planned reservation end. */
+/** Inventory delta when reservationEndDate changes (e.g. early checkout). */
+export function occupancyDaysDeltaOnEndDateChange(
+  reservationDate: Date | string,
+  previousEndDate: Date | string,
+  newEndDate: Date | string,
+): { released: Date[]; occupied: Date[] } {
+  const previousDays = new Set(
+    eachOccupancyDayInStay(reservationDate, previousEndDate).map((day) =>
+      day.toISOString(),
+    ),
+  );
+  const newDays = new Set(
+    eachOccupancyDayInStay(reservationDate, newEndDate).map((day) =>
+      day.toISOString(),
+    ),
+  );
+
+  const released: Date[] = [];
+  const occupied: Date[] = [];
+
+  for (const iso of previousDays) {
+    if (!newDays.has(iso)) {
+      released.push(new Date(iso));
+    }
+  }
+
+  for (const iso of newDays) {
+    if (!previousDays.has(iso)) {
+      occupied.push(new Date(iso));
+    }
+  }
+
+  return { released, occupied };
+}
+
+/** @deprecated Use occupancyDaysDeltaOnEndDateChange — kept for tests migration. */
 export function reservationDaysReleasedOnCheckout(reservation: {
+  reservationDate: Date;
   reservationEndDate: Date;
   actualCheckOutAt: Date | null;
 }): Date[] {
   if (!reservation.actualCheckOutAt) return [];
 
   const checkoutDay = parseDateOnly(reservation.actualCheckOutAt);
-  const end = parseDateOnly(reservation.reservationEndDate);
-  const days: Date[] = [];
-  const cursor = new Date(checkoutDay);
-
-  while (cursor <= end) {
-    days.push(new Date(cursor));
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-
-  return days;
+  const { released } = occupancyDaysDeltaOnEndDateChange(
+    reservation.reservationDate,
+    reservation.reservationEndDate,
+    checkoutDay,
+  );
+  return released;
 }
 
 export function reservationOverlapsDateRange(
   reservation: {
     reservationDate: Date;
     reservationEndDate: Date;
-    actualCheckOutAt: Date | null;
   },
   startDate: Date | string,
   endDate: Date | string,

@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RegisterMawkibOwnerDto = exports.RegisterPilgrimDto = void 0;
 const class_validator_1 = require("class-validator");
+const client_1 = require("@prisma/client");
 const pin_password_validator_1 = require("../../common/validators/pin-password.validator");
 class RegisterPilgrimDto {
     firstName;
@@ -18,6 +19,10 @@ class RegisterPilgrimDto {
     mobileNumber;
     nationalId;
     nationalIdCardImageUrl;
+    gender;
+    birthDate;
+    country;
+    passportNumber;
     password;
     province;
     city;
@@ -54,6 +59,26 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], RegisterPilgrimDto.prototype, "nationalIdCardImageUrl", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.UserGender),
+    __metadata("design:type", String)
+], RegisterPilgrimDto.prototype, "gender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], RegisterPilgrimDto.prototype, "birthDate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RegisterPilgrimDto.prototype, "country", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], RegisterPilgrimDto.prototype, "passportNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, pin_password_validator_1.IsPinPassword)(),
@@ -103,6 +128,7 @@ class RegisterMawkibOwnerDto {
     fullName;
     mobileNumber;
     nationalId;
+    gender;
     password;
     province;
     city;
@@ -129,6 +155,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], RegisterMawkibOwnerDto.prototype, "nationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.UserGender),
+    __metadata("design:type", String)
+], RegisterMawkibOwnerDto.prototype, "gender", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, pin_password_validator_1.IsPinPassword)(),

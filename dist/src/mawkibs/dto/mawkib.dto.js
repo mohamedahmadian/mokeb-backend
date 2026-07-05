@@ -104,6 +104,8 @@ class CreateMawkibDto {
     imageUrl;
     galleryImageUrls;
     distanceToShrine;
+    distanceToBusStation;
+    distanceToMetro;
     lunchReception;
     breakfastReception;
     dinnerReception;
@@ -112,6 +114,8 @@ class CreateMawkibDto {
     parking;
     internet;
     familyFriendly;
+    elevator;
+    stairs;
     maxReservationDays;
     defaultReservationDays;
     country;
@@ -125,6 +129,9 @@ class CreateMawkibDto {
     defaultCheckInTime;
     defaultCheckOutTime;
     onlineReservationEnabled;
+    autoApprovePilgrimReservations;
+    recordCheckInOnReservationConfirm;
+    skipCapacityCheckEnabled;
     ownerUserId;
     status;
 }
@@ -207,6 +214,16 @@ __decorate([
 ], CreateMawkibDto.prototype, "distanceToShrine", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "distanceToBusStation", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "distanceToMetro", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateMawkibDto.prototype, "lunchReception", void 0);
@@ -245,6 +262,16 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateMawkibDto.prototype, "familyFriendly", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "elevator", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "stairs", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
@@ -321,6 +348,21 @@ __decorate([
     __metadata("design:type", Boolean)
 ], CreateMawkibDto.prototype, "onlineReservationEnabled", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "autoApprovePilgrimReservations", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "recordCheckInOnReservationConfirm", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "skipCapacityCheckEnabled", void 0);
+__decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateMawkibDto.prototype, "ownerUserId", void 0);
@@ -345,6 +387,8 @@ class UpdateMawkibDto {
     imageUrl;
     galleryImageUrls;
     distanceToShrine;
+    distanceToBusStation;
+    distanceToMetro;
     lunchReception;
     breakfastReception;
     dinnerReception;
@@ -353,6 +397,8 @@ class UpdateMawkibDto {
     parking;
     internet;
     familyFriendly;
+    elevator;
+    stairs;
     maxReservationDays;
     defaultReservationDays;
     country;
@@ -366,6 +412,9 @@ class UpdateMawkibDto {
     defaultCheckInTime;
     defaultCheckOutTime;
     onlineReservationEnabled;
+    autoApprovePilgrimReservations;
+    recordCheckInOnReservationConfirm;
+    skipCapacityCheckEnabled;
     ownerUserId;
     status;
 }
@@ -452,6 +501,16 @@ __decorate([
 ], UpdateMawkibDto.prototype, "distanceToShrine", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateMawkibDto.prototype, "distanceToBusStation", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateMawkibDto.prototype, "distanceToMetro", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateMawkibDto.prototype, "lunchReception", void 0);
@@ -490,6 +549,16 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateMawkibDto.prototype, "familyFriendly", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "elevator", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "stairs", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
@@ -565,6 +634,21 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateMawkibDto.prototype, "onlineReservationEnabled", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "autoApprovePilgrimReservations", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "recordCheckInOnReservationConfirm", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "skipCapacityCheckEnabled", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),

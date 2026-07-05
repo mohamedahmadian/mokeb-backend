@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { UserGender } from '@prisma/client';
 
 export class RegisterDto {
   @IsString()
@@ -8,6 +9,10 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   mobileNumber: string;
+
+  @IsOptional()
+  @IsEnum(UserGender)
+  gender?: UserGender;
 
   @IsString()
   @MinLength(4)

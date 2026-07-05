@@ -6,11 +6,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   addDays,
   eachDateInRange,
+  eachOccupancyDayInStay,
   formatDateOnly,
   parseDateOnly,
+  startOfAppDay,
 } from '../common/utils/date.util';
 import {
-  reservationDaysReleasedOnCheckout,
+  occupancyDaysDeltaOnEndDateChange,
   reservationOccupiedDays,
 } from '../reservations/reservation-occupancy.util';
 import { MAWKIB_INVENTORY_HORIZON_DAYS, MAWKIB_INVENTORY_OCCUPANCY_REVISION } from './mawkib-inventory.constants';
@@ -51,7 +53,6 @@ type ReservationInventoryShape = {
   mawkibId: number;
   reservationDate: Date;
   reservationEndDate: Date;
-  actualCheckOutAt: Date | null;
   maleGuestCount: number;
   femaleGuestCount: number;
 };
@@ -154,7 +155,7 @@ export class MawkibInventoryService implements OnModuleInit {
     return occupiedRows === 0;
   }
 
-  getHorizonMeta(fromDate: Date | string = new Date()): MawkibInventoryHorizonMeta {
+  getHorizonMeta(fromDate: Date | string = startOfAppDay()): MawkibInventoryHorizonMeta {
     const minDate = parseDateOnly(fromDate);
     const maxDate = addDays(minDate, MAWKIB_INVENTORY_HORIZON_DAYS - 1);
 
@@ -168,7 +169,7 @@ export class MawkibInventoryService implements OnModuleInit {
   assertDateRangeWithinHorizon(startDate: Date | string, endDate: Date | string) {
     const start = parseDateOnly(startDate);
     const end = parseDateOnly(endDate);
-    const horizon = this.getHorizonMeta(new Date());
+    const horizon = this.getHorizonMeta();
 
     if (end < start) {
       throw new BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
@@ -245,7 +246,7 @@ export class MawkibInventoryService implements OnModuleInit {
   }
 
   async seedHorizonForMawkib(mawkibId: number) {
-    const horizon = this.getHorizonMeta(new Date());
+    const horizon = this.getHorizonMeta();
     await this.ensureDayRows(
       mawkibId,
       parseDateOnly(horizon.minDate),
@@ -323,24 +324,54 @@ export class MawkibInventoryService implements OnModuleInit {
     });
   }
 
-  async applyEarlyCheckoutRelease(
+  async applyEndDateChange(
     reservation: Pick<
       ReservationInventoryShape,
-      'mawkibId' | 'reservationEndDate' | 'actualCheckOutAt' | 'maleGuestCount' | 'femaleGuestCount'
+      | 'mawkibId'
+      | 'reservationDate'
+      | 'maleGuestCount'
+      | 'femaleGuestCount'
     >,
+    previousEndDate: Date | string,
+    newEndDate: Date | string,
   ) {
-    const days = reservationDaysReleasedOnCheckout(reservation);
-    if (days.length === 0) return;
+    const { released, occupied } = occupancyDaysDeltaOnEndDateChange(
+      reservation.reservationDate,
+      previousEndDate,
+      newEndDate,
+    );
+
+    if (released.length === 0 && occupied.length === 0) return;
+
+    const allDays = [...released, ...occupied];
+    await this.ensureDayRows(
+      reservation.mawkibId,
+      allDays[0],
+      allDays[allDays.length - 1],
+    );
 
     await this.prisma.$transaction(async (tx) => {
-      await this.applyDeltaToDays(
-        tx,
-        reservation.mawkibId,
-        days,
-        reservation.maleGuestCount,
-        reservation.femaleGuestCount,
-        -1,
-      );
+      if (released.length > 0) {
+        await this.applyDeltaToDays(
+          tx,
+          reservation.mawkibId,
+          released,
+          reservation.maleGuestCount,
+          reservation.femaleGuestCount,
+          -1,
+        );
+      }
+
+      if (occupied.length > 0) {
+        await this.applyDeltaToDays(
+          tx,
+          reservation.mawkibId,
+          occupied,
+          reservation.maleGuestCount,
+          reservation.femaleGuestCount,
+          1,
+        );
+      }
     });
   }
 
@@ -355,7 +386,7 @@ export class MawkibInventoryService implements OnModuleInit {
       throw new NotFoundException('موکب یافت نشد');
     }
 
-    const horizon = this.getHorizonMeta(new Date());
+    const horizon = this.getHorizonMeta();
     const rangeStart = parseDateOnly(horizon.minDate);
     const rangeEnd = parseDateOnly(horizon.maxDate);
 
@@ -378,7 +409,6 @@ export class MawkibInventoryService implements OnModuleInit {
         mawkibId: true,
         reservationDate: true,
         reservationEndDate: true,
-        actualCheckOutAt: true,
         maleGuestCount: true,
         femaleGuestCount: true,
       },
@@ -467,7 +497,7 @@ export class MawkibInventoryService implements OnModuleInit {
       mawkibName: mawkib.name,
       startDate: formatDateOnly(start),
       endDate: formatDateOnly(end),
-      horizon: this.getHorizonMeta(new Date()),
+      horizon: this.getHorizonMeta(),
       days,
     };
   }
@@ -475,7 +505,7 @@ export class MawkibInventoryService implements OnModuleInit {
   /** Read available capacity for many mawkibs on one day — inventory table only. */
   async getSnapshotsForMawkibsOnDate(
     mawkibs: MawkibCapacitySource[],
-    day: Date | string = new Date(),
+    day: Date | string = startOfAppDay(),
   ): Promise<Map<number, MawkibCapacitySnapshot>> {
     const result = new Map<number, MawkibCapacitySnapshot>();
     if (mawkibs.length === 0) return result;
@@ -535,14 +565,31 @@ export class MawkibInventoryService implements OnModuleInit {
   ) {
     const start = parseDateOnly(startDate);
     const end = parseDateOnly(endDate);
+    const occupancyDays = eachOccupancyDayInStay(start, end);
+
+    if (occupancyDays.length === 0) {
+      return {
+        maleCapacity,
+        femaleCapacity,
+        availableMale: maleCapacity,
+        availableFemale: femaleCapacity,
+      };
+    }
 
     await this.ensureInitialized(mawkibId);
-    await this.ensureDayRows(mawkibId, start, end);
+    await this.ensureDayRows(
+      mawkibId,
+      occupancyDays[0],
+      occupancyDays[occupancyDays.length - 1],
+    );
 
     const rows = await this.prisma.mawkibDailyInventory.findMany({
       where: {
         mawkibId,
-        date: { gte: start, lte: end },
+        date: {
+          gte: occupancyDays[0],
+          lte: occupancyDays[occupancyDays.length - 1],
+        },
       },
     });
 
@@ -550,7 +597,7 @@ export class MawkibInventoryService implements OnModuleInit {
     let minMale = Number.POSITIVE_INFINITY;
     let minFemale = Number.POSITIVE_INFINITY;
 
-    for (const day of eachDateInRange(start, end)) {
+    for (const day of occupancyDays) {
       const row = rowByDate.get(formatDateOnly(day));
       const reservedMale = row?.reservedMale ?? 0;
       const reservedFemale = row?.reservedFemale ?? 0;

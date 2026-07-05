@@ -4,4 +4,4 @@ export const MAWKIB_INVENTORY_HORIZON_DAYS = Number(
 );
 
 /** Bump when reservation day-occupancy rules change (triggers one-time inventory rebuild). */
-export const MAWKIB_INVENTORY_OCCUPANCY_REVISION = 2;
+export const MAWKIB_INVENTORY_OCCUPANCY_REVISION = 5;

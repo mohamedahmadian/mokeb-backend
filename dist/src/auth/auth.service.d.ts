@@ -75,6 +75,10 @@ export declare class AuthService {
     } | null>;
     isMobileRegistered(mobileNumber: string): Promise<{
         registered: boolean;
+        fullName?: undefined;
+    } | {
+        registered: boolean;
+        fullName: string;
     }>;
     private buildAuthResponseFromCreated;
     private buildAuthResponse;

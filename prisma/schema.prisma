@@ -72,6 +72,9 @@ model User {
   nationalIdCardImageUrl String?
   imageUrl             String?
   gender       UserGender?
+  birthDate    DateTime?   @db.Date
+  country      String?  @default("ایران")
+  passportNumber String?
   passwordHash String
   province     String?
   city         String?
@@ -88,6 +91,7 @@ model User {
   ownedMawkibs           Mawkib[]                  @relation("MawkibOwner")
   pilgrimReservations    Reservation[]             @relation("Pilgrim")
   reservedByReservations Reservation[]             @relation("ReservedBy")
+  statusUpdatedReservations Reservation[]          @relation("ReservationStatusUpdater")
   registrationRequests   MawkibRegistrationRequest[]
   reviewedHonoraryVolunteerApplications HonoraryVolunteerApplication[] @relation("ReviewedHonoraryVolunteerApplications")
   submittedHonoraryVolunteerApplications HonoraryVolunteerApplication[] @relation("SubmittedHonoraryVolunteerApplications")
@@ -148,6 +152,8 @@ model Mawkib {
   femaleCapacity   Int
   imageUrl         String?
   distanceToShrine String?
+  distanceToBusStation String?
+  distanceToMetro    String?
   lunchReception       Boolean  @default(false)
   breakfastReception   Boolean  @default(false)
   dinnerReception      Boolean  @default(false)
@@ -156,8 +162,10 @@ model Mawkib {
   parking              Boolean  @default(false)
   internet             Boolean  @default(false)
   familyFriendly       Boolean  @default(false)
-  maxReservationDays   Int?
-  defaultReservationDays Int?
+  elevator             Boolean  @default(false)
+  stairs               Boolean  @default(false)
+  maxReservationDays   Int      @default(7)
+  defaultReservationDays Int    @default(1)
   country              MawkibCountry @default(Iran)
   mawkibCity           MawkibCity?
   rules                String?
@@ -169,6 +177,9 @@ model Mawkib {
   defaultCheckInTime   String       @default("14:00")
   defaultCheckOutTime  String       @default("11:00")
   onlineReservationEnabled Boolean  @default(true)
+  autoApprovePilgrimReservations Boolean @default(false)
+  recordCheckInOnReservationConfirm Boolean @default(false)
+  skipCapacityCheckEnabled Boolean @default(false)
   ownerUserId      Int
   status           MawkibStatus @default(Pending)
   createdAt        DateTime     @default(now())
@@ -228,13 +239,17 @@ model Reservation {
   pilgrimMobile   String
   companions         String?
   description        String?
+  travelOrigin       String?
   cancellationNote   String?
   status             ReservationStatus @default(Pending)
+  lastStatusUpdatedByUserId Int?
+  lastStatusUpdatedAt       DateTime?
   createdAt       DateTime          @default(now())
 
   mawkib      Mawkib @relation(fields: [mawkibId], references: [id])
   pilgrim     User   @relation("Pilgrim", fields: [pilgrimUserId], references: [id])
   reservedBy  User   @relation("ReservedBy", fields: [reservedByUserId], references: [id])
+  lastStatusUpdatedBy User? @relation("ReservationStatusUpdater", fields: [lastStatusUpdatedByUserId], references: [id])
   review          ReservationReview?
   deliveredItems  ReservationDeliveredItem[]
 

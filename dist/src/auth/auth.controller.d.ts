@@ -45,6 +45,10 @@ export declare class AuthController {
     }>;
     checkMobileRegistered(mobileNumber?: string): Promise<{
         registered: boolean;
+        fullName?: undefined;
+    } | {
+        registered: boolean;
+        fullName: string;
     }>;
     me(user: AuthUser): AuthUser;
     changePassword(user: AuthUser, dto: ChangePasswordDto): Promise<{

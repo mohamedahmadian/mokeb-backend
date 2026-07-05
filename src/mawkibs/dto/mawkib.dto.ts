@@ -140,6 +140,14 @@ export class CreateMawkibDto {
   distanceToShrine?: string;
 
   @IsOptional()
+  @IsString()
+  distanceToBusStation?: string;
+
+  @IsOptional()
+  @IsString()
+  distanceToMetro?: string;
+
+  @IsOptional()
   @IsBoolean()
   lunchReception?: boolean;
 
@@ -170,6 +178,14 @@ export class CreateMawkibDto {
   @IsOptional()
   @IsBoolean()
   familyFriendly?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  elevator?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  stairs?: boolean;
 
   @IsOptional()
   @Type(() => Number)
@@ -232,6 +248,18 @@ export class CreateMawkibDto {
   @IsOptional()
   @IsBoolean()
   onlineReservationEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  autoApprovePilgrimReservations?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  recordCheckInOnReservationConfirm?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  skipCapacityCheckEnabled?: boolean;
 
   @IsInt()
   ownerUserId: number;
@@ -308,6 +336,14 @@ export class UpdateMawkibDto {
   distanceToShrine?: string;
 
   @IsOptional()
+  @IsString()
+  distanceToBusStation?: string;
+
+  @IsOptional()
+  @IsString()
+  distanceToMetro?: string;
+
+  @IsOptional()
   @IsBoolean()
   lunchReception?: boolean;
 
@@ -338,6 +374,14 @@ export class UpdateMawkibDto {
   @IsOptional()
   @IsBoolean()
   familyFriendly?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  elevator?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  stairs?: boolean;
 
   @IsOptional()
   @Type(() => Number)
@@ -400,6 +444,18 @@ export class UpdateMawkibDto {
   @IsOptional()
   @IsBoolean()
   onlineReservationEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  autoApprovePilgrimReservations?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  recordCheckInOnReservationConfirm?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  skipCapacityCheckEnabled?: boolean;
 
   @IsOptional()
   @IsInt()

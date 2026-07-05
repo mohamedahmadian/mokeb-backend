@@ -21,6 +21,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -55,6 +58,9 @@ export declare class UsersController {
             nationalIdCardImageUrl: string | null;
             imageUrl: string | null;
             gender: import("@prisma/client").$Enums.UserGender | null;
+            birthDate: Date | null;
+            country: string | null;
+            passportNumber: string | null;
             province: string | null;
             city: string | null;
             description: string | null;
@@ -88,6 +94,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -116,6 +125,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -144,6 +156,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -172,6 +187,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -200,6 +218,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -230,6 +251,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -262,6 +286,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;
@@ -290,6 +317,9 @@ export declare class UsersController {
         nationalIdCardImageUrl: string | null;
         imageUrl: string | null;
         gender: import("@prisma/client").$Enums.UserGender | null;
+        birthDate: Date | null;
+        country: string | null;
+        passportNumber: string | null;
         province: string | null;
         city: string | null;
         description: string | null;

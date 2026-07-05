@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { RoleName } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { buildExactMobileLookupVariants } from '../common/utils/mobile-search.util';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -11,6 +12,7 @@ import {
   RegisterPilgrimDto,
 } from './dto/public-register.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { DEFAULT_USER_COUNTRY } from '../common/constants/user-country.constants';
 
 type UserWithRoles = {
   id: number;
@@ -46,6 +48,7 @@ export class AuthService {
       firstName,
       lastName,
       mobileNumber: dto.mobileNumber,
+      gender: dto.gender,
       password: dto.password,
       province: dto.province,
       city: dto.city,
@@ -58,6 +61,10 @@ export class AuthService {
       mobileNumber: dto.mobileNumber.trim(),
       nationalId: dto.nationalId?.trim() || undefined,
       nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || undefined,
+      gender: dto.gender,
+      birthDate: dto.birthDate,
+      country: dto.country?.trim() || DEFAULT_USER_COUNTRY,
+      passportNumber: dto.passportNumber,
       password: dto.password,
       province: dto.province?.trim() || undefined,
       city: dto.city?.trim() || undefined,
@@ -78,6 +85,7 @@ export class AuthService {
       fullName: dto.fullName.trim(),
       mobileNumber: dto.mobileNumber.trim(),
       nationalId: dto.nationalId?.trim() || undefined,
+      gender: dto.gender,
       password: dto.password,
       province: dto.province?.trim() || undefined,
       city: dto.city?.trim() || undefined,
@@ -240,17 +248,21 @@ export class AuthService {
   }
 
   async isMobileRegistered(mobileNumber: string) {
-    const trimmed = mobileNumber.trim();
-    if (!trimmed) {
+    const lookupVariants = buildExactMobileLookupVariants(mobileNumber);
+    if (lookupVariants.length === 0) {
       return { registered: false };
     }
 
-    const user = await this.prisma.user.findUnique({
-      where: { mobileNumber: trimmed },
-      select: { id: true },
+    const user = await this.prisma.user.findFirst({
+      where: { mobileNumber: { in: lookupVariants } },
+      select: { id: true, fullName: true },
     });
 
-    return { registered: Boolean(user) };
+    if (!user) {
+      return { registered: false };
+    }
+
+    return { registered: true, fullName: user.fullName };
   }
 
   private buildAuthResponseFromCreated(user: {

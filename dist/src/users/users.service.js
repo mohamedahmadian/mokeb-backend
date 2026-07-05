@@ -47,6 +47,7 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../prisma/prisma.service");
+const user_country_constants_1 = require("../common/constants/user-country.constants");
 const user_dto_1 = require("./dto/user.dto");
 const MIN_PILGRIM_SEARCH_LENGTH = 2;
 const userInclude = {
@@ -144,6 +145,9 @@ let UsersService = class UsersService {
                 nationalId: dto.nationalId?.trim() || null,
                 nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || null,
                 gender: dto.gender ?? undefined,
+                birthDate: dto.birthDate ? new Date(dto.birthDate) : null,
+                country: dto.country?.trim() || user_country_constants_1.DEFAULT_USER_COUNTRY,
+                passportNumber: dto.passportNumber?.trim() || null,
                 passwordHash,
                 province: dto.province,
                 city: dto.city,
@@ -349,11 +353,27 @@ let UsersService = class UsersService {
             include: userInclude,
         });
         if (existing) {
+            const data = {};
             const imageUrl = dto.nationalIdCardImageUrl?.trim();
             if (imageUrl) {
+                data.nationalIdCardImageUrl = imageUrl;
+            }
+            if (dto.gender !== undefined) {
+                data.gender = dto.gender;
+            }
+            if (dto.birthDate !== undefined) {
+                data.birthDate = dto.birthDate ? new Date(dto.birthDate) : null;
+            }
+            if (dto.country !== undefined) {
+                data.country = dto.country.trim() || null;
+            }
+            if (dto.passportNumber !== undefined) {
+                data.passportNumber = dto.passportNumber.trim() || null;
+            }
+            if (Object.keys(data).length > 0) {
                 const updated = await this.prisma.user.update({
                     where: { id: existing.id },
-                    data: { nationalIdCardImageUrl: imageUrl },
+                    data,
                     include: userInclude,
                 });
                 return this.sanitize(updated);
@@ -372,6 +392,9 @@ let UsersService = class UsersService {
             nationalId: dto.nationalId?.trim() || undefined,
             nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || undefined,
             gender: dto.gender,
+            birthDate: dto.birthDate,
+            country: dto.country?.trim() || undefined,
+            passportNumber: dto.passportNumber?.trim() || undefined,
             password,
             province: dto.province?.trim() || undefined,
             city: dto.city?.trim() || undefined,
@@ -386,8 +409,17 @@ let UsersService = class UsersService {
     }
     async update(id, dto) {
         await this.findOne(id);
-        const { password, roles, ...fields } = dto;
+        const { password, roles, birthDate, country, passportNumber, ...fields } = dto;
         const data = { ...fields };
+        if (birthDate !== undefined) {
+            data.birthDate = birthDate ? new Date(birthDate) : null;
+        }
+        if (country !== undefined) {
+            data.country = country?.trim() || null;
+        }
+        if (passportNumber !== undefined) {
+            data.passportNumber = passportNumber?.trim() || null;
+        }
         if (fields.nationalId !== undefined) {
             data.nationalId = fields.nationalId.trim() || null;
         }

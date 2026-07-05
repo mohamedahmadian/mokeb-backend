@@ -53,3 +53,46 @@ export function mobileDigitMatches(
     searchTail === storedTail
   );
 }
+
+/** تطابق دقیق شماره موبایل پس از نرمال‌سازی ارقام. */
+export function mobilesAreExactlyEqual(
+  searchInput: string,
+  storedMobile: string,
+): boolean {
+  const searchDigits = normalizeMobileDigits(searchInput);
+  const storedDigits = normalizeMobileDigits(storedMobile);
+  if (!searchDigits || !storedDigits) return false;
+  return searchDigits === storedDigits;
+}
+
+/** حداقل ۱۰ رقم برای جستجوی دقیق (شماره کامل). */
+export function isCompleteMobileNumber(input: string): boolean {
+  const digits = normalizeMobileDigits(input);
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+/** واریانت‌های رایج ذخیره‌شده برای جستجوی دقیق در پایگاه داده. */
+export function buildExactMobileLookupVariants(input: string): string[] {
+  const digits = normalizeMobileDigits(input);
+  if (!digits) return [];
+
+  const variants = new Set<string>([digits, input.trim()]);
+
+  if (digits.startsWith('0') && digits.length >= 11) {
+    const withoutZero = digits.slice(1);
+    variants.add(withoutZero);
+    variants.add(`+98${withoutZero}`);
+    variants.add(`98${withoutZero}`);
+  } else if (digits.startsWith('98') && digits.length >= 12) {
+    const local = `0${digits.slice(2)}`;
+    variants.add(local);
+    variants.add(`+${digits}`);
+    variants.add(digits.slice(2));
+  } else if (digits.length === 10 && digits.startsWith('9')) {
+    variants.add(`0${digits}`);
+    variants.add(`+98${digits}`);
+    variants.add(`98${digits}`);
+  }
+
+  return Array.from(variants).filter((value) => value.length > 0);
+}
