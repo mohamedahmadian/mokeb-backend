@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MawkibCity, MawkibCountry, MawkibStatus, Prisma, RegistrationRequestStatus, RoleName, UserGender } from '@prisma/client';
+import { MawkibCity, MawkibCountry, MawkibStatus, Prisma, RegistrationRequestStatus, ReservationPresenceState, ReservationStatus, RoleName, UserGender } from '@prisma/client';
 import { AuthUser } from '../common/decorators/current-user.decorator';
 import { formatDateOnly, addDays, parseDateOnly, eachDateInRange, startOfAppDay, formatDateOnlyInAppTz } from '../common/utils/date.util';
 import { MawkibInventoryService } from '../mawkibs/mawkib-inventory.service';
@@ -60,6 +60,9 @@ export interface MawkibTodayGuestItem {
   totalGuests: number;
   maleCapacity: number;
   femaleCapacity: number;
+  presentMaleGuests: number;
+  presentFemaleGuests: number;
+  presentTotalGuests: number;
 }
 
 export interface MawkibsReportResponse {
@@ -75,6 +78,9 @@ export interface MawkibsReportResponse {
     todayMaleGuests: number;
     todayFemaleGuests: number;
     todayTotalGuests: number;
+    presentMaleGuests: number;
+    presentFemaleGuests: number;
+    presentTotalGuests: number;
     pendingRegistrationRequestCount: number;
     rejectedRegistrationRequestCount: number;
   };
@@ -396,7 +402,7 @@ export class ReportsService {
     const registrationRequestWhere: Prisma.MawkibRegistrationRequestWhereInput =
       ownerUserId ? { ownerUserId } : {};
 
-    const [mawkibs, statusGroups, pendingRegistrationRequests, rejectedRegistrationRequests] =
+    const [mawkibs, statusGroups, pendingRegistrationRequests, rejectedRegistrationRequests, presentReservations] =
       await Promise.all([
         this.prisma.mawkib.findMany({
           where,
@@ -428,7 +434,35 @@ export class ReportsService {
             status: RegistrationRequestStatus.Rejected,
           },
         }),
+        this.prisma.reservation.findMany({
+          where: {
+            ...(ownerUserId ? { mawkib: { ownerUserId } } : {}),
+            status: ReservationStatus.Confirmed,
+            presenceState: ReservationPresenceState.PRESENT,
+          },
+          select: {
+            mawkibId: true,
+            maleGuestCount: true,
+            femaleGuestCount: true,
+          },
+        }),
       ]);
+
+    const presentByMawkib = new Map<number, { male: number; female: number }>();
+    let presentMaleGuests = 0;
+    let presentFemaleGuests = 0;
+
+    for (const reservation of presentReservations) {
+      presentMaleGuests += reservation.maleGuestCount;
+      presentFemaleGuests += reservation.femaleGuestCount;
+      const entry = presentByMawkib.get(reservation.mawkibId) ?? {
+        male: 0,
+        female: 0,
+      };
+      entry.male += reservation.maleGuestCount;
+      entry.female += reservation.femaleGuestCount;
+      presentByMawkib.set(reservation.mawkibId, entry);
+    }
 
     const statusCount = new Map<MawkibStatus, number>(
       statusGroups.map((row) => [row.status, row._count._all]),
@@ -459,6 +493,8 @@ export class ReportsService {
         : 0;
       todayMaleGuests += maleGuests;
       todayFemaleGuests += femaleGuests;
+      const presentCounts = presentByMawkib.get(mawkib.id) ?? { male: 0, female: 0 };
+      const presentTotalGuests = presentCounts.male + presentCounts.female;
       return {
         mawkibId: mawkib.id,
         mawkibName: mawkib.name,
@@ -467,6 +503,9 @@ export class ReportsService {
         totalGuests: maleGuests + femaleGuests,
         maleCapacity: mawkib.maleCapacity,
         femaleCapacity: mawkib.femaleCapacity,
+        presentMaleGuests: presentCounts.male,
+        presentFemaleGuests: presentCounts.female,
+        presentTotalGuests,
       };
     });
 
@@ -539,6 +578,9 @@ export class ReportsService {
         todayMaleGuests,
         todayFemaleGuests,
         todayTotalGuests: todayMaleGuests + todayFemaleGuests,
+        presentMaleGuests,
+        presentFemaleGuests,
+        presentTotalGuests: presentMaleGuests + presentFemaleGuests,
       },
       statusBreakdown: (['Approved', 'Pending', 'Rejected'] as MawkibStatus[]).map(
         (status) => ({

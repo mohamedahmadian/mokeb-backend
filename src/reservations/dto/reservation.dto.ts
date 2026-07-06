@@ -11,6 +11,7 @@ import {
   Max,
   Min,
   MinLength,
+  MaxLength,
   Validate,
   ValidatorConstraint,
   ValidatorConstraintInterface,
@@ -96,6 +97,17 @@ export class CreateReservationDto {
   @IsOptional()
   @IsBoolean()
   skipCapacityCheck?: boolean;
+
+  /** Admin / mawkib owner only — custom unique tracking code; omit for auto-generation. */
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  })
+  @IsString()
+  @MaxLength(64, { message: 'کد رزرو حداکثر ۶۴ کاراکتر می‌تواند باشد' })
+  trackingCode?: string;
 }
 
 export class CreateGuestReservationDto {
@@ -257,6 +269,12 @@ export class SearchReservationDto {
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   trackingCode?: string;
 
+  /** Unified track lookup: matches tracking code, mobile, or national ID (OR). */
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  lookupQuery?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -291,6 +309,12 @@ export class SearchReservationDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   all?: boolean;
+
+  /** With lookupQuery: return only the best-matching reservation (no alternatives). */
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  lookupSingle?: boolean;
 }
 
 export class TrackReservationDto {

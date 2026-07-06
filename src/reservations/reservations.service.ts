@@ -8,6 +8,8 @@ import {
   MawkibStatus,
   Prisma,
   ReservationDeliveredItemStatus,
+  ReservationEventType,
+  ReservationPresenceState,
   ReservationStatus,
   RoleName,
 } from '@prisma/client';
@@ -32,7 +34,9 @@ import {
 } from './dto/reservation-delivered-item.dto';
 import { AuthUser } from '../common/decorators/current-user.decorator';
 import { UsersService } from '../users/users.service';
-import { parseDateOnly, formatDateOnlyInAppTz, startOfAppDay, APP_TIMEZONE } from '../common/utils/date.util';
+import { ReservationEventsService } from './reservation-events.service';
+import { assertUniqueAttendanceSecond } from './reservation-event.util';
+import { parseDateOnly, formatDateOnlyInAppTz, startOfAppDay, APP_TIMEZONE, isRecordedAtBeforeCheckInMinute } from '../common/utils/date.util';
 import { allocateNextReservationTrackingCode } from '../common/utils/reservation-code.util';
 import {
   buildExactMobileLookupVariants,
@@ -53,6 +57,9 @@ import {
   computeExtensionStartDate,
   defaultExtensionEndDate,
 } from './reservation-extend.util';
+import { rankReservationsByLookupQuery } from './reservation-lookup.util';
+import { MealPlansService } from '../meal-plans/meal-plans.service';
+import { AttendanceRosterKind } from './dto/attendance-roster.dto';
 
 const reviewUserSelect = {
   id: true,
@@ -73,10 +80,11 @@ const reservationInclude = {
       defaultCheckOutTime: true,
       defaultReservationDays: true,
       maxReservationDays: true,
+      mealPlanManagementEnabled: true,
       owner: { select: { fullName: true, mobileNumber: true } },
     },
   },
-  pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
+  pilgrim: { select: { id: true, fullName: true, mobileNumber: true, nationalId: true } },
   reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
   lastStatusUpdatedBy: { select: reviewUserSelect },
   review: {
@@ -103,7 +111,7 @@ const guestReservationTrackInclude = {
       imageUrl: true,
     },
   },
-  pilgrim: { select: { id: true, fullName: true, mobileNumber: true } },
+  pilgrim: { select: { id: true, fullName: true, mobileNumber: true, nationalId: true } },
   reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
   deliveredItems: {
     include: {
@@ -127,7 +135,23 @@ export class ReservationsService {
     private prisma: PrismaService,
     private mawkibsService: MawkibsService,
     private usersService: UsersService,
+    private reservationEventsService: ReservationEventsService,
+    private mealPlansService: MealPlansService,
   ) {}
+
+  private async maybeGenerateMealPlans(reservation: {
+    id: number;
+    mawkibId: number;
+    reservationDate: Date;
+    reservationEndDate: Date;
+  }) {
+    await this.mealPlansService.autoGenerateForNewReservation({
+      reservationId: reservation.id,
+      mawkibId: reservation.mawkibId,
+      reservationDate: reservation.reservationDate,
+      reservationEndDate: reservation.reservationEndDate,
+    });
+  }
 
   private statusAuditFields(userId: number): {
     lastStatusUpdatedByUserId: number;
@@ -139,12 +163,89 @@ export class ReservationsService {
     };
   }
 
+  private appendWhereAnd(
+    where: Prisma.ReservationWhereInput,
+    clause: Prisma.ReservationWhereInput,
+  ) {
+    const existingAnd = where.AND
+      ? Array.isArray(where.AND)
+        ? where.AND
+        : [where.AND]
+      : [];
+    where.AND = [...existingAnd, clause];
+  }
+
+  private buildReservationLookupOrConditions(
+    query: string,
+  ): Prisma.ReservationWhereInput[] {
+    const q = query.trim();
+    const conditions: Prisma.ReservationWhereInput[] = [];
+
+    if (/^\d+$/.test(q)) {
+      const id = Number.parseInt(q, 10);
+      if (Number.isFinite(id) && id > 0) {
+        conditions.push({ id });
+      }
+      conditions.push(
+        { trackingCode: { equals: q, mode: 'insensitive' } },
+        { trackingCode: { endsWith: `-${q}`, mode: 'insensitive' } },
+      );
+    }
+
+    conditions.push(
+      { trackingCode: { contains: q, mode: 'insensitive' } },
+      { pilgrimMobile: { contains: q, mode: 'insensitive' } },
+      {
+        pilgrim: {
+          mobileNumber: { contains: q, mode: 'insensitive' },
+        },
+      },
+      {
+        pilgrim: {
+          nationalId: { contains: q, mode: 'insensitive' },
+        },
+      },
+    );
+
+    const digits = normalizeMobileDigits(q);
+    if (digits && digits !== q) {
+      conditions.push(
+        { pilgrimMobile: { contains: digits, mode: 'insensitive' } },
+        {
+          pilgrim: {
+            mobileNumber: { contains: digits, mode: 'insensitive' },
+          },
+        },
+        {
+          pilgrim: {
+            nationalId: { contains: digits, mode: 'insensitive' },
+          },
+        },
+      );
+    }
+
+    for (const pattern of buildMobileSearchPatterns(q)) {
+      if (pattern === q || pattern === digits) continue;
+      conditions.push(
+        { pilgrimMobile: { contains: pattern, mode: 'insensitive' } },
+        {
+          pilgrim: {
+            mobileNumber: { contains: pattern, mode: 'insensitive' },
+          },
+        },
+      );
+    }
+
+    return conditions;
+  }
+
   private buildSearchWhere(
     search?: SearchReservationDto,
   ): Prisma.ReservationWhereInput {
     if (!search) return {};
 
     const where: Prisma.ReservationWhereInput = {};
+    const lookupQuery = search.lookupQuery?.trim();
 
     if (search.mawkibId) {
       where.mawkibId = search.mawkibId;
@@ -179,16 +280,23 @@ export class ReservationsService {
     if (search.pilgrimUserId) {
       where.pilgrimUserId = search.pilgrimUserId;
     }
-    if (search.trackingCode) {
+
+    if (lookupQuery) {
+      this.appendWhereAnd(where, {
+        OR: this.buildReservationLookupOrConditions(lookupQuery),
+      });
+    } else if (search.trackingCode) {
       where.trackingCode = {
         contains: search.trackingCode.trim(),
         mode: 'insensitive',
       };
     }
+
     if (
-      search.pilgrimName ||
-      search.pilgrimMobile ||
-      search.pilgrimNationalId
+      !lookupQuery &&
+      (search.pilgrimName ||
+        search.pilgrimMobile ||
+        search.pilgrimNationalId)
     ) {
       const pilgrimFilters: Prisma.ReservationWhereInput[] = [];
 
@@ -273,6 +381,24 @@ export class ReservationsService {
     });
   }
 
+  private applyLookupRanking<
+    T extends {
+      id: number;
+      trackingCode: string;
+      pilgrimMobile: string;
+      pilgrim: { mobileNumber: string; nationalId?: string | null };
+    },
+  >(items: T[], search?: SearchReservationDto): T[] {
+    const lookupQuery = search?.lookupQuery?.trim();
+    if (!lookupQuery) return items;
+
+    const ranked = rankReservationsByLookupQuery(items, lookupQuery);
+    if (search?.lookupSingle) {
+      return ranked.length > 0 ? [ranked[0]] : [];
+    }
+    return ranked;
+  }
+
   private applyListPagination<T>(
     items: T[],
     search?: SearchReservationDto,
@@ -306,8 +432,11 @@ export class ReservationsService {
       orderBy: { reservationDate: 'desc' },
     });
     const filtered = this.sortByReservationDate(
-      this.filterReservationsByMobileSearch(
-        this.filterByGuestCountTotal(items, search),
+      this.applyLookupRanking(
+        this.filterReservationsByMobileSearch(
+          this.filterByGuestCountTotal(items, search),
+          search,
+        ),
         search,
       ),
       search,
@@ -325,8 +454,11 @@ export class ReservationsService {
       orderBy: { reservationDate: 'desc' },
     });
     const filtered = this.sortByReservationDate(
-      this.filterReservationsByMobileSearch(
-        this.filterByGuestCountTotal(items, search),
+      this.applyLookupRanking(
+        this.filterReservationsByMobileSearch(
+          this.filterByGuestCountTotal(items, search),
+          search,
+        ),
         search,
       ),
       search,
@@ -357,8 +489,11 @@ export class ReservationsService {
       orderBy: { reservationDate: 'desc' },
     });
     const filtered = this.sortByReservationDate(
-      this.filterReservationsByMobileSearch(
-        this.filterByGuestCountTotal(items, search),
+      this.applyLookupRanking(
+        this.filterReservationsByMobileSearch(
+          this.filterByGuestCountTotal(items, search),
+          search,
+        ),
         search,
       ),
       search,
@@ -461,6 +596,7 @@ export class ReservationsService {
       pilgrim: { mobileNumber: string };
     },
   >(items: T[], search?: SearchReservationDto): T[] {
+    if (search?.lookupQuery?.trim()) return items;
     if (!search?.pilgrimMobile?.trim()) return items;
 
     const searchDigits = normalizeMobileDigits(search.pilgrimMobile);
@@ -610,11 +746,58 @@ export class ReservationsService {
     return reservation;
   }
 
+  private async assertTrackingCodeAvailable(trackingCode: string) {
+    const existing = await this.prisma.reservation.findUnique({
+      where: { trackingCode },
+      select: { id: true },
+    });
+
+    if (existing) {
+      throw new BadRequestException('این کد رزرو قبلاً ثبت شده است');
+    }
+  }
+
   private async createWithTrackingCode(
     data: Omit<Prisma.ReservationUncheckedCreateInput, 'trackingCode'>,
+    options?: {
+      customTrackingCode?: string;
+      allowCustomTrackingCode?: boolean;
+    },
     include: Prisma.ReservationInclude = reservationInclude,
   ) {
     assertHasGuestCount(data.maleGuestCount, data.femaleGuestCount);
+
+    const trimmedCustom = options?.customTrackingCode?.trim();
+
+    if (trimmedCustom) {
+      if (!options?.allowCustomTrackingCode) {
+        throw new ForbiddenException('شما مجوز تعیین کد رزرو را ندارید');
+      }
+
+      if (trimmedCustom.length > 64) {
+        throw new BadRequestException('کد رزرو حداکثر ۶۴ کاراکتر می‌تواند باشد');
+      }
+
+      await this.assertTrackingCodeAvailable(trimmedCustom);
+
+      try {
+        return await this.prisma.reservation.create({
+          data: {
+            ...data,
+            trackingCode: trimmedCustom,
+          },
+          include,
+        });
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          throw new BadRequestException('این کد رزرو قبلاً ثبت شده است');
+        }
+        throw error;
+      }
+    }
 
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
@@ -745,6 +928,10 @@ export class ReservationsService {
       );
     }
 
+    if (dto.trackingCode && !isAdmin && !isOwner) {
+      throw new ForbiddenException('شما مجوز تعیین کد رزرو را ندارید');
+    }
+
     if (!skipCapacity) {
       await this.mawkibsService.assertCapacityInRange(
         dto.mawkibId,
@@ -793,31 +980,45 @@ export class ReservationsService {
       ? this.resolveActualCheckInOnConfirm(mawkib, null)
       : undefined;
 
-    const reservation = await this.createWithTrackingCode({
-      mawkibId: dto.mawkibId,
-      pilgrimUserId,
-      reservedByUserId: currentUser.id,
-      reservationDate,
-      reservationEndDate,
-      plannedCheckInTime: plannedTimes.plannedCheckInTime,
-      plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
-      maleGuestCount: dto.maleGuestCount,
-      femaleGuestCount: dto.femaleGuestCount,
-      pilgrimMobile: dto.pilgrimMobile,
-      description: dto.description,
-      companions: dto.companions?.trim() || undefined,
-      status: autoConfirmed
-        ? ReservationStatus.Confirmed
-        : ReservationStatus.Pending,
-      ...(autoConfirmed ? this.statusAuditFields(currentUser.id) : {}),
-      ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
-    });
+    const reservation = await this.createWithTrackingCode(
+      {
+        mawkibId: dto.mawkibId,
+        pilgrimUserId,
+        reservedByUserId: currentUser.id,
+        reservationDate,
+        reservationEndDate,
+        plannedCheckInTime: plannedTimes.plannedCheckInTime,
+        plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
+        maleGuestCount: dto.maleGuestCount,
+        femaleGuestCount: dto.femaleGuestCount,
+        pilgrimMobile: dto.pilgrimMobile,
+        description: dto.description,
+        companions: dto.companions?.trim() || undefined,
+        status: autoConfirmed
+          ? ReservationStatus.Confirmed
+          : ReservationStatus.Pending,
+        ...(autoConfirmed ? this.statusAuditFields(currentUser.id) : {}),
+        ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
+      },
+      {
+        customTrackingCode: dto.trackingCode,
+        allowCustomTrackingCode: isAdmin || isOwner,
+      },
+    );
+
+    await this.syncCheckInEventOnConfirm(
+      reservation.id,
+      checkInOnConfirm,
+      currentUser.id,
+    );
 
     if (reservation.status === ReservationStatus.Confirmed) {
       await this.mawkibsService.syncInventoryOnReservationConfirmed(
         reservation,
       );
     }
+
+    await this.maybeGenerateMealPlans(reservation);
 
     return reservation;
   }
@@ -917,6 +1118,7 @@ export class ReservationsService {
         status: initialStatus,
         ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
       },
+      undefined,
       {
         mawkib: {
           select: {
@@ -929,11 +1131,19 @@ export class ReservationsService {
       },
     );
 
+    await this.syncCheckInEventOnConfirm(
+      reservation.id,
+      checkInOnConfirm,
+      pilgrim.id,
+    );
+
     if (reservation.status === ReservationStatus.Confirmed) {
       await this.mawkibsService.syncInventoryOnReservationConfirmed(
         reservation,
       );
     }
+
+    await this.maybeGenerateMealPlans(reservation);
 
     return {
       message: autoApproved
@@ -1026,6 +1236,12 @@ export class ReservationsService {
       },
       include: reservationInclude,
     });
+
+    await this.syncCheckInEventOnConfirm(
+      updated.id,
+      checkInOnConfirm,
+      currentUser.id,
+    );
 
     if (
       dto.status === ReservationStatus.Confirmed &&
@@ -1244,11 +1460,19 @@ export class ReservationsService {
       ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
     });
 
+    await this.syncCheckInEventOnConfirm(
+      reservation.id,
+      checkInOnConfirm,
+      currentUser.id,
+    );
+
     if (reservation.status === ReservationStatus.Confirmed) {
       await this.mawkibsService.syncInventoryOnReservationConfirmed(
         reservation,
       );
     }
+
+    await this.maybeGenerateMealPlans(reservation);
 
     return reservation;
   }
@@ -1277,6 +1501,21 @@ export class ReservationsService {
       return new Date();
     }
     return undefined;
+  }
+
+  private async syncCheckInEventOnConfirm(
+    reservationId: number,
+    checkInAt: Date | undefined,
+    userId: number,
+  ) {
+    if (!checkInAt) return;
+
+    await this.reservationEventsService.syncEventFromLegacyAttendance(
+      reservationId,
+      ReservationEventType.CHECK_IN,
+      checkInAt,
+      userId,
+    );
   }
 
   private assertConfirmedReservationStillActive(reservation: {
@@ -1354,7 +1593,10 @@ export class ReservationsService {
       throw new BadRequestException('خروج این رزرو قبلاً ثبت شده است');
     }
 
-    if (recordedAt < reservation.actualCheckInAt) {
+    if (
+      reservation.actualCheckInAt &&
+      isRecordedAtBeforeCheckInMinute(recordedAt, reservation.actualCheckInAt)
+    ) {
       throw new BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
     }
 
@@ -1383,6 +1625,26 @@ export class ReservationsService {
         ...(auditUserId ? this.statusAuditFields(auditUserId) : {}),
       },
       include: reservationInclude,
+    }).then(async (updated) => {
+      if (auditUserId) {
+        await this.reservationEventsService.syncEventFromLegacyAttendance(
+          reservation.id,
+          ReservationEventType.EARLY_CHECKOUT,
+          recordedAt,
+          auditUserId,
+        );
+      }
+
+      const mealPlanResult =
+        await this.mealPlansService.cancelMealPlansAfterCheckoutDate(
+          reservation.id,
+          newEndDate,
+        );
+
+      return {
+        ...updated,
+        mealPlanNotice: mealPlanResult.notice,
+      };
     });
   }
 
@@ -1402,7 +1664,10 @@ export class ReservationsService {
       throw new BadRequestException('ابتدا باید ورود ثبت شود');
     }
 
-    if (recordedAt < reservation.actualCheckInAt) {
+    if (
+      reservation.actualCheckInAt &&
+      isRecordedAtBeforeCheckInMinute(recordedAt, reservation.actualCheckInAt)
+    ) {
       throw new BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
     }
 
@@ -1472,6 +1737,21 @@ export class ReservationsService {
     return date;
   }
 
+  private async assertUniqueAttendanceSecondForReservation(
+    reservationId: number,
+    reservation: {
+      actualCheckInAt: Date | null;
+      actualCheckOutAt: Date | null;
+    },
+    recordedAt: Date,
+  ): Promise<void> {
+    const existingEvents = await this.prisma.reservationEvent.findMany({
+      where: { reservationId },
+      select: { createdAt: true },
+    });
+    assertUniqueAttendanceSecond(recordedAt, reservation, existingEvents);
+  }
+
   async checkIn(
     id: number,
     currentUser: AuthUser,
@@ -1510,11 +1790,26 @@ export class ReservationsService {
 
     const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
 
-    return this.prisma.reservation.update({
+    await this.assertUniqueAttendanceSecondForReservation(
+      id,
+      reservation,
+      recordedAt,
+    );
+
+    const updated = await this.prisma.reservation.update({
       where: { id },
       data: { actualCheckInAt: recordedAt },
       include: reservationInclude,
     });
+
+    await this.reservationEventsService.syncEventFromLegacyAttendance(
+      id,
+      ReservationEventType.CHECK_IN,
+      recordedAt,
+      currentUser.id,
+    );
+
+    return updated;
   }
 
   async checkOut(
@@ -1554,9 +1849,18 @@ export class ReservationsService {
     }
 
     const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
-    if (recordedAt < reservation.actualCheckInAt) {
+    if (
+      reservation.actualCheckInAt &&
+      isRecordedAtBeforeCheckInMinute(recordedAt, reservation.actualCheckInAt)
+    ) {
       throw new BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
     }
+
+    await this.assertUniqueAttendanceSecondForReservation(
+      id,
+      reservation,
+      recordedAt,
+    );
 
     const isStaff = isAdmin || isOwner;
 
@@ -1636,7 +1940,10 @@ export class ReservationsService {
 
     const recordedAt = this.resolveRecordedAt(dto.recordedAt);
 
-    if (recordedAt < reservation.actualCheckInAt) {
+    if (
+      reservation.actualCheckInAt &&
+      isRecordedAtBeforeCheckInMinute(recordedAt, reservation.actualCheckInAt)
+    ) {
       throw new BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
     }
 
@@ -1664,11 +1971,26 @@ export class ReservationsService {
 
     const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
 
-    return this.prisma.reservation.update({
+    await this.assertUniqueAttendanceSecondForReservation(
+      reservation.id,
+      reservation,
+      recordedAt,
+    );
+
+    const updated = await this.prisma.reservation.update({
       where: { id: reservation.id },
       data: { actualCheckInAt: recordedAt },
       include: reservationInclude,
     });
+
+    await this.reservationEventsService.syncEventFromLegacyAttendance(
+      reservation.id,
+      ReservationEventType.CHECK_IN,
+      recordedAt,
+      reservation.pilgrimUserId,
+    );
+
+    return updated;
   }
 
   async checkOutGuest(
@@ -1691,11 +2013,24 @@ export class ReservationsService {
     }
 
     const recordedAt = this.resolveRecordedAt(dto?.recordedAt);
-    if (recordedAt < reservation.actualCheckInAt) {
+    if (
+      reservation.actualCheckInAt &&
+      isRecordedAtBeforeCheckInMinute(recordedAt, reservation.actualCheckInAt)
+    ) {
       throw new BadRequestException('ساعت خروج نمی‌تواند قبل از ورود باشد');
     }
 
-    return this.performCheckOut(reservation, recordedAt);
+    await this.assertUniqueAttendanceSecondForReservation(
+      reservation.id,
+      reservation,
+      recordedAt,
+    );
+
+    return this.performCheckOut(
+      reservation,
+      recordedAt,
+      reservation.pilgrimUserId,
+    );
   }
 
   private assertCanReviewReservation(
@@ -1958,5 +2293,117 @@ export class ReservationsService {
     });
 
     return this.findOne(reservationId);
+  }
+
+  async getAttendanceRoster(
+    kind: AttendanceRosterKind,
+    user: AuthUser,
+    mawkibId?: number,
+  ) {
+    const isAdmin = user.roles.includes(RoleName.Admin);
+    const isOwner = user.roles.includes(RoleName.MawkibOwner);
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException('دسترسی مجاز نیست');
+    }
+
+    const today = startOfAppDay();
+    const presenceState =
+      kind === AttendanceRosterKind.ABSENT
+        ? ReservationPresenceState.TEMPORARILY_OUT
+        : ReservationPresenceState.PRESENT;
+
+    const mawkibWhere = mawkibId
+      ? isAdmin
+        ? { id: mawkibId }
+        : { id: mawkibId, ownerUserId: user.id }
+      : isAdmin
+        ? undefined
+        : { ownerUserId: user.id };
+
+    const reservations = await this.prisma.reservation.findMany({
+      where: {
+        status: ReservationStatus.Confirmed,
+        presenceState,
+        reservationDate: { lte: today },
+        reservationEndDate: { gte: today },
+        ...(mawkibWhere ? { mawkib: mawkibWhere } : {}),
+      },
+      select: {
+        id: true,
+        pilgrimMobile: true,
+        actualCheckInAt: true,
+        pilgrim: {
+          select: {
+            fullName: true,
+            nationalId: true,
+            mobileNumber: true,
+          },
+        },
+        events: {
+          where: {
+            eventType: {
+              in: [
+                ReservationEventType.CHECK_IN,
+                ReservationEventType.TEMP_IN,
+                ReservationEventType.TEMP_OUT,
+              ],
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          select: { eventType: true, createdAt: true },
+        },
+      },
+    });
+
+    const now = Date.now();
+
+    const rows = reservations
+      .map((reservation) => {
+        const events = reservation.events;
+        let referenceAt: Date | null = null;
+
+        if (kind === AttendanceRosterKind.ABSENT) {
+          referenceAt =
+            events.find((e) => e.eventType === ReservationEventType.TEMP_OUT)
+              ?.createdAt ?? null;
+        } else {
+          referenceAt =
+            events.find(
+              (e) =>
+                e.eventType === ReservationEventType.TEMP_IN ||
+                e.eventType === ReservationEventType.CHECK_IN,
+            )?.createdAt ??
+            reservation.actualCheckInAt ??
+            null;
+        }
+
+        const durationMs = referenceAt
+          ? Math.max(0, now - new Date(referenceAt).getTime())
+          : 0;
+
+        return {
+          reservationId: reservation.id,
+          fullName: reservation.pilgrim.fullName,
+          mobile:
+            reservation.pilgrimMobile?.trim() ||
+            reservation.pilgrim.mobileNumber?.trim() ||
+            '',
+          nationalId: reservation.pilgrim.nationalId?.trim() || null,
+          durationMs,
+          lastExitAt:
+            kind === AttendanceRosterKind.ABSENT && referenceAt
+              ? new Date(referenceAt).toISOString()
+              : null,
+        };
+      })
+      .sort((a, b) => b.durationMs - a.durationMs);
+
+    return {
+      kind,
+      generatedAt: new Date().toISOString(),
+      mawkibId: mawkibId ?? null,
+      rows,
+    };
   }
 }

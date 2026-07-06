@@ -8,3 +8,8 @@ export declare function formatDateOnly(date: Date): string;
 export declare function eachDateInRange(start: Date, end: Date): Date[];
 export declare function reservationStayDayCount(startDate: Date | string, endDate: Date | string): number;
 export declare function eachOccupancyDayInStay(startDate: Date | string, endDate: Date | string): Date[];
+export declare function eachMealPlanDayInStay(startDate: Date | string, endDate: Date | string): Date[];
+export declare function compareAttendanceBySecond(a: Date, b: Date, timeZone?: string): number;
+export declare function isSameAttendanceSecond(a: Date, b: Date, timeZone?: string): boolean;
+export declare function compareAttendanceByMinute(a: Date, b: Date, timeZone?: string): number;
+export declare function isRecordedAtBeforeCheckInMinute(recordedAt: Date, checkInAt: Date, timeZone?: string): boolean;

@@ -11,16 +11,24 @@ const common_1 = require("@nestjs/common");
 const reservations_service_1 = require("./reservations.service");
 const reservations_controller_1 = require("./reservations.controller");
 const guest_reservations_controller_1 = require("./guest-reservations.controller");
+const reservation_events_controller_1 = require("./reservation-events.controller");
+const reservation_events_service_1 = require("./reservation-events.service");
 const mawkibs_module_1 = require("../mawkibs/mawkibs.module");
 const users_module_1 = require("../users/users.module");
+const meal_plans_module_1 = require("../meal-plans/meal-plans.module");
 let ReservationsModule = class ReservationsModule {
 };
 exports.ReservationsModule = ReservationsModule;
 exports.ReservationsModule = ReservationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [mawkibs_module_1.MawkibsModule, users_module_1.UsersModule],
-        controllers: [guest_reservations_controller_1.GuestReservationsController, reservations_controller_1.ReservationsController],
-        providers: [reservations_service_1.ReservationsService],
+        imports: [mawkibs_module_1.MawkibsModule, users_module_1.UsersModule, meal_plans_module_1.MealPlansModule],
+        controllers: [
+            guest_reservations_controller_1.GuestReservationsController,
+            reservations_controller_1.ReservationsController,
+            reservation_events_controller_1.ReservationEventsController,
+        ],
+        providers: [reservations_service_1.ReservationsService, reservation_events_service_1.ReservationEventsService],
+        exports: [reservations_service_1.ReservationsService, reservation_events_service_1.ReservationEventsService],
     })
 ], ReservationsModule);
 //# sourceMappingURL=reservations.module.js.map

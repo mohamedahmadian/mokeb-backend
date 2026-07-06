@@ -26,7 +26,12 @@ function assertIranLocationsFile() {
 async function main() {
   assertIranLocationsFile();
 
-  const roles: RoleName[] = ['Admin', 'Pilgrim', 'MawkibOwner', 'HonoraryServant'];
+  const roles: RoleName[] = [
+    'Admin',
+    'Pilgrim',
+    'MawkibOwner',
+    'HonoraryServant',
+  ];
 
   for (const name of roles) {
     await prisma.role.upsert({
@@ -37,20 +42,22 @@ async function main() {
   }
 
   const adminRole = await prisma.role.findUnique({ where: { name: 'Admin' } });
-  const pilgrimRole = await prisma.role.findUnique({ where: { name: 'Pilgrim' } });
+  const pilgrimRole = await prisma.role.findUnique({
+    where: { name: 'Pilgrim' },
+  });
 
   if (!adminRole || !pilgrimRole) {
     throw new Error('Roles not found');
   }
 
-  const passwordHash = await bcrypt.hash('admin123', 10);
+  const passwordHash = await bcrypt.hash('1111', 10);
 
   const admin = await prisma.user.upsert({
-    where: { mobileNumber: '09120000000' },
+    where: { mobileNumber: '09159103070' },
     update: {},
     create: {
       fullName: 'مدیر سیستم',
-      mobileNumber: '09120000000',
+      mobileNumber: '09159103070',
       passwordHash,
       province: 'تهران',
       city: 'تهران',
@@ -61,7 +68,7 @@ async function main() {
   });
 
   console.log('Seed completed:', { adminId: admin.id });
-  console.log('Admin login: 09120000000 / admin123');
+  console.log('Admin login: 09159103070 / 1111');
 }
 
 main()

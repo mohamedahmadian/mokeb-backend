@@ -15,6 +15,7 @@ import { LocationsModule } from './locations/locations.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { ReportsModule } from './reports/reports.module';
 import { CronsModule } from './crons/crons.module';
+import { MealPlansModule } from './meal-plans/meal-plans.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { CronsModule } from './crons/crons.module';
     UploadsModule,
     ReportsModule,
     CronsModule,
+    MealPlansModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -52,6 +52,9 @@ export interface MawkibTodayGuestItem {
     totalGuests: number;
     maleCapacity: number;
     femaleCapacity: number;
+    presentMaleGuests: number;
+    presentFemaleGuests: number;
+    presentTotalGuests: number;
 }
 export interface MawkibsReportResponse {
     scope: 'all' | 'mine';
@@ -66,6 +69,9 @@ export interface MawkibsReportResponse {
         todayMaleGuests: number;
         todayFemaleGuests: number;
         todayTotalGuests: number;
+        presentMaleGuests: number;
+        presentFemaleGuests: number;
+        presentTotalGuests: number;
         pendingRegistrationRequestCount: number;
         rejectedRegistrationRequestCount: number;
     };

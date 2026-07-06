@@ -91,6 +91,45 @@ let MawkibsService = class MawkibsService {
         }
         return items.filter((m) => m.availableMaleCapacity <= 0 && m.availableFemaleCapacity <= 0);
     }
+    async computePresentCountsByMawkibIds(mawkibIds) {
+        const counts = new Map();
+        for (const id of mawkibIds) {
+            counts.set(id, { male: 0, female: 0 });
+        }
+        if (mawkibIds.length === 0)
+            return counts;
+        const reservations = await this.prisma.reservation.findMany({
+            where: {
+                mawkibId: { in: mawkibIds },
+                status: client_1.ReservationStatus.Confirmed,
+                presenceState: client_1.ReservationPresenceState.PRESENT,
+            },
+            select: {
+                mawkibId: true,
+                maleGuestCount: true,
+                femaleGuestCount: true,
+            },
+        });
+        for (const reservation of reservations) {
+            const entry = counts.get(reservation.mawkibId);
+            entry.male += reservation.maleGuestCount;
+            entry.female += reservation.femaleGuestCount;
+        }
+        return counts;
+    }
+    async enrichWithPresentCounts(mawkibs) {
+        if (mawkibs.length === 0)
+            return mawkibs;
+        const presentCounts = await this.computePresentCountsByMawkibIds(mawkibs.map((mawkib) => mawkib.id));
+        return mawkibs.map((mawkib) => {
+            const present = presentCounts.get(mawkib.id) ?? { male: 0, female: 0 };
+            return {
+                ...mawkib,
+                presentMaleCount: present.male,
+                presentFemaleCount: present.female,
+            };
+        });
+    }
     async enrichWithTodayCapacity(mawkibs, day = (0, date_util_1.startOfAppDay)()) {
         const snapshots = await this.inventoryService.getSnapshotsForMawkibsOnDate(mawkibs, day);
         return mawkibs.map((mawkib) => {
@@ -301,10 +340,12 @@ let MawkibsService = class MawkibsService {
         });
         if (this.hasReservationAvailabilitySearch(search)) {
             const filtered = await this.enrichAndFilterByAvailability(mawkibs, search);
-            return this.applyListPagination(filtered, search);
+            const withPresent = await this.enrichWithPresentCounts(filtered);
+            return this.applyListPagination(withPresent, search);
         }
         const enriched = await this.enrichWithTodayCapacity(mawkibs);
-        const filtered = this.filterByCapacityView(enriched, search?.capacityFilter);
+        const withPresent = await this.enrichWithPresentCounts(enriched);
+        const filtered = this.filterByCapacityView(withPresent, search?.capacityFilter);
         return this.applyListPagination(filtered, search);
     }
     async syncGalleryImages(mawkibId, urls) {

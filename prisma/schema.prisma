@@ -32,6 +32,26 @@ enum ReservationDeliveredItemStatus {
   ReceivedFromGuest
 }
 
+enum ReservationEventType {
+  CHECK_IN
+  TEMP_OUT
+  TEMP_IN
+  EARLY_CHECKOUT
+}
+
+enum ReservationPresenceState {
+  NOT_ARRIVED
+  PRESENT
+  TEMPORARILY_OUT
+  LEFT
+}
+
+enum MealType {
+  Breakfast
+  Lunch
+  Dinner
+}
+
 enum RegistrationRequestStatus {
   Pending
   Approved
@@ -98,6 +118,7 @@ model User {
   reservationReviewsAuthored           ReservationReview[] @relation("ReservationReviewAuthor")
   reservationReviewsReplied              ReservationReview[] @relation("ReservationReviewReplier")
   reservationDeliveredItemsRecorded      ReservationDeliveredItem[] @relation("ReservationDeliveredItemRecorder")
+  reservationEventsCreated               ReservationEvent[] @relation("ReservationEventCreator")
   mawkibFeedbacksAuthored              MawkibFeedback[] @relation("MawkibFeedbackAuthor")
   mawkibFeedbacksReplied               MawkibFeedback[] @relation("MawkibFeedbackReplier")
 
@@ -180,6 +201,7 @@ model Mawkib {
   autoApprovePilgrimReservations Boolean @default(false)
   recordCheckInOnReservationConfirm Boolean @default(false)
   skipCapacityCheckEnabled Boolean @default(false)
+  mealPlanManagementEnabled Boolean @default(false)
   ownerUserId      Int
   status           MawkibStatus @default(Pending)
   createdAt        DateTime     @default(now())
@@ -242,6 +264,7 @@ model Reservation {
   travelOrigin       String?
   cancellationNote   String?
   status             ReservationStatus @default(Pending)
+  presenceState      ReservationPresenceState @default(NOT_ARRIVED)
   lastStatusUpdatedByUserId Int?
   lastStatusUpdatedAt       DateTime?
   createdAt       DateTime          @default(now())
@@ -252,9 +275,45 @@ model Reservation {
   lastStatusUpdatedBy User? @relation("ReservationStatusUpdater", fields: [lastStatusUpdatedByUserId], references: [id])
   review          ReservationReview?
   deliveredItems  ReservationDeliveredItem[]
+  events          ReservationEvent[]
+  mealPlans       MealPlan[]
 
   @@index([mawkibId, reservationDate])
+  @@index([mawkibId, presenceState])
   @@map("reservations")
+}
+
+model MealPlan {
+  id            Int      @id @default(autoincrement())
+  reservationId Int
+  date          DateTime @db.Date
+  mealType      MealType
+  isRequired    Boolean  @default(true)
+  isServed      Boolean  @default(false)
+  servedAt      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@unique([reservationId, date, mealType])
+  @@index([reservationId, date])
+  @@map("meal_plans")
+}
+
+model ReservationEvent {
+  id              Int                  @id @default(autoincrement())
+  reservationId   Int
+  eventType       ReservationEventType
+  createdAt       DateTime             @default(now())
+  createdByUserId Int
+  description     String?
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  createdBy   User        @relation("ReservationEventCreator", fields: [createdByUserId], references: [id])
+
+  @@index([reservationId, createdAt])
+  @@map("reservation_events")
 }
 
 model ReservationDeliveredItem {

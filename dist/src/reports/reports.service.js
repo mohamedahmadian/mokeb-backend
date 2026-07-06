@@ -264,7 +264,7 @@ let ReportsService = class ReportsService {
             ? { ownerUserId }
             : {};
         const registrationRequestWhere = ownerUserId ? { ownerUserId } : {};
-        const [mawkibs, statusGroups, pendingRegistrationRequests, rejectedRegistrationRequests] = await Promise.all([
+        const [mawkibs, statusGroups, pendingRegistrationRequests, rejectedRegistrationRequests, presentReservations] = await Promise.all([
             this.prisma.mawkib.findMany({
                 where,
                 select: {
@@ -295,7 +295,33 @@ let ReportsService = class ReportsService {
                     status: client_1.RegistrationRequestStatus.Rejected,
                 },
             }),
+            this.prisma.reservation.findMany({
+                where: {
+                    ...(ownerUserId ? { mawkib: { ownerUserId } } : {}),
+                    status: client_1.ReservationStatus.Confirmed,
+                    presenceState: client_1.ReservationPresenceState.PRESENT,
+                },
+                select: {
+                    mawkibId: true,
+                    maleGuestCount: true,
+                    femaleGuestCount: true,
+                },
+            }),
         ]);
+        const presentByMawkib = new Map();
+        let presentMaleGuests = 0;
+        let presentFemaleGuests = 0;
+        for (const reservation of presentReservations) {
+            presentMaleGuests += reservation.maleGuestCount;
+            presentFemaleGuests += reservation.femaleGuestCount;
+            const entry = presentByMawkib.get(reservation.mawkibId) ?? {
+                male: 0,
+                female: 0,
+            };
+            entry.male += reservation.maleGuestCount;
+            entry.female += reservation.femaleGuestCount;
+            presentByMawkib.set(reservation.mawkibId, entry);
+        }
         const statusCount = new Map(statusGroups.map((row) => [row.status, row._count._all]));
         const today = (0, date_util_1.startOfAppDay)();
         const todayDate = (0, date_util_1.formatDateOnlyInAppTz)(new Date());
@@ -317,6 +343,8 @@ let ReportsService = class ReportsService {
                 : 0;
             todayMaleGuests += maleGuests;
             todayFemaleGuests += femaleGuests;
+            const presentCounts = presentByMawkib.get(mawkib.id) ?? { male: 0, female: 0 };
+            const presentTotalGuests = presentCounts.male + presentCounts.female;
             return {
                 mawkibId: mawkib.id,
                 mawkibName: mawkib.name,
@@ -325,6 +353,9 @@ let ReportsService = class ReportsService {
                 totalGuests: maleGuests + femaleGuests,
                 maleCapacity: mawkib.maleCapacity,
                 femaleCapacity: mawkib.femaleCapacity,
+                presentMaleGuests: presentCounts.male,
+                presentFemaleGuests: presentCounts.female,
+                presentTotalGuests,
             };
         });
         todayGuestByMawkib.sort((a, b) => b.totalGuests - a.totalGuests);
@@ -385,6 +416,9 @@ let ReportsService = class ReportsService {
                 todayMaleGuests,
                 todayFemaleGuests,
                 todayTotalGuests: todayMaleGuests + todayFemaleGuests,
+                presentMaleGuests,
+                presentFemaleGuests,
+                presentTotalGuests: presentMaleGuests + presentFemaleGuests,
             },
             statusBreakdown: ['Approved', 'Pending', 'Rejected'].map((status) => ({
                 label: statusLabels[status],

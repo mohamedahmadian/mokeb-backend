@@ -1,4 +1,4 @@
-import { MawkibStatus, Prisma, ReservationStatus } from '@prisma/client';
+import { MawkibStatus, Prisma, ReservationPresenceState, ReservationStatus } from '@prisma/client';
 import {
   addDays,
   eachDateInRange,
@@ -12,8 +12,124 @@ import type { ReportCountItem } from './reports.service';
 import type {
   ReservationsReportHighlights,
   ReservationsReportMawkibRow,
+  ReservationsReportPresence,
   ReservationsReportResponse,
 } from './reservations-report.types';
+
+const PRESENCE_STATE_LABELS: Record<ReservationPresenceState, string> = {
+  NOT_ARRIVED: 'هنوز وارد نشده',
+  PRESENT: 'حاضر در موکب',
+  TEMPORARILY_OUT: 'خروج موقت',
+  LEFT: 'خارج شده',
+};
+
+interface MawkibGuestCounts {
+  male: number;
+  female: number;
+}
+
+function emptyGuestCounts(): MawkibGuestCounts {
+  return { male: 0, female: 0 };
+}
+
+function addGuestCounts(
+  target: MawkibGuestCounts,
+  maleGuestCount: number,
+  femaleGuestCount: number,
+) {
+  target.male += maleGuestCount;
+  target.female += femaleGuestCount;
+}
+
+function aggregatePresenceByMawkib(
+  reservations: {
+    mawkibId: number;
+    maleGuestCount: number;
+    femaleGuestCount: number;
+    presenceState: ReservationPresenceState;
+  }[],
+): {
+  presentByMawkib: Map<number, MawkibGuestCounts>;
+  temporarilyOutByMawkib: Map<number, MawkibGuestCounts>;
+  presenceTotals: ReservationsReportPresence;
+  presenceBreakdown: ReportCountItem[];
+} {
+  const presentByMawkib = new Map<number, MawkibGuestCounts>();
+  const temporarilyOutByMawkib = new Map<number, MawkibGuestCounts>();
+  const breakdownCounts = new Map<ReservationPresenceState, number>();
+
+  let presentMaleGuests = 0;
+  let presentFemaleGuests = 0;
+  let temporarilyOutMaleGuests = 0;
+  let temporarilyOutFemaleGuests = 0;
+  let presentReservationCount = 0;
+  let temporarilyOutReservationCount = 0;
+
+  for (const reservation of reservations) {
+    breakdownCounts.set(
+      reservation.presenceState,
+      (breakdownCounts.get(reservation.presenceState) ?? 0) + 1,
+    );
+
+    if (reservation.presenceState === ReservationPresenceState.PRESENT) {
+      presentReservationCount += 1;
+      presentMaleGuests += reservation.maleGuestCount;
+      presentFemaleGuests += reservation.femaleGuestCount;
+      const entry =
+        presentByMawkib.get(reservation.mawkibId) ?? emptyGuestCounts();
+      addGuestCounts(
+        entry,
+        reservation.maleGuestCount,
+        reservation.femaleGuestCount,
+      );
+      presentByMawkib.set(reservation.mawkibId, entry);
+      continue;
+    }
+
+    if (reservation.presenceState === ReservationPresenceState.TEMPORARILY_OUT) {
+      temporarilyOutReservationCount += 1;
+      temporarilyOutMaleGuests += reservation.maleGuestCount;
+      temporarilyOutFemaleGuests += reservation.femaleGuestCount;
+      const entry =
+        temporarilyOutByMawkib.get(reservation.mawkibId) ?? emptyGuestCounts();
+      addGuestCounts(
+        entry,
+        reservation.maleGuestCount,
+        reservation.femaleGuestCount,
+      );
+      temporarilyOutByMawkib.set(reservation.mawkibId, entry);
+    }
+  }
+
+  const presenceBreakdown = (
+    [
+      ReservationPresenceState.PRESENT,
+      ReservationPresenceState.TEMPORARILY_OUT,
+      ReservationPresenceState.NOT_ARRIVED,
+      ReservationPresenceState.LEFT,
+    ] as const
+  ).map((state) => ({
+    label: PRESENCE_STATE_LABELS[state],
+    count: breakdownCounts.get(state) ?? 0,
+  }));
+
+  return {
+    presentByMawkib,
+    temporarilyOutByMawkib,
+    presenceTotals: {
+      presentMaleGuests,
+      presentFemaleGuests,
+      presentTotalGuests: presentMaleGuests + presentFemaleGuests,
+      temporarilyOutMaleGuests,
+      temporarilyOutFemaleGuests,
+      temporarilyOutTotalGuests:
+        temporarilyOutMaleGuests + temporarilyOutFemaleGuests,
+      presentReservationCount,
+      temporarilyOutReservationCount,
+    },
+    presenceBreakdown,
+  };
+}
 
 function startOfLocalDay(date = new Date()): Date {
   return startOfAppDay(date);
@@ -69,9 +185,15 @@ function computeHighlights(
         )[0]
       : null;
 
+  const mostPresent =
+    rows.length > 0
+      ? [...rows].sort((a, b) => b.presentTotalGuests - a.presentTotalGuests)[0]
+      : null;
+
   return {
     mostReserved,
     leastReserved,
+    mostPresent: mostPresent?.presentTotalGuests ? mostPresent : null,
     fullCapacityMawkibs: rows.filter(
       (row) => row.capacity > 0 && row.occupancyPercent >= 100,
     ),
@@ -160,6 +282,7 @@ export async function buildReservationsReport(
     mawkibs,
     reservationCounts,
     confirmedCounts,
+    presenceReservations,
   ] = await Promise.all([
     prisma.reservation.count({ where: reservationWhere }),
     prisma.reservation.count({
@@ -277,7 +400,25 @@ export async function buildReservationsReport(
       },
       _count: { id: true },
     }),
+    prisma.reservation.findMany({
+      where: {
+        ...reservationWhere,
+        status: ReservationStatus.Confirmed,
+      },
+      select: {
+        mawkibId: true,
+        maleGuestCount: true,
+        femaleGuestCount: true,
+        presenceState: true,
+      },
+    }),
   ]);
+
+  const {
+    presentByMawkib,
+    presenceTotals,
+    presenceBreakdown,
+  } = aggregatePresenceByMawkib(presenceReservations);
 
   const monthGrowthPercent =
     lastMonthCount > 0
@@ -333,6 +474,9 @@ export async function buildReservationsReport(
     const occupancyPercent =
       capacity > 0 ? Math.round((occupied / capacity) * 100) : 0;
 
+    const presentCounts = presentByMawkib.get(mawkib.id) ?? emptyGuestCounts();
+    const presentTotalGuests = presentCounts.male + presentCounts.female;
+
     return {
       mawkibId: mawkib.id,
       mawkibName: mawkib.name,
@@ -340,6 +484,9 @@ export async function buildReservationsReport(
       reservationCount: reservationCountMap.get(mawkib.id) ?? 0,
       confirmedCount: confirmedCountMap.get(mawkib.id) ?? 0,
       occupancyPercent,
+      presentMaleGuests: presentCounts.male,
+      presentFemaleGuests: presentCounts.female,
+      presentTotalGuests,
     };
   });
 
@@ -406,6 +553,8 @@ export async function buildReservationsReport(
       remainingCapacity,
       occupancyPercent,
     },
+    presence: presenceTotals,
+    presenceBreakdown,
     statusBreakdown: [
       { label: 'تأیید شده', count: confirmedCount + completedCount },
       { label: 'در انتظار', count: pendingActiveCount },

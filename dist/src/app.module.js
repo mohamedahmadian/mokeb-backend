@@ -24,6 +24,7 @@ const locations_module_1 = require("./locations/locations.module");
 const uploads_module_1 = require("./uploads/uploads.module");
 const reports_module_1 = require("./reports/reports.module");
 const crons_module_1 = require("./crons/crons.module");
+const meal_plans_module_1 = require("./meal-plans/meal-plans.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
@@ -48,6 +49,7 @@ exports.AppModule = AppModule = __decorate([
             uploads_module_1.UploadsModule,
             reports_module_1.ReportsModule,
             crons_module_1.CronsModule,
+            meal_plans_module_1.MealPlansModule,
         ],
     })
 ], AppModule);

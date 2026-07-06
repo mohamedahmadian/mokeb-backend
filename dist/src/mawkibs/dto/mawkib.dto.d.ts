@@ -60,6 +60,7 @@ export declare class CreateMawkibDto {
     autoApprovePilgrimReservations?: boolean;
     recordCheckInOnReservationConfirm?: boolean;
     skipCapacityCheckEnabled?: boolean;
+    mealPlanManagementEnabled?: boolean;
     ownerUserId: number;
     status?: MawkibStatus;
 }
@@ -107,6 +108,7 @@ export declare class UpdateMawkibDto {
     autoApprovePilgrimReservations?: boolean;
     recordCheckInOnReservationConfirm?: boolean;
     skipCapacityCheckEnabled?: boolean;
+    mealPlanManagementEnabled?: boolean;
     ownerUserId?: number;
     status?: MawkibStatus;
 }

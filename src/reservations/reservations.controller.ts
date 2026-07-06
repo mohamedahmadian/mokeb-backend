@@ -22,6 +22,7 @@ import {
   TrackByMobileDto,
   UpdateReservationStatusDto,
 } from './dto/reservation.dto';
+import { AttendanceRosterQueryDto } from './dto/attendance-roster.dto';
 import {
   CreateReservationReviewDto,
   ReplyReservationReviewDto,
@@ -82,6 +83,20 @@ export class ReservationsController {
   trackByMobile(@Query() query: TrackByMobileDto) {
     return this.reservationsService.findRecentByMobileForGuest(
       query.mobileNumber,
+    );
+  }
+
+  @Get('attendance-roster')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  getAttendanceRoster(
+    @Query() query: AttendanceRosterQueryDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.getAttendanceRoster(
+      query.kind,
+      user,
+      query.mawkibId,
     );
   }
 

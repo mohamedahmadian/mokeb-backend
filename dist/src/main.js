@@ -4,6 +4,10 @@ const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const path_1 = require("path");
 const app_module_1 = require("./app.module");
+function shouldServeFrontend() {
+    return (process.env.NODE_ENV === 'production' ||
+        process.env.SERVE_FRONTEND === 'true');
+}
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.useStaticAssets((0, path_1.join)(process.cwd(), 'uploads'), {
@@ -15,6 +19,22 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
     }));
     app.setGlobalPrefix('api');
+    if (shouldServeFrontend()) {
+        const publicPath = (0, path_1.join)(process.cwd(), 'public');
+        app.useStaticAssets(publicPath, { index: false });
+        app.use((req, res, next) => {
+            if (req.method !== 'GET' && req.method !== 'HEAD') {
+                return next();
+            }
+            if (req.path.startsWith('/api')) {
+                return next();
+            }
+            res.sendFile((0, path_1.join)(publicPath, 'index.html'), (err) => {
+                if (err)
+                    next();
+            });
+        });
+    }
     await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

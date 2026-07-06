@@ -40,6 +40,7 @@ class CreateReservationDto {
     plannedCheckInTime;
     plannedCheckOutTime;
     skipCapacityCheck;
+    trackingCode;
 }
 exports.CreateReservationDto = CreateReservationDto;
 __decorate([
@@ -112,6 +113,18 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateReservationDto.prototype, "skipCapacityCheck", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (typeof value !== 'string')
+            return undefined;
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(64, { message: 'کد رزرو حداکثر ۶۴ کاراکتر می‌تواند باشد' }),
+    __metadata("design:type", String)
+], CreateReservationDto.prototype, "trackingCode", void 0);
 class CreateGuestReservationDto {
     firstName;
     lastName;
@@ -282,12 +295,14 @@ class SearchReservationDto {
     pilgrimMobile;
     pilgrimNationalId;
     trackingCode;
+    lookupQuery;
     pilgrimUserId;
     guestCountMin;
     guestCountMax;
     page;
     pageSize;
     all;
+    lookupSingle;
 }
 exports.SearchReservationDto = SearchReservationDto;
 __decorate([
@@ -356,6 +371,12 @@ __decorate([
 ], SearchReservationDto.prototype, "trackingCode", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], SearchReservationDto.prototype, "lookupQuery", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
@@ -395,6 +416,12 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], SearchReservationDto.prototype, "all", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], SearchReservationDto.prototype, "lookupSingle", void 0);
 class TrackReservationDto {
     trackingCode;
 }

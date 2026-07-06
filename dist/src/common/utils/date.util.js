@@ -10,6 +10,11 @@ exports.formatDateOnly = formatDateOnly;
 exports.eachDateInRange = eachDateInRange;
 exports.reservationStayDayCount = reservationStayDayCount;
 exports.eachOccupancyDayInStay = eachOccupancyDayInStay;
+exports.eachMealPlanDayInStay = eachMealPlanDayInStay;
+exports.compareAttendanceBySecond = compareAttendanceBySecond;
+exports.isSameAttendanceSecond = isSameAttendanceSecond;
+exports.compareAttendanceByMinute = compareAttendanceByMinute;
+exports.isRecordedAtBeforeCheckInMinute = isRecordedAtBeforeCheckInMinute;
 function parseDateOnly(value) {
     if (value instanceof Date) {
         return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
@@ -67,5 +72,81 @@ function eachOccupancyDayInStay(startDate, endDate) {
         return [];
     }
     return eachDateInRange(start, addDays(end, -1));
+}
+function eachMealPlanDayInStay(startDate, endDate) {
+    const start = parseDateOnly(startDate);
+    const end = parseDateOnly(endDate);
+    if (end < start)
+        return [];
+    return eachDateInRange(start, end);
+}
+function attendanceMinuteParts(date, timeZone = exports.APP_TIMEZONE) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).formatToParts(date);
+    const pick = (type) => parts.find((p) => p.type === type)?.value ?? '00';
+    return {
+        year: Number(pick('year')),
+        month: Number(pick('month')),
+        day: Number(pick('day')),
+        hour: Number(pick('hour')),
+        minute: Number(pick('minute')),
+    };
+}
+function attendanceSecondParts(date, timeZone = exports.APP_TIMEZONE) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+    }).formatToParts(date);
+    const pick = (type) => parts.find((p) => p.type === type)?.value ?? '00';
+    return {
+        year: Number(pick('year')),
+        month: Number(pick('month')),
+        day: Number(pick('day')),
+        hour: Number(pick('hour')),
+        minute: Number(pick('minute')),
+        second: Number(pick('second')),
+    };
+}
+function compareAttendanceBySecond(a, b, timeZone = exports.APP_TIMEZONE) {
+    const toKey = (date) => {
+        const p = attendanceSecondParts(date, timeZone);
+        return (p.year * 1_000_000_000_0 +
+            p.month * 1_000_000_00 +
+            p.day * 1_000_000 +
+            p.hour * 10_000 +
+            p.minute * 100 +
+            p.second);
+    };
+    return toKey(a) - toKey(b);
+}
+function isSameAttendanceSecond(a, b, timeZone = exports.APP_TIMEZONE) {
+    return compareAttendanceBySecond(a, b, timeZone) === 0;
+}
+function compareAttendanceByMinute(a, b, timeZone = exports.APP_TIMEZONE) {
+    const toKey = (date) => {
+        const p = attendanceMinuteParts(date, timeZone);
+        return (p.year * 1_000_000_00 +
+            p.month * 1_000_000 +
+            p.day * 10_000 +
+            p.hour * 100 +
+            p.minute);
+    };
+    return toKey(a) - toKey(b);
+}
+function isRecordedAtBeforeCheckInMinute(recordedAt, checkInAt, timeZone = exports.APP_TIMEZONE) {
+    return compareAttendanceByMinute(recordedAt, checkInAt, timeZone) < 0;
 }
 //# sourceMappingURL=date.util.js.map

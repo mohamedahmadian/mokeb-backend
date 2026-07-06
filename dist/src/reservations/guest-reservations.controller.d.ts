@@ -27,6 +27,7 @@ export declare class GuestReservationsController {
             defaultReservationDays: number;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
+            mealPlanManagementEnabled: boolean;
             owner: {
                 fullName: string;
                 mobileNumber: string;
@@ -36,6 +37,7 @@ export declare class GuestReservationsController {
             id: number;
             fullName: string;
             mobileNumber: string;
+            nationalId: string | null;
         };
         reservedBy: {
             id: number;
@@ -47,24 +49,24 @@ export declare class GuestReservationsController {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
-            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
             repliedByUserId: number | null;
-            authorUserId: number;
+            updatedAt: Date;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -77,11 +79,11 @@ export declare class GuestReservationsController {
             status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
             itemName: string;
             quantity: number;
             recordedByUserId: number;
             receivedAt: Date | null;
-            updatedAt: Date;
         })[];
     } & {
         id: number;
@@ -103,11 +105,13 @@ export declare class GuestReservationsController {
         travelOrigin: string | null;
         cancellationNote: string | null;
         status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
         lastStatusUpdatedByUserId: number | null;
         lastStatusUpdatedAt: Date | null;
         createdAt: Date;
     }>;
     checkOutGuest(body: GuestRecordAttendanceDto): Promise<{
+        mealPlanNotice: string | undefined;
         mawkib: {
             id: number;
             name: string;
@@ -120,6 +124,7 @@ export declare class GuestReservationsController {
             defaultReservationDays: number;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
+            mealPlanManagementEnabled: boolean;
             owner: {
                 fullName: string;
                 mobileNumber: string;
@@ -129,6 +134,7 @@ export declare class GuestReservationsController {
             id: number;
             fullName: string;
             mobileNumber: string;
+            nationalId: string | null;
         };
         reservedBy: {
             id: number;
@@ -140,24 +146,24 @@ export declare class GuestReservationsController {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
-            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
             repliedByUserId: number | null;
-            authorUserId: number;
+            updatedAt: Date;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -170,13 +176,12 @@ export declare class GuestReservationsController {
             status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
             itemName: string;
             quantity: number;
             recordedByUserId: number;
             receivedAt: Date | null;
-            updatedAt: Date;
         })[];
-    } & {
         id: number;
         mawkibId: number;
         pilgrimUserId: number;
@@ -196,6 +201,7 @@ export declare class GuestReservationsController {
         travelOrigin: string | null;
         cancellationNote: string | null;
         status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
         lastStatusUpdatedByUserId: number | null;
         lastStatusUpdatedAt: Date | null;
         createdAt: Date;
@@ -213,6 +219,7 @@ export declare class GuestReservationsController {
             defaultReservationDays: number;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
+            mealPlanManagementEnabled: boolean;
             owner: {
                 fullName: string;
                 mobileNumber: string;
@@ -222,6 +229,7 @@ export declare class GuestReservationsController {
             id: number;
             fullName: string;
             mobileNumber: string;
+            nationalId: string | null;
         };
         reservedBy: {
             id: number;
@@ -233,24 +241,24 @@ export declare class GuestReservationsController {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
-            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
             repliedByUserId: number | null;
-            authorUserId: number;
+            updatedAt: Date;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -263,11 +271,11 @@ export declare class GuestReservationsController {
             status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
             itemName: string;
             quantity: number;
             recordedByUserId: number;
             receivedAt: Date | null;
-            updatedAt: Date;
         })[];
     } & {
         id: number;
@@ -289,6 +297,7 @@ export declare class GuestReservationsController {
         travelOrigin: string | null;
         cancellationNote: string | null;
         status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
         lastStatusUpdatedByUserId: number | null;
         lastStatusUpdatedAt: Date | null;
         createdAt: Date;
@@ -305,6 +314,7 @@ export declare class GuestReservationsController {
             id: number;
             fullName: string;
             mobileNumber: string;
+            nationalId: string | null;
         };
         reservedBy: {
             id: number;
@@ -322,11 +332,11 @@ export declare class GuestReservationsController {
             status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
             itemName: string;
             quantity: number;
             recordedByUserId: number;
             receivedAt: Date | null;
-            updatedAt: Date;
         })[];
     } & {
         id: number;
@@ -348,6 +358,7 @@ export declare class GuestReservationsController {
         travelOrigin: string | null;
         cancellationNote: string | null;
         status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
         lastStatusUpdatedByUserId: number | null;
         lastStatusUpdatedAt: Date | null;
         createdAt: Date;

@@ -79,3 +79,120 @@ export function eachOccupancyDayInStay(
   }
   return eachDateInRange(start, addDays(end, -1));
 }
+
+/** Calendar days with meals during a stay (check-in through checkout day, inclusive). */
+export function eachMealPlanDayInStay(
+  startDate: Date | string,
+  endDate: Date | string,
+): Date[] {
+  const start = parseDateOnly(startDate);
+  const end = parseDateOnly(endDate);
+  if (end < start) return [];
+  return eachDateInRange(start, end);
+}
+
+function attendanceMinuteParts(date: Date, timeZone = APP_TIMEZONE) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '00';
+
+  return {
+    year: Number(pick('year')),
+    month: Number(pick('month')),
+    day: Number(pick('day')),
+    hour: Number(pick('hour')),
+    minute: Number(pick('minute')),
+  };
+}
+
+function attendanceSecondParts(date: Date, timeZone = APP_TIMEZONE) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const pick = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? '00';
+
+  return {
+    year: Number(pick('year')),
+    month: Number(pick('month')),
+    day: Number(pick('day')),
+    hour: Number(pick('hour')),
+    minute: Number(pick('minute')),
+    second: Number(pick('second')),
+  };
+}
+
+/** Compare timestamps at second precision in APP_TIMEZONE (ms ignored). */
+export function compareAttendanceBySecond(
+  a: Date,
+  b: Date,
+  timeZone = APP_TIMEZONE,
+): number {
+  const toKey = (date: Date) => {
+    const p = attendanceSecondParts(date, timeZone);
+    return (
+      p.year * 1_000_000_000_0 +
+      p.month * 1_000_000_00 +
+      p.day * 1_000_000 +
+      p.hour * 10_000 +
+      p.minute * 100 +
+      p.second
+    );
+  };
+
+  return toKey(a) - toKey(b);
+}
+
+export function isSameAttendanceSecond(
+  a: Date,
+  b: Date,
+  timeZone = APP_TIMEZONE,
+): boolean {
+  return compareAttendanceBySecond(a, b, timeZone) === 0;
+}
+
+/** Compare clock times at minute precision in APP_TIMEZONE (seconds/ms ignored). */
+export function compareAttendanceByMinute(
+  a: Date,
+  b: Date,
+  timeZone = APP_TIMEZONE,
+): number {
+  const toKey = (date: Date) => {
+    const p = attendanceMinuteParts(date, timeZone);
+    return (
+      p.year * 1_000_000_00 +
+      p.month * 1_000_000 +
+      p.day * 10_000 +
+      p.hour * 100 +
+      p.minute
+    );
+  };
+
+  return toKey(a) - toKey(b);
+}
+
+/** True when recordedAt is strictly before check-in at minute precision. */
+export function isRecordedAtBeforeCheckInMinute(
+  recordedAt: Date,
+  checkInAt: Date,
+  timeZone = APP_TIMEZONE,
+): boolean {
+  return compareAttendanceByMinute(recordedAt, checkInAt, timeZone) < 0;
+}

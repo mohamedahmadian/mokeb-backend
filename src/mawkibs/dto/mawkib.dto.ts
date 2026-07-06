@@ -261,6 +261,10 @@ export class CreateMawkibDto {
   @IsBoolean()
   skipCapacityCheckEnabled?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
+  mealPlanManagementEnabled?: boolean;
+
   @IsInt()
   ownerUserId: number;
 
@@ -456,6 +460,10 @@ export class UpdateMawkibDto {
   @IsOptional()
   @IsBoolean()
   skipCapacityCheckEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  mealPlanManagementEnabled?: boolean;
 
   @IsOptional()
   @IsInt()

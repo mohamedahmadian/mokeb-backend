@@ -13,6 +13,7 @@ export declare class CreateReservationDto {
     plannedCheckInTime?: string;
     plannedCheckOutTime?: string;
     skipCapacityCheck?: boolean;
+    trackingCode?: string;
 }
 export declare class CreateGuestReservationDto {
     firstName: string;
@@ -57,12 +58,14 @@ export declare class SearchReservationDto {
     pilgrimMobile?: string;
     pilgrimNationalId?: string;
     trackingCode?: string;
+    lookupQuery?: string;
     pilgrimUserId?: number;
     guestCountMin?: number;
     guestCountMax?: number;
     page?: number;
     pageSize?: number;
     all?: boolean;
+    lookupSingle?: boolean;
 }
 export declare class TrackReservationDto {
     trackingCode: string;
