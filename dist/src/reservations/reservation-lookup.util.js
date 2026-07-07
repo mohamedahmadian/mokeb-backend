@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.POSTGRES_INT4_MAX = void 0;
 exports.trackingCodeSequence = trackingCodeSequence;
+exports.parseReservationIdLookup = parseReservationIdLookup;
 exports.scoreReservationLookupMatch = scoreReservationLookupMatch;
 exports.rankReservationsByLookupQuery = rankReservationsByLookupQuery;
 function trackingCodeSequence(trackingCode) {
@@ -8,6 +10,19 @@ function trackingCodeSequence(trackingCode) {
     if (dash < 0)
         return null;
     return trackingCode.slice(dash + 1);
+}
+exports.POSTGRES_INT4_MAX = 2_147_483_647;
+function parseReservationIdLookup(query) {
+    const q = query.trim();
+    if (!/^\d+$/.test(q))
+        return null;
+    if (q.length >= 10)
+        return null;
+    const id = Number.parseInt(q, 10);
+    if (!Number.isFinite(id) || id <= 0 || id > exports.POSTGRES_INT4_MAX) {
+        return null;
+    }
+    return id;
 }
 function scoreReservationLookupMatch(reservation, query) {
     const q = query.trim();
@@ -23,8 +38,8 @@ function scoreReservationLookupMatch(reservation, query) {
         return 950;
     if (lowerCode.endsWith(`-${q}`))
         return 900;
-    const id = Number.parseInt(q, 10);
-    if (Number.isFinite(id) && id > 0 && reservation.id === id)
+    const id = parseReservationIdLookup(q);
+    if (id != null && reservation.id === id)
         return 850;
     if (lowerCode.includes(lowerQ))
         return 100;
@@ -41,7 +56,7 @@ function scoreReservationLookupMatch(reservation, query) {
         return 50;
     return 0;
 }
-function rankReservationsByLookupQuery(reservations, query) {
+function rankReservationsByLookupQuery(reservations, query, exact = false) {
     const q = query.trim();
     if (!q || reservations.length === 0)
         return reservations;
@@ -49,10 +64,15 @@ function rankReservationsByLookupQuery(reservations, query) {
         reservation,
         score: scoreReservationLookupMatch(reservation, q),
     }));
+    const isExactScore = (score) => score === 1000 || score === 850 || score === 500;
     const maxScore = Math.max(...scored.map((item) => item.score));
-    const threshold = maxScore >= 800 ? 800 : 1;
+    const threshold = exact
+        ? 500
+        : maxScore >= 800
+            ? 800
+            : 1;
     return scored
-        .filter((item) => item.score >= threshold)
+        .filter((item) => item.score >= threshold && (!exact || isExactScore(item.score)))
         .sort((a, b) => b.score - a.score)
         .map((item) => item.reservation);
 }

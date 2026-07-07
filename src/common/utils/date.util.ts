@@ -30,6 +30,58 @@ export function todayDateStringInAppTz(timeZone = APP_TIMEZONE): string {
   return formatDateOnlyInAppTz(new Date(), timeZone);
 }
 
+/** UTC instant for calendar YYYY-MM-DD + HH:mm in APP_TIMEZONE (e.g. 14:00 Tehran). */
+export function appLocalDateTimeToUtc(
+  calendarDate: string,
+  timeHHmm: string,
+  timeZone = APP_TIMEZONE,
+): Date {
+  const [year, month, day] = calendarDate.split('-').map(Number);
+  const [hour, minute] = timeHHmm.split(':').map(Number);
+
+  let utc = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).formatToParts(new Date(utc));
+
+    const pick = (type: Intl.DateTimeFormatPartTypes) =>
+      Number(parts.find((p) => p.type === type)?.value ?? '0');
+
+    const localYear = pick('year');
+    const localMonth = pick('month');
+    const localDay = pick('day');
+    const localHour = pick('hour');
+    const localMinute = pick('minute');
+
+    if (
+      localYear === year &&
+      localMonth === month &&
+      localDay === day &&
+      localHour === hour &&
+      localMinute === minute
+    ) {
+      return new Date(utc);
+    }
+
+    const desiredMinutes =
+      Date.UTC(year, month - 1, day, hour, minute) / 60_000;
+    const actualMinutes =
+      Date.UTC(localYear, localMonth - 1, localDay, localHour, localMinute) /
+      60_000;
+    utc += (desiredMinutes - actualMinutes) * 60_000;
+  }
+
+  return new Date(utc);
+}
+
 export function addDays(date: Date | string, days: number): Date {
   const result = parseDateOnly(date);
   result.setUTCDate(result.getUTCDate() + days);

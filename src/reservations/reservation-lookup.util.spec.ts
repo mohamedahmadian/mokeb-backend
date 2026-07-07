@@ -1,4 +1,5 @@
 import {
+  parseReservationIdLookup,
   rankReservationsByLookupQuery,
   scoreReservationLookupMatch,
 } from './reservation-lookup.util';
@@ -24,6 +25,14 @@ function reservation(
 }
 
 describe('reservation lookup ranking', () => {
+  it('does not treat Iranian mobile numbers as reservation id lookups', () => {
+    expect(parseReservationIdLookup('09159103071')).toBeNull();
+    expect(parseReservationIdLookup('9159103071')).toBeNull();
+    expect(parseReservationIdLookup('1234567890')).toBeNull();
+    expect(parseReservationIdLookup('121')).toBe(121);
+    expect(parseReservationIdLookup('2003')).toBe(2003);
+  });
+
   it('prefers tracking sequence 2003 over 2004 when searching 2003', () => {
     const items = [reservation(2, '50415-2004'), reservation(1, '50415-2003')];
 

@@ -315,6 +315,12 @@ export class SearchReservationDto {
   @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   lookupSingle?: boolean;
+
+  /** With lookupQuery: match fields exactly instead of partial contains. */
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  lookupExact?: boolean;
 }
 
 export class TrackReservationDto {

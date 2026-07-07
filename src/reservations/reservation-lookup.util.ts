@@ -4,6 +4,25 @@ export function trackingCodeSequence(trackingCode: string): string | null {
   return trackingCode.slice(dash + 1);
 }
 
+/** PostgreSQL INT4 upper bound — reservation ids must fit this range. */
+export const POSTGRES_INT4_MAX = 2_147_483_647;
+
+/** Parse a lookup token as reservation id only when it is a safe INT4 value. */
+export function parseReservationIdLookup(query: string): number | null {
+  const q = query.trim();
+  if (!/^\d+$/.test(q)) return null;
+
+  // Mobile numbers and national IDs are 10+ digits — not reservation ids.
+  if (q.length >= 10) return null;
+
+  const id = Number.parseInt(q, 10);
+  if (!Number.isFinite(id) || id <= 0 || id > POSTGRES_INT4_MAX) {
+    return null;
+  }
+
+  return id;
+}
+
 export function scoreReservationLookupMatch(
   reservation: {
     id: number;
@@ -26,8 +45,8 @@ export function scoreReservationLookupMatch(
   if (suffix === q) return 950;
   if (lowerCode.endsWith(`-${q}`)) return 900;
 
-  const id = Number.parseInt(q, 10);
-  if (Number.isFinite(id) && id > 0 && reservation.id === id) return 850;
+  const id = parseReservationIdLookup(q);
+  if (id != null && reservation.id === id) return 850;
 
   if (lowerCode.includes(lowerQ)) return 100;
 
@@ -52,7 +71,7 @@ export function rankReservationsByLookupQuery<
     pilgrimMobile: string;
     pilgrim: { mobileNumber: string; nationalId?: string | null };
   },
->(reservations: T[], query: string): T[] {
+>(reservations: T[], query: string, exact = false): T[] {
   const q = query.trim();
   if (!q || reservations.length === 0) return reservations;
 
@@ -61,11 +80,18 @@ export function rankReservationsByLookupQuery<
     score: scoreReservationLookupMatch(reservation, q),
   }));
 
+  const isExactScore = (score: number) =>
+    score === 1000 || score === 850 || score === 500;
+
   const maxScore = Math.max(...scored.map((item) => item.score));
-  const threshold = maxScore >= 800 ? 800 : 1;
+  const threshold = exact
+    ? 500
+    : maxScore >= 800
+      ? 800
+      : 1;
 
   return scored
-    .filter((item) => item.score >= threshold)
+    .filter((item) => item.score >= threshold && (!exact || isExactScore(item.score)))
     .sort((a, b) => b.score - a.score)
     .map((item) => item.reservation);
 }

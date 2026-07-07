@@ -36,7 +36,7 @@ import { AuthUser } from '../common/decorators/current-user.decorator';
 import { UsersService } from '../users/users.service';
 import { ReservationEventsService } from './reservation-events.service';
 import { assertUniqueAttendanceSecond } from './reservation-event.util';
-import { parseDateOnly, formatDateOnlyInAppTz, startOfAppDay, APP_TIMEZONE, isRecordedAtBeforeCheckInMinute } from '../common/utils/date.util';
+import { parseDateOnly, formatDateOnly, formatDateOnlyInAppTz, startOfAppDay, APP_TIMEZONE, isRecordedAtBeforeCheckInMinute } from '../common/utils/date.util';
 import { allocateNextReservationTrackingCode } from '../common/utils/reservation-code.util';
 import {
   buildExactMobileLookupVariants,
@@ -57,9 +57,13 @@ import {
   computeExtensionStartDate,
   defaultExtensionEndDate,
 } from './reservation-extend.util';
-import { rankReservationsByLookupQuery } from './reservation-lookup.util';
+import {
+  parseReservationIdLookup,
+  rankReservationsByLookupQuery,
+} from './reservation-lookup.util';
 import { MealPlansService } from '../meal-plans/meal-plans.service';
 import { AttendanceRosterKind } from './dto/attendance-roster.dto';
+import { resolveAbsentRosterContext } from './attendance-roster.util';
 
 const reviewUserSelect = {
   id: true,
@@ -177,15 +181,45 @@ export class ReservationsService {
 
   private buildReservationLookupOrConditions(
     query: string,
+    exact = false,
   ): Prisma.ReservationWhereInput[] {
     const q = query.trim();
     const conditions: Prisma.ReservationWhereInput[] = [];
 
-    if (/^\d+$/.test(q)) {
-      const id = Number.parseInt(q, 10);
-      if (Number.isFinite(id) && id > 0) {
+    if (exact) {
+      const id = parseReservationIdLookup(q);
+      if (id != null) {
         conditions.push({ id });
       }
+
+      conditions.push({
+        trackingCode: { equals: q, mode: 'insensitive' },
+      });
+
+      const mobileVariants = buildExactMobileLookupVariants(q);
+      if (mobileVariants.length > 0) {
+        conditions.push(
+          { pilgrimMobile: { in: mobileVariants } },
+          {
+            pilgrim: {
+              mobileNumber: { in: mobileVariants },
+            },
+          },
+        );
+      }
+
+      conditions.push({
+        pilgrim: {
+          nationalId: { equals: q, mode: 'insensitive' },
+        },
+      });
+
+      return conditions;
+    }
+
+    const id = parseReservationIdLookup(q);
+    if (id != null) {
+      conditions.push({ id });
       conditions.push(
         { trackingCode: { equals: q, mode: 'insensitive' } },
         { trackingCode: { endsWith: `-${q}`, mode: 'insensitive' } },
@@ -283,7 +317,10 @@ export class ReservationsService {
 
     if (lookupQuery) {
       this.appendWhereAnd(where, {
-        OR: this.buildReservationLookupOrConditions(lookupQuery),
+        OR: this.buildReservationLookupOrConditions(
+          lookupQuery,
+          search.lookupExact,
+        ),
       });
     } else if (search.trackingCode) {
       where.trackingCode = {
@@ -392,7 +429,11 @@ export class ReservationsService {
     const lookupQuery = search?.lookupQuery?.trim();
     if (!lookupQuery) return items;
 
-    const ranked = rankReservationsByLookupQuery(items, lookupQuery);
+    const ranked = rankReservationsByLookupQuery(
+      items,
+      lookupQuery,
+      search?.lookupExact,
+    );
     if (search?.lookupSingle) {
       return ranked.length > 0 ? [ranked[0]] : [];
     }
@@ -870,14 +911,37 @@ export class ReservationsService {
     };
 
     if (isExactReservationDuplicate(conflict, candidate)) {
-      throw new BadRequestException(
-        'متاسفانه این رزرو با رزروهای قبلی شما در سامانه تداخل دارد',
-      );
+      this.throwReservationConflict(conflict, true);
     }
 
-    throw new BadRequestException(
-      `این زائر در بازه تاریخ انتخابی رزرو فعال دیگری دارد (کد: ${conflict.trackingCode}${conflict.mawkib?.name ? ` — ${conflict.mawkib.name}` : ''})`,
-    );
+    this.throwReservationConflict(conflict, false);
+  }
+
+  private throwReservationConflict(
+    conflict: {
+      trackingCode: string;
+      reservationDate: Date;
+      reservationEndDate: Date;
+      mawkib: { name: string } | null;
+    },
+    exactDuplicate: boolean,
+  ) {
+    const conflictPayload = {
+      trackingCode: conflict.trackingCode,
+      mawkibName: conflict.mawkib?.name ?? null,
+      reservationDate: formatDateOnly(conflict.reservationDate),
+      reservationEndDate: formatDateOnly(conflict.reservationEndDate),
+    };
+
+    const message = exactDuplicate
+      ? 'متاسفانه این رزرو با رزروهای قبلی شما در سامانه تداخل دارد'
+      : `این زائر در بازه تاریخ انتخابی رزرو فعال دیگری دارد (کد: ${conflict.trackingCode}${conflict.mawkib?.name ? ` — ${conflict.mawkib.name}` : ''})`;
+
+    throw new BadRequestException({
+      message,
+      error: 'ReservationConflict',
+      conflict: conflictPayload,
+    });
   }
 
   async create(dto: CreateReservationDto, currentUser: AuthUser) {
@@ -2308,9 +2372,14 @@ export class ReservationsService {
     }
 
     const today = startOfAppDay();
-    const presenceState =
+    const presenceFilter =
       kind === AttendanceRosterKind.ABSENT
-        ? ReservationPresenceState.TEMPORARILY_OUT
+        ? {
+            in: [
+              ReservationPresenceState.NOT_ARRIVED,
+              ReservationPresenceState.TEMPORARILY_OUT,
+            ],
+          }
         : ReservationPresenceState.PRESENT;
 
     const mawkibWhere = mawkibId
@@ -2324,7 +2393,7 @@ export class ReservationsService {
     const reservations = await this.prisma.reservation.findMany({
       where: {
         status: ReservationStatus.Confirmed,
-        presenceState,
+        presenceState: presenceFilter,
         reservationDate: { lte: today },
         reservationEndDate: { gte: today },
         ...(mawkibWhere ? { mawkib: mawkibWhere } : {}),
@@ -2333,6 +2402,10 @@ export class ReservationsService {
         id: true,
         pilgrimMobile: true,
         actualCheckInAt: true,
+        presenceState: true,
+        reservationDate: true,
+        plannedCheckInTime: true,
+        createdAt: true,
         pilgrim: {
           select: {
             fullName: true,
@@ -2361,22 +2434,43 @@ export class ReservationsService {
     const rows = reservations
       .map((reservation) => {
         const events = reservation.events;
-        let referenceAt: Date | null = null;
 
         if (kind === AttendanceRosterKind.ABSENT) {
-          referenceAt =
-            events.find((e) => e.eventType === ReservationEventType.TEMP_OUT)
-              ?.createdAt ?? null;
-        } else {
-          referenceAt =
-            events.find(
-              (e) =>
-                e.eventType === ReservationEventType.TEMP_IN ||
-                e.eventType === ReservationEventType.CHECK_IN,
-            )?.createdAt ??
-            reservation.actualCheckInAt ??
-            null;
+          const absentContext = resolveAbsentRosterContext(reservation, events);
+          if (!absentContext) {
+            return null;
+          }
+
+          const referenceAt = absentContext.referenceAt;
+          const durationMs = referenceAt
+            ? Math.max(0, now - new Date(referenceAt).getTime())
+            : 0;
+
+          return {
+            reservationId: reservation.id,
+            fullName: reservation.pilgrim.fullName,
+            mobile:
+              reservation.pilgrimMobile?.trim() ||
+              reservation.pilgrim.mobileNumber?.trim() ||
+              '',
+            nationalId: reservation.pilgrim.nationalId?.trim() || null,
+            durationMs,
+            lastExitAt: absentContext.lastExitAt
+              ? new Date(absentContext.lastExitAt).toISOString()
+              : null,
+            absenceKind: absentContext.absenceKind,
+            registerEventType: absentContext.registerEventType,
+          };
         }
+
+        let referenceAt: Date | null =
+          events.find(
+            (e) =>
+              e.eventType === ReservationEventType.TEMP_IN ||
+              e.eventType === ReservationEventType.CHECK_IN,
+          )?.createdAt ??
+          reservation.actualCheckInAt ??
+          null;
 
         const durationMs = referenceAt
           ? Math.max(0, now - new Date(referenceAt).getTime())
@@ -2391,12 +2485,12 @@ export class ReservationsService {
             '',
           nationalId: reservation.pilgrim.nationalId?.trim() || null,
           durationMs,
-          lastExitAt:
-            kind === AttendanceRosterKind.ABSENT && referenceAt
-              ? new Date(referenceAt).toISOString()
-              : null,
+          lastExitAt: null,
+          absenceKind: null,
+          registerEventType: null,
         };
       })
+      .filter((row): row is NonNullable<typeof row> => row != null)
       .sort((a, b) => b.durationMs - a.durationMs);
 
     return {

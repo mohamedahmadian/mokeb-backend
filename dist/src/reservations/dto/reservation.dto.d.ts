@@ -66,6 +66,7 @@ export declare class SearchReservationDto {
     pageSize?: number;
     all?: boolean;
     lookupSingle?: boolean;
+    lookupExact?: boolean;
 }
 export declare class TrackReservationDto {
     trackingCode: string;

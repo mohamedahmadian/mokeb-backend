@@ -5,6 +5,7 @@ exports.parseDateOnly = parseDateOnly;
 exports.formatDateOnlyInAppTz = formatDateOnlyInAppTz;
 exports.startOfAppDay = startOfAppDay;
 exports.todayDateStringInAppTz = todayDateStringInAppTz;
+exports.appLocalDateTimeToUtc = appLocalDateTimeToUtc;
 exports.addDays = addDays;
 exports.formatDateOnly = formatDateOnly;
 exports.eachDateInRange = eachDateInRange;
@@ -36,6 +37,40 @@ function startOfAppDay(date = new Date(), timeZone = exports.APP_TIMEZONE) {
 }
 function todayDateStringInAppTz(timeZone = exports.APP_TIMEZONE) {
     return formatDateOnlyInAppTz(new Date(), timeZone);
+}
+function appLocalDateTimeToUtc(calendarDate, timeHHmm, timeZone = exports.APP_TIMEZONE) {
+    const [year, month, day] = calendarDate.split('-').map(Number);
+    const [hour, minute] = timeHHmm.split(':').map(Number);
+    let utc = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+    for (let attempt = 0; attempt < 4; attempt++) {
+        const parts = new Intl.DateTimeFormat('en-GB', {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        }).formatToParts(new Date(utc));
+        const pick = (type) => Number(parts.find((p) => p.type === type)?.value ?? '0');
+        const localYear = pick('year');
+        const localMonth = pick('month');
+        const localDay = pick('day');
+        const localHour = pick('hour');
+        const localMinute = pick('minute');
+        if (localYear === year &&
+            localMonth === month &&
+            localDay === day &&
+            localHour === hour &&
+            localMinute === minute) {
+            return new Date(utc);
+        }
+        const desiredMinutes = Date.UTC(year, month - 1, day, hour, minute) / 60_000;
+        const actualMinutes = Date.UTC(localYear, localMonth - 1, localDay, localHour, localMinute) /
+            60_000;
+        utc += (desiredMinutes - actualMinutes) * 60_000;
+    }
+    return new Date(utc);
 }
 function addDays(date, days) {
     const result = parseDateOnly(date);
