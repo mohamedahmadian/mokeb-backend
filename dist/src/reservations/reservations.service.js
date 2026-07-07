@@ -297,15 +297,15 @@ let ReservationsService = class ReservationsService {
             return true;
         });
     }
-    sortByReservationDate(items, search) {
+    sortByCreatedAt(items, search) {
         const order = search?.sortOrder ?? 'desc';
         return [...items].sort((a, b) => {
-            const dateDiff = a.reservationDate.getTime() - b.reservationDate.getTime();
-            if (dateDiff !== 0) {
-                return order === 'asc' ? dateDiff : -dateDiff;
-            }
             const createdDiff = a.createdAt.getTime() - b.createdAt.getTime();
-            return order === 'asc' ? createdDiff : -createdDiff;
+            if (createdDiff !== 0) {
+                return order === 'asc' ? createdDiff : -createdDiff;
+            }
+            const dateDiff = a.reservationDate.getTime() - b.reservationDate.getTime();
+            return order === 'asc' ? dateDiff : -dateDiff;
         });
     }
     applyLookupRanking(items, search) {
@@ -341,9 +341,9 @@ let ReservationsService = class ReservationsService {
         const items = await this.prisma.reservation.findMany({
             where: this.buildSearchWhere(search),
             include: reservationInclude,
-            orderBy: { reservationDate: 'desc' },
+            orderBy: { createdAt: 'desc' },
         });
-        const filtered = this.sortByReservationDate(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
+        const filtered = this.sortByCreatedAt(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
         return this.applyListPagination(filtered, search);
     }
     async findByPilgrim(pilgrimUserId, search) {
@@ -353,9 +353,9 @@ let ReservationsService = class ReservationsService {
                 ...this.buildSearchWhere(search),
             },
             include: reservationInclude,
-            orderBy: { reservationDate: 'desc' },
+            orderBy: { createdAt: 'desc' },
         });
-        const filtered = this.sortByReservationDate(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
+        const filtered = this.sortByCreatedAt(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
         return this.applyListPagination(filtered, search);
     }
     async findByMawkibOwner(ownerUserId, search) {
@@ -374,9 +374,9 @@ let ReservationsService = class ReservationsService {
                 ...this.buildSearchWhere(rest),
             },
             include: reservationInclude,
-            orderBy: { reservationDate: 'desc' },
+            orderBy: { createdAt: 'desc' },
         });
-        const filtered = this.sortByReservationDate(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
+        const filtered = this.sortByCreatedAt(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
         return this.applyListPagination(filtered, search);
     }
     async getPendingCountsByMawkib(user) {

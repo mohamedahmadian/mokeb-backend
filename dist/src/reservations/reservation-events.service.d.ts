@@ -66,6 +66,8 @@ export declare class ReservationEventsService {
         };
         reservation: {
             id: number;
+            description: string | null;
+            createdAt: Date;
             trackingCode: string;
             mawkibId: number;
             pilgrimUserId: number;
@@ -80,14 +82,12 @@ export declare class ReservationEventsService {
             femaleGuestCount: number;
             pilgrimMobile: string;
             companions: string | null;
-            description: string | null;
             travelOrigin: string | null;
             cancellationNote: string | null;
             status: import("@prisma/client").$Enums.ReservationStatus;
             presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
             lastStatusUpdatedByUserId: number | null;
             lastStatusUpdatedAt: Date | null;
-            createdAt: Date;
         };
     }>;
     private applyCheckIn;

@@ -402,19 +402,19 @@ export class ReservationsService {
     });
   }
 
-  private sortByReservationDate<
+  private sortByCreatedAt<
     T extends { reservationDate: Date; createdAt: Date },
   >(items: T[], search?: SearchReservationDto): T[] {
     const order = search?.sortOrder ?? 'desc';
     return [...items].sort((a, b) => {
-      const dateDiff =
-        a.reservationDate.getTime() - b.reservationDate.getTime();
-      if (dateDiff !== 0) {
-        return order === 'asc' ? dateDiff : -dateDiff;
+      const createdDiff = a.createdAt.getTime() - b.createdAt.getTime();
+      if (createdDiff !== 0) {
+        return order === 'asc' ? createdDiff : -createdDiff;
       }
 
-      const createdDiff = a.createdAt.getTime() - b.createdAt.getTime();
-      return order === 'asc' ? createdDiff : -createdDiff;
+      const dateDiff =
+        a.reservationDate.getTime() - b.reservationDate.getTime();
+      return order === 'asc' ? dateDiff : -dateDiff;
     });
   }
 
@@ -470,9 +470,9 @@ export class ReservationsService {
     const items = await this.prisma.reservation.findMany({
       where: this.buildSearchWhere(search),
       include: reservationInclude,
-      orderBy: { reservationDate: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
-    const filtered = this.sortByReservationDate(
+    const filtered = this.sortByCreatedAt(
       this.applyLookupRanking(
         this.filterReservationsByMobileSearch(
           this.filterByGuestCountTotal(items, search),
@@ -492,9 +492,9 @@ export class ReservationsService {
         ...this.buildSearchWhere(search),
       },
       include: reservationInclude,
-      orderBy: { reservationDate: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
-    const filtered = this.sortByReservationDate(
+    const filtered = this.sortByCreatedAt(
       this.applyLookupRanking(
         this.filterReservationsByMobileSearch(
           this.filterByGuestCountTotal(items, search),
@@ -527,9 +527,9 @@ export class ReservationsService {
         ...this.buildSearchWhere(rest),
       },
       include: reservationInclude,
-      orderBy: { reservationDate: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
-    const filtered = this.sortByReservationDate(
+    const filtered = this.sortByCreatedAt(
       this.applyLookupRanking(
         this.filterReservationsByMobileSearch(
           this.filterByGuestCountTotal(items, search),
