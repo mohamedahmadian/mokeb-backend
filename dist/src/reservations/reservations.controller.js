@@ -62,6 +62,9 @@ let ReservationsController = class ReservationsController {
     cancel(id, dto, user) {
         return this.reservationsService.cancel(id, dto, user);
     }
+    updateTrackingCode(id, dto, user) {
+        return this.reservationsService.updateTrackingCode(id, dto, user);
+    }
     extend(id, dto, user) {
         return this.reservationsService.extend(id, dto, user);
     }
@@ -193,6 +196,17 @@ __decorate([
     __metadata("design:paramtypes", [Number, reservation_dto_1.CancelReservationDto, Object]),
     __metadata("design:returntype", void 0)
 ], ReservationsController.prototype, "cancel", null);
+__decorate([
+    (0, common_1.Patch)(':id/tracking-code'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, reservation_dto_1.UpdateReservationTrackingCodeDto, Object]),
+    __metadata("design:returntype", void 0)
+], ReservationsController.prototype, "updateTrackingCode", null);
 __decorate([
     (0, common_1.Post)(':id/extend'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

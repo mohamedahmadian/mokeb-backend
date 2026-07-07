@@ -216,6 +216,13 @@ export class CancelReservationDto {
   note?: string;
 }
 
+export class UpdateReservationTrackingCodeDto {
+  @IsString()
+  @IsNotEmpty({ message: 'کد رزرو الزامی است' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  trackingCode: string;
+}
+
 export class SearchReservationDto {
   @IsOptional()
   @Type(() => Number)

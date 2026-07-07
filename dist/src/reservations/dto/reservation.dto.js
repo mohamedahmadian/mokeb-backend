@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GuestRecordAttendanceDto = exports.RecordReservationAttendanceDto = exports.ExtendReservationDto = exports.TrackByExactMobileDto = exports.TrackByMobileDto = exports.TrackReservationDto = exports.SearchReservationDto = exports.CancelReservationDto = exports.UpdateReservationStatusDto = exports.CreateGuestReservationDto = exports.CreateReservationDto = void 0;
+exports.GuestRecordAttendanceDto = exports.RecordReservationAttendanceDto = exports.ExtendReservationDto = exports.TrackByExactMobileDto = exports.TrackByMobileDto = exports.TrackReservationDto = exports.SearchReservationDto = exports.UpdateReservationTrackingCodeDto = exports.CancelReservationDto = exports.UpdateReservationStatusDto = exports.CreateGuestReservationDto = exports.CreateReservationDto = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
@@ -282,6 +282,16 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CancelReservationDto.prototype, "note", void 0);
+class UpdateReservationTrackingCodeDto {
+    trackingCode;
+}
+exports.UpdateReservationTrackingCodeDto = UpdateReservationTrackingCodeDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'کد رزرو الزامی است' }),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], UpdateReservationTrackingCodeDto.prototype, "trackingCode", void 0);
 class SearchReservationDto {
     mawkibId;
     status;

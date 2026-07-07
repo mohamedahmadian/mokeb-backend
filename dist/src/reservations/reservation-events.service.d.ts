@@ -26,9 +26,9 @@ export declare class ReservationEventsService {
             };
         } & {
             id: number;
-            description: string | null;
-            createdAt: Date;
             reservationId: number;
+            createdAt: Date;
+            description: string | null;
             eventType: import("@prisma/client").$Enums.ReservationEventType;
             createdByUserId: number;
         })[];
@@ -44,9 +44,9 @@ export declare class ReservationEventsService {
             };
         } & {
             id: number;
-            description: string | null;
-            createdAt: Date;
             reservationId: number;
+            createdAt: Date;
+            description: string | null;
             eventType: import("@prisma/client").$Enums.ReservationEventType;
             createdByUserId: number;
         })[];
@@ -58,17 +58,17 @@ export declare class ReservationEventsService {
             };
         } & {
             id: number;
-            description: string | null;
-            createdAt: Date;
             reservationId: number;
+            createdAt: Date;
+            description: string | null;
             eventType: import("@prisma/client").$Enums.ReservationEventType;
             createdByUserId: number;
         };
         reservation: {
             id: number;
-            description: string | null;
             createdAt: Date;
-            trackingCode: string;
+            description: string | null;
+            status: import("@prisma/client").$Enums.ReservationStatus;
             mawkibId: number;
             pilgrimUserId: number;
             reservedByUserId: number;
@@ -80,11 +80,11 @@ export declare class ReservationEventsService {
             actualCheckOutAt: Date | null;
             maleGuestCount: number;
             femaleGuestCount: number;
+            trackingCode: string;
             pilgrimMobile: string;
             companions: string | null;
             travelOrigin: string | null;
             cancellationNote: string | null;
-            status: import("@prisma/client").$Enums.ReservationStatus;
             presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
             lastStatusUpdatedByUserId: number | null;
             lastStatusUpdatedAt: Date | null;
@@ -94,9 +94,9 @@ export declare class ReservationEventsService {
     private applyEarlyCheckout;
     syncEventFromLegacyAttendance(reservationId: number, eventType: 'CHECK_IN' | 'EARLY_CHECKOUT', recordedAt: Date, userId: number): Promise<{
         id: number;
-        description: string | null;
-        createdAt: Date;
         reservationId: number;
+        createdAt: Date;
+        description: string | null;
         eventType: import("@prisma/client").$Enums.ReservationEventType;
         createdByUserId: number;
     }>;

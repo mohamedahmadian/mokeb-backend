@@ -917,6 +917,42 @@ let ReservationsService = class ReservationsService {
         }
         return updated;
     }
+    async updateTrackingCode(id, dto, currentUser) {
+        const reservation = await this.findOne(id);
+        const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
+        const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
+        if (!isAdmin && !isOwner) {
+            throw new common_1.ForbiddenException('شما مجوز تغییر کد رزرو را ندارید');
+        }
+        if (isOwner && !isAdmin) {
+            await this.mawkibsService.assertOwnerAccess(reservation.mawkibId, currentUser.id);
+        }
+        const trimmed = dto.trackingCode.trim();
+        if (!trimmed) {
+            throw new common_1.BadRequestException('کد رزرو الزامی است');
+        }
+        if (trimmed.length > 64) {
+            throw new common_1.BadRequestException('کد رزرو حداکثر ۶۴ کاراکتر می‌تواند باشد');
+        }
+        if (trimmed === reservation.trackingCode) {
+            return reservation;
+        }
+        await this.assertTrackingCodeAvailable(trimmed);
+        try {
+            return await this.prisma.reservation.update({
+                where: { id },
+                data: { trackingCode: trimmed },
+                include: reservationInclude,
+            });
+        }
+        catch (error) {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2002') {
+                throw new common_1.BadRequestException('این کد رزرو قبلاً ثبت شده است');
+            }
+            throw error;
+        }
+    }
     async cancel(id, dto, currentUser) {
         const reservation = await this.findOne(id);
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);

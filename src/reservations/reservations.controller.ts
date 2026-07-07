@@ -21,6 +21,7 @@ import {
   SearchReservationDto,
   TrackByMobileDto,
   UpdateReservationStatusDto,
+  UpdateReservationTrackingCodeDto,
 } from './dto/reservation.dto';
 import { AttendanceRosterQueryDto } from './dto/attendance-roster.dto';
 import {
@@ -131,6 +132,17 @@ export class ReservationsController {
     @CurrentUser() user: AuthUser,
   ) {
     return this.reservationsService.cancel(id, dto, user);
+  }
+
+  @Patch(':id/tracking-code')
+  @UseGuards(RolesGuard)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  updateTrackingCode(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateReservationTrackingCodeDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reservationsService.updateTrackingCode(id, dto, user);
   }
 
   @Post(':id/extend')

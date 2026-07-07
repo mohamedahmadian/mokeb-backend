@@ -17,6 +17,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MawkibsService } from '../mawkibs/mawkibs.service';
 import {
   CancelReservationDto,
+  UpdateReservationTrackingCodeDto,
   CreateReservationDto,
   CreateGuestReservationDto,
   ExtendReservationDto,
@@ -1333,6 +1334,58 @@ export class ReservationsService {
     }
 
     return updated;
+  }
+
+  async updateTrackingCode(
+    id: number,
+    dto: UpdateReservationTrackingCodeDto,
+    currentUser: AuthUser,
+  ) {
+    const reservation = await this.findOne(id);
+    const isAdmin = currentUser.roles.includes(RoleName.Admin);
+    const isOwner = currentUser.roles.includes(RoleName.MawkibOwner);
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException('شما مجوز تغییر کد رزرو را ندارید');
+    }
+
+    if (isOwner && !isAdmin) {
+      await this.mawkibsService.assertOwnerAccess(
+        reservation.mawkibId,
+        currentUser.id,
+      );
+    }
+
+    const trimmed = dto.trackingCode.trim();
+    if (!trimmed) {
+      throw new BadRequestException('کد رزرو الزامی است');
+    }
+
+    if (trimmed.length > 64) {
+      throw new BadRequestException('کد رزرو حداکثر ۶۴ کاراکتر می‌تواند باشد');
+    }
+
+    if (trimmed === reservation.trackingCode) {
+      return reservation;
+    }
+
+    await this.assertTrackingCodeAvailable(trimmed);
+
+    try {
+      return await this.prisma.reservation.update({
+        where: { id },
+        data: { trackingCode: trimmed },
+        include: reservationInclude,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new BadRequestException('این کد رزرو قبلاً ثبت شده است');
+      }
+      throw error;
+    }
   }
 
   async cancel(id: number, dto: CancelReservationDto, currentUser: AuthUser) {

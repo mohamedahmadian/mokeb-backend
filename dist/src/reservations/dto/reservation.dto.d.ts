@@ -45,6 +45,9 @@ export declare class UpdateReservationStatusDto {
 export declare class CancelReservationDto {
     note?: string;
 }
+export declare class UpdateReservationTrackingCodeDto {
+    trackingCode: string;
+}
 export declare class SearchReservationDto {
     mawkibId?: number;
     status?: ReservationStatus;

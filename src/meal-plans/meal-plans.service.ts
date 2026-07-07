@@ -450,6 +450,8 @@ export class MealPlansService {
         id: true,
         trackingCode: true,
         pilgrimMobile: true,
+        maleGuestCount: true,
+        femaleGuestCount: true,
         actualCheckInAt: true,
         actualCheckOutAt: true,
         pilgrim: {
@@ -501,6 +503,8 @@ export class MealPlansService {
         mobile:
           reservation.pilgrimMobile || reservation.pilgrim.mobileNumber || '',
         nationalId: reservation.pilgrim.nationalId,
+        maleGuestCount: reservation.maleGuestCount,
+        femaleGuestCount: reservation.femaleGuestCount,
         isPresent,
         presence: isPresent ? 'دارد' : 'ندارد',
         isServed,
