@@ -46,6 +46,7 @@ import {
   mobilesAreExactlyEqual,
   normalizeMobileDigits,
 } from '../common/utils/mobile-search.util';
+import { lookupQueryVariants } from '../common/utils/lookup-query.util';
 import {
   BLOCKING_RESERVATION_STATUSES,
   isExactReservationDuplicate,
@@ -180,6 +181,23 @@ export class ReservationsService {
   }
 
   private buildReservationLookupOrConditions(
+    query: string,
+    exact = false,
+  ): Prisma.ReservationWhereInput[] {
+    const variants = lookupQueryVariants(query);
+    const seen = new Set<string>();
+    const conditions: Prisma.ReservationWhereInput[] = [];
+
+    for (const q of variants) {
+      if (!q || seen.has(q)) continue;
+      seen.add(q);
+      conditions.push(...this.buildReservationLookupOrConditionsForQuery(q, exact));
+    }
+
+    return conditions;
+  }
+
+  private buildReservationLookupOrConditionsForQuery(
     query: string,
     exact = false,
   ): Prisma.ReservationWhereInput[] {

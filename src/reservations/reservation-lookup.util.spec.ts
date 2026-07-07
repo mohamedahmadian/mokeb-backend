@@ -41,15 +41,15 @@ describe('reservation lookup ranking', () => {
     expect(ranked).toHaveLength(1);
   });
 
-  it('scores suffix match higher than fuzzy contains in date prefix', () => {
-    const exact = scoreReservationLookupMatch(
-      reservation(1, '50415-2003'),
-      '2003',
-    );
-    const other = scoreReservationLookupMatch(
-      reservation(2, '50415-2004'),
-      '2003',
-    );
-    expect(exact).toBeGreaterThan(other);
+  it('prefers exact national id over tracking code suffix match', () => {
+    const nationalId = '1234567890';
+    const items = [
+      reservation(2, '50415-1234567890', { nationalId: '9999999999' }),
+      reservation(1, '50415-2003', { nationalId }),
+    ];
+
+    const ranked = rankReservationsByLookupQuery(items, nationalId);
+    expect(ranked).toHaveLength(1);
+    expect(ranked[0].id).toBe(1);
   });
 });

@@ -45,7 +45,7 @@ function scoreReservationLookupMatch(reservation, query) {
         return 100;
     const mobile = reservation.pilgrimMobile ?? '';
     const pilgrimMobile = reservation.pilgrim?.mobileNumber ?? '';
-    const nationalId = reservation.pilgrim?.nationalId ?? '';
+    const nationalId = (reservation.pilgrim?.nationalId ?? '').trim();
     if (mobile === q || pilgrimMobile === q)
         return 500;
     if (nationalId === q)
@@ -65,6 +65,12 @@ function rankReservationsByLookupQuery(reservations, query, exact = false) {
         score: scoreReservationLookupMatch(reservation, q),
     }));
     const isExactScore = (score) => score === 1000 || score === 850 || score === 500;
+    const identityMatches = scored.filter((item) => item.score === 500);
+    if (!exact && identityMatches.length > 0) {
+        return identityMatches
+            .sort((a, b) => b.score - a.score)
+            .map((item) => item.reservation);
+    }
     const maxScore = Math.max(...scored.map((item) => item.score));
     const threshold = exact
         ? 500

@@ -20,6 +20,7 @@ const reservation_event_util_1 = require("./reservation-event.util");
 const date_util_1 = require("../common/utils/date.util");
 const reservation_code_util_1 = require("../common/utils/reservation-code.util");
 const mobile_search_util_1 = require("../common/utils/mobile-search.util");
+const lookup_query_util_1 = require("../common/utils/lookup-query.util");
 const reservation_conflict_util_1 = require("./reservation-conflict.util");
 const reservation_guest_count_util_1 = require("./reservation-guest-count.util");
 const reservation_occupancy_util_1 = require("./reservation-occupancy.util");
@@ -121,6 +122,18 @@ let ReservationsService = class ReservationsService {
         where.AND = [...existingAnd, clause];
     }
     buildReservationLookupOrConditions(query, exact = false) {
+        const variants = (0, lookup_query_util_1.lookupQueryVariants)(query);
+        const seen = new Set();
+        const conditions = [];
+        for (const q of variants) {
+            if (!q || seen.has(q))
+                continue;
+            seen.add(q);
+            conditions.push(...this.buildReservationLookupOrConditionsForQuery(q, exact));
+        }
+        return conditions;
+    }
+    buildReservationLookupOrConditionsForQuery(query, exact = false) {
         const q = query.trim();
         const conditions = [];
         if (exact) {
