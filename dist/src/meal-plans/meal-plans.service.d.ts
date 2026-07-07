@@ -104,6 +104,7 @@ export declare class MealPlansService {
             fullName: string;
             mobile: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
             maleGuestCount: number;
             femaleGuestCount: number;
             isPresent: boolean;

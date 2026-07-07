@@ -338,6 +338,7 @@ let MealPlansService = class MealPlansService {
                         fullName: true,
                         mobileNumber: true,
                         nationalId: true,
+                        gender: true,
                     },
                 },
                 events: {
@@ -375,6 +376,7 @@ let MealPlansService = class MealPlansService {
                 fullName: reservation.pilgrim.fullName,
                 mobile: reservation.pilgrimMobile || reservation.pilgrim.mobileNumber || '',
                 nationalId: reservation.pilgrim.nationalId,
+                gender: reservation.pilgrim.gender,
                 maleGuestCount: reservation.maleGuestCount,
                 femaleGuestCount: reservation.femaleGuestCount,
                 isPresent,

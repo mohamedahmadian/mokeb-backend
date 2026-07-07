@@ -459,6 +459,7 @@ export class MealPlansService {
             fullName: true,
             mobileNumber: true,
             nationalId: true,
+            gender: true,
           },
         },
         events: {
@@ -503,6 +504,7 @@ export class MealPlansService {
         mobile:
           reservation.pilgrimMobile || reservation.pilgrim.mobileNumber || '',
         nationalId: reservation.pilgrim.nationalId,
+        gender: reservation.pilgrim.gender,
         maleGuestCount: reservation.maleGuestCount,
         femaleGuestCount: reservation.femaleGuestCount,
         isPresent,
