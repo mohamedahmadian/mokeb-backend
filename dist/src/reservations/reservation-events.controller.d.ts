@@ -12,9 +12,9 @@ export declare class ReservationEventsController {
             };
         } & {
             id: number;
-            reservationId: number;
-            createdAt: Date;
             description: string | null;
+            createdAt: Date;
+            reservationId: number;
             eventType: import("@prisma/client").$Enums.ReservationEventType;
             createdByUserId: number;
         })[];
@@ -30,9 +30,9 @@ export declare class ReservationEventsController {
             };
         } & {
             id: number;
-            reservationId: number;
-            createdAt: Date;
             description: string | null;
+            createdAt: Date;
+            reservationId: number;
             eventType: import("@prisma/client").$Enums.ReservationEventType;
             createdByUserId: number;
         })[];
@@ -44,17 +44,17 @@ export declare class ReservationEventsController {
             };
         } & {
             id: number;
-            reservationId: number;
-            createdAt: Date;
             description: string | null;
+            createdAt: Date;
+            reservationId: number;
             eventType: import("@prisma/client").$Enums.ReservationEventType;
             createdByUserId: number;
         };
         reservation: {
             id: number;
-            createdAt: Date;
             description: string | null;
-            status: import("@prisma/client").$Enums.ReservationStatus;
+            createdAt: Date;
+            trackingCode: string;
             mawkibId: number;
             pilgrimUserId: number;
             reservedByUserId: number;
@@ -66,11 +66,11 @@ export declare class ReservationEventsController {
             actualCheckOutAt: Date | null;
             maleGuestCount: number;
             femaleGuestCount: number;
-            trackingCode: string;
             pilgrimMobile: string;
             companions: string | null;
             travelOrigin: string | null;
             cancellationNote: string | null;
+            status: import("@prisma/client").$Enums.ReservationStatus;
             presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
             lastStatusUpdatedByUserId: number | null;
             lastStatusUpdatedAt: Date | null;

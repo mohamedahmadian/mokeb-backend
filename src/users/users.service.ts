@@ -10,7 +10,15 @@ import * as bcrypt from 'bcrypt';
 import { AuthUser } from '../common/decorators/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import { DEFAULT_USER_COUNTRY } from '../common/constants/user-country.constants';
-import { AssignRoleDto, CreateQuickPilgrimDto, CreateUserDto, ListPilgrimsDto, ListUsersDto, PilgrimListScope, UpdateUserDto } from './dto/user.dto';
+import {
+  AssignRoleDto,
+  CreateQuickPilgrimDto,
+  CreateUserDto,
+  ListPilgrimsDto,
+  ListUsersDto,
+  PilgrimListScope,
+  UpdateUserDto,
+} from './dto/user.dto';
 
 const MIN_PILGRIM_SEARCH_LENGTH = 2;
 
@@ -43,17 +51,29 @@ export class UsersService {
       ];
     } else {
       if (filters.fullName?.trim()) {
-        where.fullName = { contains: filters.fullName.trim(), mode: 'insensitive' };
+        where.fullName = {
+          contains: filters.fullName.trim(),
+          mode: 'insensitive',
+        };
       }
       if (filters.mobileNumber?.trim()) {
-        where.mobileNumber = { contains: filters.mobileNumber.trim(), mode: 'insensitive' };
+        where.mobileNumber = {
+          contains: filters.mobileNumber.trim(),
+          mode: 'insensitive',
+        };
       }
     }
     if (filters.nationalId?.trim()) {
-      where.nationalId = { contains: filters.nationalId.trim(), mode: 'insensitive' };
+      where.nationalId = {
+        contains: filters.nationalId.trim(),
+        mode: 'insensitive',
+      };
     }
     if (filters.province?.trim()) {
-      where.province = { contains: filters.province.trim(), mode: 'insensitive' };
+      where.province = {
+        contains: filters.province.trim(),
+        mode: 'insensitive',
+      };
     }
     if (filters.city?.trim()) {
       where.city = { contains: filters.city.trim(), mode: 'insensitive' };
@@ -76,7 +96,9 @@ export class UsersService {
     const users = await this.prisma.user.findMany({
       where,
       include,
-      orderBy: filters.search?.trim() ? { fullName: 'asc' } : { createdAt: 'desc' },
+      orderBy: filters.search?.trim()
+        ? { fullName: 'asc' }
+        : { createdAt: 'desc' },
       ...(filters.search?.trim() ? { take: 50 } : {}),
     });
     return users.map((user) => this.sanitize(user));
@@ -190,7 +212,10 @@ export class UsersService {
   async updateForUser(id: number, dto: UpdateUserDto, user: AuthUser) {
     const isAdmin = user.roles.includes(RoleName.Admin);
     if (isAdmin) {
-      return this.update(id, this.stripProfileImageUnlessSelf(dto, user.id, id));
+      return this.update(
+        id,
+        this.stripProfileImageUnlessSelf(dto, user.id, id),
+      );
     }
 
     if (user.id === id) {
@@ -214,7 +239,9 @@ export class UsersService {
         throw new ForbiddenException('شما مجوز تغییر نقش را ندارید');
       }
       if (imageUrl !== undefined) {
-        throw new ForbiddenException('شما مجوز تغییر عکس پروفایل زائر را ندارید');
+        throw new ForbiddenException(
+          'شما مجوز تغییر عکس پروفایل زائر را ندارید',
+        );
       }
       return this.update(id, pilgrimFields);
     }
@@ -235,7 +262,10 @@ export class UsersService {
         fullName: { contains: query.fullName.trim(), mode: 'insensitive' },
       }),
       ...(query.mobileNumber?.trim() && {
-        mobileNumber: { contains: query.mobileNumber.trim(), mode: 'insensitive' },
+        mobileNumber: {
+          contains: query.mobileNumber.trim(),
+          mode: 'insensitive',
+        },
       }),
       ...(query.nationalId?.trim() && {
         nationalId: { contains: query.nationalId.trim(), mode: 'insensitive' },
@@ -440,7 +470,8 @@ export class UsersService {
   async update(id: number, dto: UpdateUserDto) {
     await this.findOne(id);
 
-    const { password, roles, birthDate, country, passportNumber, ...fields } = dto;
+    const { password, roles, birthDate, country, passportNumber, ...fields } =
+      dto;
     const data: Prisma.UserUpdateInput = { ...fields };
 
     if (birthDate !== undefined) {
@@ -460,7 +491,8 @@ export class UsersService {
     }
 
     if (fields.nationalIdCardImageUrl !== undefined) {
-      data.nationalIdCardImageUrl = fields.nationalIdCardImageUrl?.trim() || null;
+      data.nationalIdCardImageUrl =
+        fields.nationalIdCardImageUrl?.trim() || null;
     }
 
     if (fields.imageUrl !== undefined) {

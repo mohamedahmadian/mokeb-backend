@@ -76,17 +76,29 @@ let UsersService = class UsersService {
         }
         else {
             if (filters.fullName?.trim()) {
-                where.fullName = { contains: filters.fullName.trim(), mode: 'insensitive' };
+                where.fullName = {
+                    contains: filters.fullName.trim(),
+                    mode: 'insensitive',
+                };
             }
             if (filters.mobileNumber?.trim()) {
-                where.mobileNumber = { contains: filters.mobileNumber.trim(), mode: 'insensitive' };
+                where.mobileNumber = {
+                    contains: filters.mobileNumber.trim(),
+                    mode: 'insensitive',
+                };
             }
         }
         if (filters.nationalId?.trim()) {
-            where.nationalId = { contains: filters.nationalId.trim(), mode: 'insensitive' };
+            where.nationalId = {
+                contains: filters.nationalId.trim(),
+                mode: 'insensitive',
+            };
         }
         if (filters.province?.trim()) {
-            where.province = { contains: filters.province.trim(), mode: 'insensitive' };
+            where.province = {
+                contains: filters.province.trim(),
+                mode: 'insensitive',
+            };
         }
         if (filters.city?.trim()) {
             where.city = { contains: filters.city.trim(), mode: 'insensitive' };
@@ -106,7 +118,9 @@ let UsersService = class UsersService {
         const users = await this.prisma.user.findMany({
             where,
             include,
-            orderBy: filters.search?.trim() ? { fullName: 'asc' } : { createdAt: 'desc' },
+            orderBy: filters.search?.trim()
+                ? { fullName: 'asc' }
+                : { createdAt: 'desc' },
             ...(filters.search?.trim() ? { take: 50 } : {}),
         });
         return users.map((user) => this.sanitize(user));
@@ -232,7 +246,10 @@ let UsersService = class UsersService {
                 fullName: { contains: query.fullName.trim(), mode: 'insensitive' },
             }),
             ...(query.mobileNumber?.trim() && {
-                mobileNumber: { contains: query.mobileNumber.trim(), mode: 'insensitive' },
+                mobileNumber: {
+                    contains: query.mobileNumber.trim(),
+                    mode: 'insensitive',
+                },
             }),
             ...(query.nationalId?.trim() && {
                 nationalId: { contains: query.nationalId.trim(), mode: 'insensitive' },
@@ -424,7 +441,8 @@ let UsersService = class UsersService {
             data.nationalId = fields.nationalId.trim() || null;
         }
         if (fields.nationalIdCardImageUrl !== undefined) {
-            data.nationalIdCardImageUrl = fields.nationalIdCardImageUrl?.trim() || null;
+            data.nationalIdCardImageUrl =
+                fields.nationalIdCardImageUrl?.trim() || null;
         }
         if (fields.imageUrl !== undefined) {
             data.imageUrl = fields.imageUrl?.trim() || null;
