@@ -12,10 +12,10 @@ export declare class RegistrationRequestsService {
         };
     } & {
         id: number;
+        address: string;
         description: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.RegistrationRequestStatus;
-        address: string;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -26,10 +26,10 @@ export declare class RegistrationRequestsService {
     })[]>;
     findByOwner(ownerUserId: number): import("@prisma/client").Prisma.PrismaPromise<{
         id: number;
+        address: string;
         description: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.RegistrationRequestStatus;
-        address: string;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -46,10 +46,10 @@ export declare class RegistrationRequestsService {
         };
     } & {
         id: number;
+        address: string;
         description: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.RegistrationRequestStatus;
-        address: string;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -60,10 +60,10 @@ export declare class RegistrationRequestsService {
     }>;
     create(dto: CreateRegistrationRequestDto, currentUser: AuthUser): Promise<{
         id: number;
+        address: string;
         description: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.RegistrationRequestStatus;
-        address: string;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -74,10 +74,10 @@ export declare class RegistrationRequestsService {
     }>;
     review(id: number, status: 'Approved' | 'Rejected'): Promise<{
         id: number;
+        address: string;
         description: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.RegistrationRequestStatus;
-        address: string;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -94,10 +94,10 @@ export declare class RegistrationRequestsService {
             };
         } & {
             id: number;
+            address: string;
             description: string | null;
             createdAt: Date;
             status: import("@prisma/client").$Enums.RegistrationRequestStatus;
-            address: string;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -111,13 +111,14 @@ export declare class RegistrationRequestsService {
             name: string;
             imageUrl: string | null;
             country: import("@prisma/client").$Enums.MawkibCountry;
+            address: string;
             description: string | null;
             whatsapp: string | null;
             bale: string | null;
             eitaa: string | null;
             createdAt: Date;
             status: import("@prisma/client").$Enums.MawkibStatus;
-            address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;

@@ -20,7 +20,9 @@ import {
   UpdateReservationTrackingCodeDto,
   CreateReservationDto,
   CreateGuestReservationDto,
+  EvacuateMawkibDto,
   ExtendReservationDto,
+  PurgeMawkibReservationsDto,
   RecordReservationAttendanceDto,
   SearchReservationDto,
   UpdateReservationStatusDto,
@@ -37,7 +39,16 @@ import { AuthUser } from '../common/decorators/current-user.decorator';
 import { UsersService } from '../users/users.service';
 import { ReservationEventsService } from './reservation-events.service';
 import { assertUniqueAttendanceSecond } from './reservation-event.util';
-import { parseDateOnly, formatDateOnly, formatDateOnlyInAppTz, startOfAppDay, APP_TIMEZONE, isRecordedAtBeforeCheckInMinute } from '../common/utils/date.util';
+import {
+  parseDateOnly,
+  formatDateOnly,
+  formatDateOnlyInAppTz,
+  startOfAppDay,
+  APP_TIMEZONE,
+  appLocalDateTimeToUtc,
+  isRecordedAtBeforeCheckInMinute,
+} from '../common/utils/date.util';
+import { DEFAULT_CHECK_IN_TIME } from '../common/constants/check-times';
 import { allocateNextReservationTrackingCode } from '../common/utils/reservation-code.util';
 import {
   buildExactMobileLookupVariants,
@@ -53,11 +64,11 @@ import {
   isExactReservationDuplicate,
 } from './reservation-conflict.util';
 import { assertHasGuestCount } from './reservation-guest-count.util';
-import { resolvePlannedTimes } from './reservation-occupancy.util';
+import { resolvePlannedTimes, DEFAULT_CHECK_IN_TIME } from './reservation-occupancy.util';
 import {
-  computeExtensionEndDate,
-  computeExtensionStartDate,
-  defaultExtensionEndDate,
+  computeExtendedEndDate,
+  currentReservationEndDate,
+  defaultExtendedEndDate,
 } from './reservation-extend.util';
 import {
   parseReservationIdLookup,
@@ -78,6 +89,7 @@ const reservationInclude = {
       id: true,
       name: true,
       address: true,
+      neshanAddressUrl: true,
       phoneNumber: true,
       imageUrl: true,
       latitude: true,
@@ -90,7 +102,15 @@ const reservationInclude = {
       owner: { select: { fullName: true, mobileNumber: true } },
     },
   },
-  pilgrim: { select: { id: true, fullName: true, mobileNumber: true, nationalId: true } },
+  pilgrim: {
+    select: {
+      id: true,
+      fullName: true,
+      mobileNumber: true,
+      nationalId: true,
+      gender: true,
+    },
+  },
   reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
   lastStatusUpdatedBy: { select: reviewUserSelect },
   review: {
@@ -113,11 +133,20 @@ const guestReservationTrackInclude = {
       id: true,
       name: true,
       address: true,
+      neshanAddressUrl: true,
       phoneNumber: true,
       imageUrl: true,
     },
   },
-  pilgrim: { select: { id: true, fullName: true, mobileNumber: true, nationalId: true } },
+  pilgrim: {
+    select: {
+      id: true,
+      fullName: true,
+      mobileNumber: true,
+      nationalId: true,
+      gender: true,
+    },
+  },
   reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
   deliveredItems: {
     include: {
@@ -150,12 +179,16 @@ export class ReservationsService {
     mawkibId: number;
     reservationDate: Date;
     reservationEndDate: Date;
+    maleGuestCount: number;
+    femaleGuestCount: number;
   }) {
     await this.mealPlansService.autoGenerateForNewReservation({
       reservationId: reservation.id,
       mawkibId: reservation.mawkibId,
       reservationDate: reservation.reservationDate,
       reservationEndDate: reservation.reservationEndDate,
+      maleGuestCount: reservation.maleGuestCount,
+      femaleGuestCount: reservation.femaleGuestCount,
     });
   }
 
@@ -1488,12 +1521,16 @@ export class ReservationsService {
 
     this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
 
-    const extensionStartStr = computeExtensionStartDate(
-      source.reservationEndDate ?? source.reservationDate,
+    const reservationStartStr = formatDateOnly(
+      parseDateOnly(source.reservationDate),
     );
-    const extensionStart = parseDateOnly(extensionStartStr);
+    const currentEndStr = currentReservationEndDate(
+      source.reservationEndDate,
+      source.reservationDate,
+    );
+    const currentEnd = parseDateOnly(currentEndStr);
 
-    let extensionEnd: Date;
+    let newEndStr: string;
 
     if (isPilgrimOnly) {
       if (dto.reservationEndDate || dto.stayDays) {
@@ -1501,115 +1538,84 @@ export class ReservationsService {
           'زائر نمی‌تواند بازه تمدید را به‌صورت دستی تنظیم کند',
         );
       }
-      extensionEnd = parseDateOnly(
-        defaultExtensionEndDate(
-          source.reservationEndDate,
-          mawkib.defaultReservationDays,
-        ),
+      newEndStr = defaultExtendedEndDate(
+        currentEndStr,
+        mawkib.defaultReservationDays,
       );
+    } else if (dto.reservationEndDate) {
+      newEndStr = dto.reservationEndDate.slice(0, 10);
+    } else if (dto.stayDays) {
+      newEndStr = computeExtendedEndDate(currentEndStr, dto.stayDays);
     } else {
-      if (dto.reservationEndDate) {
-        extensionEnd = parseDateOnly(dto.reservationEndDate);
-      } else if (dto.stayDays) {
-        extensionEnd = parseDateOnly(
-          computeExtensionEndDate(extensionStartStr, dto.stayDays),
-        );
-      } else {
-        extensionEnd = parseDateOnly(
-          defaultExtensionEndDate(
-            source.reservationEndDate,
-            mawkib.defaultReservationDays,
-          ),
-        );
-      }
-    }
-
-    if (extensionEnd < extensionStart) {
-      throw new BadRequestException(
-        'تاریخ پایان تمدید نمی‌تواند قبل از تاریخ شروع باشد',
+      newEndStr = defaultExtendedEndDate(
+        currentEndStr,
+        mawkib.defaultReservationDays,
       );
     }
 
-    await this.mawkibsService.assertReservationServiceStart(
-      source.mawkibId,
-      extensionStart,
-    );
+    const newEnd = parseDateOnly(newEndStr);
+
+    if (newEndStr < reservationStartStr) {
+      throw new BadRequestException(
+        'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد',
+      );
+    }
+
+    if (newEndStr === currentEndStr) {
+      throw new BadRequestException(
+        'تاریخ پایان جدید با تاریخ فعلی یکسان است',
+      );
+    }
+
+    if (newEndStr < currentEndStr) {
+      throw new BadRequestException(
+        'تاریخ پایان جدید نمی‌تواند قبل از تاریخ پایان فعلی باشد',
+      );
+    }
 
     await this.mawkibsService.assertMaxReservationDays(
       source.mawkibId,
-      extensionStart,
-      extensionEnd,
+      parseDateOnly(reservationStartStr),
+      newEnd,
     );
 
     await this.mawkibsService.assertCapacityInRange(
       source.mawkibId,
       source.maleGuestCount,
       source.femaleGuestCount,
-      extensionStart,
-      extensionEnd,
+      currentEnd,
+      newEnd,
     );
 
     await this.assertNoConflictingReservation({
       pilgrimUserId: source.pilgrimUserId,
       mawkibId: source.mawkibId,
-      reservationDate: extensionStart,
-      reservationEndDate: extensionEnd,
+      reservationDate: source.reservationDate,
+      reservationEndDate: newEnd,
       maleGuestCount: source.maleGuestCount,
       femaleGuestCount: source.femaleGuestCount,
       excludeReservationId: sourceId,
     });
 
-    const plannedTimes = resolvePlannedTimes(
-      {
-        plannedCheckInTime: source.plannedCheckInTime ?? undefined,
-        plannedCheckOutTime: source.plannedCheckOutTime ?? undefined,
+    const updated = await this.prisma.reservation.update({
+      where: { id: sourceId },
+      data: {
+        reservationEndDate: newEnd,
       },
-      mawkib,
-    );
-
-    const extensionNote = `تمدید رزرو ${source.trackingCode}`;
-
-    const autoConfirmed = isAdmin || isOwner;
-    const checkInOnConfirm = autoConfirmed
-      ? this.resolveActualCheckInOnConfirm(mawkib, null)
-      : undefined;
-
-    const reservation = await this.createWithTrackingCode({
-      mawkibId: source.mawkibId,
-      pilgrimUserId: source.pilgrimUserId,
-      reservedByUserId: currentUser.id,
-      reservationDate: extensionStart,
-      reservationEndDate: extensionEnd,
-      plannedCheckInTime: plannedTimes.plannedCheckInTime,
-      plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
-      maleGuestCount: source.maleGuestCount,
-      femaleGuestCount: source.femaleGuestCount,
-      pilgrimMobile: source.pilgrimMobile,
-      description: extensionNote,
-      companions: source.companions ?? undefined,
-      travelOrigin: source.travelOrigin ?? undefined,
-      status: autoConfirmed
-        ? ReservationStatus.Confirmed
-        : ReservationStatus.Pending,
-      ...(autoConfirmed ? this.statusAuditFields(currentUser.id) : {}),
-      ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
+      include: reservationInclude,
     });
 
-    await this.syncCheckInEventOnConfirm(
-      reservation.id,
-      checkInOnConfirm,
-      currentUser.id,
-    );
-
-    if (reservation.status === ReservationStatus.Confirmed) {
-      await this.mawkibsService.syncInventoryOnReservationConfirmed(
-        reservation,
+    if (source.status === ReservationStatus.Confirmed) {
+      await this.mawkibsService.syncInventoryOnEndDateChange(
+        source,
+        currentEnd,
+        newEnd,
       );
     }
 
-    await this.maybeGenerateMealPlans(reservation);
+    await this.maybeGenerateMealPlans(updated);
 
-    return reservation;
+    return updated;
   }
 
   async remove(id: number) {

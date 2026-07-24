@@ -1,7 +1,7 @@
 import { MawkibStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
-import { AdminSearchMawkibDto, CreateMawkibDto, MawkibInventoryQueryDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
+import { AdminSearchMawkibDto, CreateMawkibDto, MawkibInventoryQueryDto, MawkibInventoryReconcileDto, SearchMawkibDto, UpdateMawkibDto } from './dto/mawkib.dto';
 import { MawkibCapacitySnapshot } from '../common/types/capacity.types';
 import { MawkibInventoryService } from './mawkib-inventory.service';
 export interface PaginatedMawkibsResult<T> {
@@ -45,13 +45,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -111,13 +112,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -181,13 +183,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -227,6 +230,8 @@ export declare class MawkibsService {
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
+        reservedMaleCapacity: number;
+        reservedFemaleCapacity: number;
     })[] | PaginatedMawkibsResult<{
         _count: {
             reservations: number;
@@ -250,13 +255,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -296,6 +302,8 @@ export declare class MawkibsService {
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
+        reservedMaleCapacity: number;
+        reservedFemaleCapacity: number;
     }>>;
     findByOwner(ownerUserId: number, search?: AdminSearchMawkibDto): Promise<({
         _count: {
@@ -320,13 +328,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -389,13 +398,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -460,13 +470,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -506,6 +517,8 @@ export declare class MawkibsService {
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
+        reservedMaleCapacity: number;
+        reservedFemaleCapacity: number;
     }>;
     findOne(id: number, userId?: number, isAdmin?: boolean): Promise<{
         _count: {
@@ -530,13 +543,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -576,6 +590,8 @@ export declare class MawkibsService {
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
+        reservedMaleCapacity: number;
+        reservedFemaleCapacity: number;
     }>;
     create(dto: CreateMawkibDto, actingUserId?: number, isAdmin?: boolean): Promise<{
         _count: {
@@ -600,13 +616,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -667,13 +684,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -735,13 +753,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -806,13 +825,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;
@@ -857,6 +877,13 @@ export declare class MawkibsService {
         femaleCapacity: number;
     }>, day?: Date | string): Promise<Map<number, MawkibCapacitySnapshot>>;
     getInventoryRange(mawkibId: number, query: MawkibInventoryQueryDto): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
+    reconcileInventoryInRange(mawkibId: number, query: MawkibInventoryReconcileDto): Promise<{
+        mawkibId: number;
+        startDate: string;
+        endDate: string;
+        daysUpdated: number;
+        reservationsProcessed: number;
+    }>;
     getInventoryRangeForViewer(mawkibId: number, query: MawkibInventoryQueryDto, userId?: number, isAdmin?: boolean): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
     syncInventoryOnReservationConfirmed(reservation: {
         mawkibId: number;
@@ -892,13 +919,14 @@ export declare class MawkibsService {
         name: string;
         imageUrl: string | null;
         country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
         description: string | null;
         whatsapp: string | null;
         bale: string | null;
         eitaa: string | null;
         createdAt: Date;
         status: import("@prisma/client").$Enums.MawkibStatus;
-        address: string;
+        neshanAddressUrl: string | null;
         latitude: number | null;
         longitude: number | null;
         phoneNumber: string;

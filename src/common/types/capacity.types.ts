@@ -3,6 +3,8 @@ export interface MawkibCapacitySnapshot {
   femaleCapacity: number;
   availableMale: number;
   availableFemale: number;
+  reservedMale: number;
+  reservedFemale: number;
 }
 
 export function totalCapacity(snapshot: Pick<MawkibCapacitySnapshot, 'maleCapacity' | 'femaleCapacity'>) {

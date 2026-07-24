@@ -52,16 +52,27 @@ export declare class MawkibInventoryService implements OnModuleInit {
     ensureInitialized(mawkibId: number): Promise<void>;
     ensureDayRows(mawkibId: number, startDate: Date, endDate: Date): Promise<void>;
     seedHorizonForMawkib(mawkibId: number): Promise<void>;
+    private aggregateOccupancyByDay;
+    private applyAggregatedCountsToDays;
     private applyDeltaToDays;
     applyReservationOccupancy(reservation: ReservationInventoryShape, delta: 1 | -1): Promise<void>;
     applyEndDateChange(reservation: Pick<ReservationInventoryShape, 'mawkibId' | 'reservationDate' | 'maleGuestCount' | 'femaleGuestCount'>, previousEndDate: Date | string, newEndDate: Date | string): Promise<void>;
     rebuildMawkibInventory(mawkibId: number): Promise<void>;
+    rebuildMawkibInventoryInRange(mawkibId: number, startDate: Date | string, endDate: Date | string): Promise<{
+        mawkibId: number;
+        startDate: string;
+        endDate: string;
+        daysUpdated: number;
+        reservationsProcessed: number;
+    }>;
     getInventoryRange(mawkibId: number, startDate: Date | string, endDate: Date | string): Promise<MawkibInventoryRangeResult>;
     getSnapshotsForMawkibsOnDate(mawkibs: MawkibCapacitySource[], day?: Date | string): Promise<Map<number, MawkibCapacitySnapshot>>;
     getCapacitySnapshotFromInventory(mawkibId: number, day: Date | string, maleCapacity: number, femaleCapacity: number): Promise<MawkibCapacitySnapshot>;
     getMinCapacityInRangeFromInventory(mawkibId: number, startDate: Date | string, endDate: Date | string, maleCapacity: number, femaleCapacity: number): Promise<{
         maleCapacity: number;
         femaleCapacity: number;
+        reservedMale: number;
+        reservedFemale: number;
         availableMale: number;
         availableFemale: number;
     }>;

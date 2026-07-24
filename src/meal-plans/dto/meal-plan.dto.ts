@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { MealType } from '@prisma/client';
@@ -24,6 +25,12 @@ export class MealPlanEntryDto {
 
   @IsBoolean()
   isRequired: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  guestCount?: number;
 }
 
 export class SaveMealPlansDto {
@@ -47,4 +54,17 @@ export class UpsertMealPlanEntryDto {
 
   @IsBoolean()
   isRequired: boolean;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  guestCount?: number;
+}
+
+export class MarkMealServedDto {
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  guestCount: number;
 }

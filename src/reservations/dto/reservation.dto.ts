@@ -352,12 +352,12 @@ export class TrackByExactMobileDto {
 }
 
 export class ExtendReservationDto {
-  /** End date of the extension stay (YYYY-MM-DD). Owner/admin only. */
+  /** New reservation end date (YYYY-MM-DD). Owner/admin only. */
   @IsOptional()
   @IsDateString()
   reservationEndDate?: string;
 
-  /** Stay length in days from extension start. Owner/admin only. */
+  /** Extra days added to the current end date. Owner/admin only. */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -376,4 +376,30 @@ export class GuestRecordAttendanceDto extends TrackReservationDto {
   @IsOptional()
   @IsDateString()
   recordedAt?: string;
+}
+
+export class EvacuateMawkibDto {
+  @IsIn(['Completed', 'Cancelled'])
+  status: 'Completed' | 'Cancelled';
+
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, {
+    message: 'ساعت خروج باید به فرمت HH:mm باشد',
+  })
+  checkoutTime: string;
+
+  @IsOptional()
+  @IsString()
+  note?: string;
+}
+
+export class PurgeMawkibReservationsDto {
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  deletePilgrimUsers: boolean;
+
+  @IsString()
+  @IsNotEmpty({ message: 'متن تأیید الزامی است' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  confirmationText: string;
 }

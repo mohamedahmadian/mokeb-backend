@@ -20,6 +20,7 @@ export declare class GuestReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -38,6 +39,7 @@ export declare class GuestReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -117,6 +119,7 @@ export declare class GuestReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -135,6 +138,7 @@ export declare class GuestReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -212,6 +216,7 @@ export declare class GuestReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -230,6 +235,7 @@ export declare class GuestReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -308,6 +314,7 @@ export declare class GuestReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             phoneNumber: string;
         };
         pilgrim: {
@@ -315,6 +322,7 @@ export declare class GuestReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;

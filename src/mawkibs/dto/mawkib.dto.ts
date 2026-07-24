@@ -87,6 +87,10 @@ export class CreateMawkibDto {
   address: string;
 
   @IsOptional()
+  @IsString()
+  neshanAddressUrl?: string;
+
+  @IsOptional()
   @IsNumber()
   latitude?: number;
 
@@ -282,6 +286,10 @@ export class UpdateMawkibDto {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsString()
+  neshanAddressUrl?: string | null;
 
   @IsOptional()
   @IsNumber()
@@ -662,6 +670,14 @@ export class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
 }
 
 export class MawkibInventoryQueryDto {
+  @IsDateString()
+  startDate: string;
+
+  @IsDateString()
+  endDate: string;
+}
+
+export class MawkibInventoryReconcileDto {
   @IsDateString()
   startDate: string;
 

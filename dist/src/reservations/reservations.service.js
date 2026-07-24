@@ -39,6 +39,7 @@ const reservationInclude = {
             id: true,
             name: true,
             address: true,
+            neshanAddressUrl: true,
             phoneNumber: true,
             imageUrl: true,
             latitude: true,
@@ -51,7 +52,15 @@ const reservationInclude = {
             owner: { select: { fullName: true, mobileNumber: true } },
         },
     },
-    pilgrim: { select: { id: true, fullName: true, mobileNumber: true, nationalId: true } },
+    pilgrim: {
+        select: {
+            id: true,
+            fullName: true,
+            mobileNumber: true,
+            nationalId: true,
+            gender: true,
+        },
+    },
     reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
     lastStatusUpdatedBy: { select: reviewUserSelect },
     review: {
@@ -73,11 +82,20 @@ const guestReservationTrackInclude = {
             id: true,
             name: true,
             address: true,
+            neshanAddressUrl: true,
             phoneNumber: true,
             imageUrl: true,
         },
     },
-    pilgrim: { select: { id: true, fullName: true, mobileNumber: true, nationalId: true } },
+    pilgrim: {
+        select: {
+            id: true,
+            fullName: true,
+            mobileNumber: true,
+            nationalId: true,
+            gender: true,
+        },
+    },
     reservedBy: { select: { id: true, fullName: true, mobileNumber: true } },
     deliveredItems: {
         include: {

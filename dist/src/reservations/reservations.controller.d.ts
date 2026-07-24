@@ -13,6 +13,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -31,6 +32,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -108,6 +110,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -126,6 +129,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -204,6 +208,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -222,6 +227,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -299,6 +305,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -317,6 +324,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -403,6 +411,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -421,6 +430,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -499,6 +509,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             phoneNumber: string;
         };
         pilgrim: {
@@ -506,6 +517,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -584,6 +596,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -602,6 +615,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -680,13 +694,14 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             country: import("@prisma/client").$Enums.MawkibCountry;
+            address: string;
             description: string | null;
             whatsapp: string | null;
             bale: string | null;
             eitaa: string | null;
             createdAt: Date;
             status: import("@prisma/client").$Enums.MawkibStatus;
-            address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -738,6 +753,8 @@ export declare class ReservationsController {
             passwordHash: string;
             province: string | null;
             city: string | null;
+            address: string | null;
+            carPlate: string | null;
             description: string | null;
             whatsapp: string | null;
             telegram: string | null;
@@ -761,6 +778,8 @@ export declare class ReservationsController {
             passwordHash: string;
             province: string | null;
             city: string | null;
+            address: string | null;
+            carPlate: string | null;
             description: string | null;
             whatsapp: string | null;
             telegram: string | null;
@@ -784,6 +803,8 @@ export declare class ReservationsController {
             passwordHash: string;
             province: string | null;
             city: string | null;
+            address: string | null;
+            carPlate: string | null;
             description: string | null;
             whatsapp: string | null;
             telegram: string | null;
@@ -876,6 +897,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -894,6 +916,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -972,6 +995,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -990,6 +1014,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1068,6 +1093,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1086,6 +1112,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1164,13 +1191,14 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             country: import("@prisma/client").$Enums.MawkibCountry;
+            address: string;
             description: string | null;
             whatsapp: string | null;
             bale: string | null;
             eitaa: string | null;
             createdAt: Date;
             status: import("@prisma/client").$Enums.MawkibStatus;
-            address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1222,6 +1250,8 @@ export declare class ReservationsController {
             passwordHash: string;
             province: string | null;
             city: string | null;
+            address: string | null;
+            carPlate: string | null;
             description: string | null;
             whatsapp: string | null;
             telegram: string | null;
@@ -1245,6 +1275,8 @@ export declare class ReservationsController {
             passwordHash: string;
             province: string | null;
             city: string | null;
+            address: string | null;
+            carPlate: string | null;
             description: string | null;
             whatsapp: string | null;
             telegram: string | null;
@@ -1268,6 +1300,8 @@ export declare class ReservationsController {
             passwordHash: string;
             province: string | null;
             city: string | null;
+            address: string | null;
+            carPlate: string | null;
             description: string | null;
             whatsapp: string | null;
             telegram: string | null;
@@ -1360,6 +1394,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1378,6 +1413,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1457,6 +1493,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1475,6 +1512,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1552,6 +1590,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1570,6 +1609,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1648,6 +1688,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1666,6 +1707,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1744,6 +1786,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1762,6 +1805,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1840,6 +1884,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1858,6 +1903,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -1936,6 +1982,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -1954,6 +2001,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -2032,6 +2080,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -2050,6 +2099,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -2128,6 +2178,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -2146,6 +2197,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -2224,6 +2276,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -2242,6 +2295,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;
@@ -2320,6 +2374,7 @@ export declare class ReservationsController {
             name: string;
             imageUrl: string | null;
             address: string;
+            neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
@@ -2338,6 +2393,7 @@ export declare class ReservationsController {
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
         };
         reservedBy: {
             id: number;

@@ -138,6 +138,8 @@ let MawkibsService = class MawkibsService {
                 ...mawkib,
                 availableMaleCapacity: snapshot.availableMale,
                 availableFemaleCapacity: snapshot.availableFemale,
+                reservedMaleCapacity: snapshot.reservedMale,
+                reservedFemaleCapacity: snapshot.reservedFemale,
             };
         });
     }
@@ -165,6 +167,8 @@ let MawkibsService = class MawkibsService {
                     ...mawkib,
                     availableMaleCapacity: snapshot.availableMale,
                     availableFemaleCapacity: snapshot.availableFemale,
+                    reservedMaleCapacity: snapshot.reservedMale,
+                    reservedFemaleCapacity: snapshot.reservedFemale,
                 };
             }));
         }
@@ -540,6 +544,9 @@ let MawkibsService = class MawkibsService {
     }
     async getInventoryRange(mawkibId, query) {
         return this.inventoryService.getInventoryRange(mawkibId, query.startDate, query.endDate);
+    }
+    async reconcileInventoryInRange(mawkibId, query) {
+        return this.inventoryService.rebuildMawkibInventoryInRange(mawkibId, query.startDate, query.endDate);
     }
     async getInventoryRangeForViewer(mawkibId, query, userId, isAdmin = false) {
         const mawkib = await this.prisma.mawkib.findUnique({

@@ -16,6 +16,7 @@ import {
   AdminSearchMawkibDto,
   CreateMawkibDto,
   MawkibInventoryQueryDto,
+  MawkibInventoryReconcileDto,
   SearchMawkibDto,
   UpdateMawkibDto,
 } from './dto/mawkib.dto';
@@ -81,6 +82,16 @@ export class MawkibsController {
       user.id,
       isAdmin,
     );
+  }
+
+  @Post(':id/inventory/reconcile')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.Admin)
+  reconcileInventory(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: MawkibInventoryReconcileDto,
+  ) {
+    return this.mawkibsService.reconcileInventoryInRange(id, body);
   }
 
   @Get(':id/capacity')

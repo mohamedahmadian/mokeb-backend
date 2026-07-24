@@ -21,6 +21,7 @@ import {
   MAWKIB_AMENITY_FILTER_KEYS,
   MawkibCapacityFilter,
   MawkibInventoryQueryDto,
+  MawkibInventoryReconcileDto,
   SearchMawkibDto,
   UpdateMawkibDto,
 } from './dto/mawkib.dto';
@@ -195,6 +196,8 @@ export class MawkibsService {
         ...mawkib,
         availableMaleCapacity: snapshot.availableMale,
         availableFemaleCapacity: snapshot.availableFemale,
+        reservedMaleCapacity: snapshot.reservedMale,
+        reservedFemaleCapacity: snapshot.reservedFemale,
       };
     });
   }
@@ -268,6 +271,8 @@ export class MawkibsService {
             ...mawkib,
             availableMaleCapacity: snapshot.availableMale,
             availableFemaleCapacity: snapshot.availableFemale,
+            reservedMaleCapacity: snapshot.reservedMale,
+            reservedFemaleCapacity: snapshot.reservedFemale,
           };
         }),
       );
@@ -746,6 +751,17 @@ export class MawkibsService {
 
   async getInventoryRange(mawkibId: number, query: MawkibInventoryQueryDto) {
     return this.inventoryService.getInventoryRange(
+      mawkibId,
+      query.startDate,
+      query.endDate,
+    );
+  }
+
+  async reconcileInventoryInRange(
+    mawkibId: number,
+    query: MawkibInventoryReconcileDto,
+  ) {
+    return this.inventoryService.rebuildMawkibInventoryInRange(
       mawkibId,
       query.startDate,
       query.endDate,

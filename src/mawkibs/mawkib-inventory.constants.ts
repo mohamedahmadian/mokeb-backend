@@ -5,3 +5,8 @@ export const MAWKIB_INVENTORY_HORIZON_DAYS = Number(
 
 /** Bump when reservation day-occupancy rules change (triggers one-time inventory rebuild). */
 export const MAWKIB_INVENTORY_OCCUPANCY_REVISION = 5;
+
+/** Interactive transaction timeout for bulk inventory rebuilds (ms). */
+export const MAWKIB_INVENTORY_REBUILD_TX_TIMEOUT_MS = Number(
+  process.env.MAWKIB_INVENTORY_REBUILD_TX_TIMEOUT_MS ?? 60_000,
+);

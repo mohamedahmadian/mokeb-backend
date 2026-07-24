@@ -98,6 +98,8 @@ model User {
   passwordHash String
   province     String?
   city         String?
+  address      String?
+  carPlate     String?
   description  String?
   whatsapp     String?
   telegram     String?
@@ -161,6 +163,7 @@ model Mawkib {
   id               Int          @id @default(autoincrement())
   name             String
   address          String
+  neshanAddressUrl String?
   latitude         Float?
   longitude        Float?
   phoneNumber      String
@@ -288,6 +291,7 @@ model MealPlan {
   reservationId Int
   date          DateTime @db.Date
   mealType      MealType
+  guestCount    Int      @default(1)
   isRequired    Boolean  @default(true)
   isServed      Boolean  @default(false)
   servedAt      DateTime?

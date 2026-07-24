@@ -17,7 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthUser } from '../common/decorators/current-user.decorator';
-import { AddMealPlanDayDto, SaveMealPlansDto, UpsertMealPlanEntryDto } from './dto/meal-plan.dto';
+import { AddMealPlanDayDto, MarkMealServedDto, SaveMealPlansDto, UpsertMealPlanEntryDto } from './dto/meal-plan.dto';
 import { PresentAttendeesReportQueryDto } from './dto/present-attendees-report.dto';
 import { MealPlansService } from './meal-plans.service';
 
@@ -90,8 +90,9 @@ export class MealPlansController {
   @Patch(':id/serve')
   markServed(
     @Param('id', ParseIntPipe) id: number,
+    @Body() dto: MarkMealServedDto,
     @CurrentUser() user: AuthUser,
   ) {
-    return this.service.markServed(id, user);
+    return this.service.markServed(id, dto.guestCount, user);
   }
 }

@@ -48,6 +48,9 @@ let MawkibsController = class MawkibsController {
         const isAdmin = user.roles.includes(client_1.RoleName.Admin);
         return this.mawkibsService.getInventoryRangeForViewer(id, query, user.id, isAdmin);
     }
+    reconcileInventory(id, body) {
+        return this.mawkibsService.reconcileInventoryInRange(id, body);
+    }
     getCapacity(id, date) {
         return this.mawkibsService.getCapacitySnapshot(id, date ? new Date(date) : undefined);
     }
@@ -129,6 +132,16 @@ __decorate([
     __metadata("design:paramtypes", [Number, mawkib_dto_1.MawkibInventoryQueryDto, Object]),
     __metadata("design:returntype", void 0)
 ], MawkibsController.prototype, "findInventory", null);
+__decorate([
+    (0, common_1.Post)(':id/inventory/reconcile'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, mawkib_dto_1.MawkibInventoryReconcileDto]),
+    __metadata("design:returntype", void 0)
+], MawkibsController.prototype, "reconcileInventory", null);
 __decorate([
     (0, common_1.Get)(':id/capacity'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),

@@ -14,9 +14,44 @@ import {
 import {
   occupancyDaysDeltaOnEndDateChange,
   reservationOccupiedDays,
+  reservationOverlapsDateRange,
 } from '../reservations/reservation-occupancy.util';
-import { MAWKIB_INVENTORY_HORIZON_DAYS, MAWKIB_INVENTORY_OCCUPANCY_REVISION } from './mawkib-inventory.constants';
+import { MAWKIB_INVENTORY_HORIZON_DAYS, MAWKIB_INVENTORY_OCCUPANCY_REVISION, MAWKIB_INVENTORY_REBUILD_TX_TIMEOUT_MS } from './mawkib-inventory.constants';
 import type { MawkibCapacitySnapshot } from '../common/types/capacity.types';
+
+// #region agent log
+function agentDebugLog(
+  location: string,
+  message: string,
+  data: Record<string, unknown>,
+  hypothesisId: string,
+) {
+  fetch('http://127.0.0.1:7929/ingest/64824c4b-ac44-41b9-87b8-d1ea5f1d3aa4', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Debug-Session-Id': '06086f',
+    },
+    body: JSON.stringify({
+      sessionId: '06086f',
+      location,
+      message,
+      data,
+      hypothesisId,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+}
+// #endregion
+
+type ReservationOccupancySource = {
+  reservationDate: Date;
+  reservationEndDate: Date;
+  maleGuestCount: number;
+  femaleGuestCount: number;
+};
+
+type DayOccupancyTotals = { male: number; female: number };
 
 export type MawkibCapacitySource = {
   id: number;
@@ -220,8 +255,18 @@ export class MawkibInventoryService implements OnModuleInit {
     const count = await this.prisma.mawkibDailyInventory.count({
       where: { mawkibId },
     });
+    const stale = count === 0 ? false : await this.isInventoryStale(mawkibId);
 
-    if (count === 0 || (await this.isInventoryStale(mawkibId))) {
+    // #region agent log
+    agentDebugLog(
+      'mawkib-inventory.service.ts:ensureInitialized',
+      'ensureInitialized check',
+      { mawkibId, rowCount: count, isStale: stale, willRebuild: count === 0 || stale },
+      'H2',
+    );
+    // #endregion
+
+    if (count === 0 || stale) {
       await this.rebuildMawkibInventory(mawkibId);
     }
   }
@@ -252,6 +297,52 @@ export class MawkibInventoryService implements OnModuleInit {
       parseDateOnly(horizon.minDate),
       parseDateOnly(horizon.maxDate),
     );
+  }
+
+  private aggregateOccupancyByDay(
+    reservations: ReservationOccupancySource[],
+    dayFilter?: Set<string>,
+  ): Map<string, DayOccupancyTotals> {
+    const counts = new Map<string, DayOccupancyTotals>();
+
+    for (const reservation of reservations) {
+      for (const day of reservationOccupiedDays(reservation)) {
+        const key = formatDateOnly(day);
+        if (dayFilter && !dayFilter.has(key)) continue;
+
+        const entry = counts.get(key) ?? { male: 0, female: 0 };
+        entry.male += reservation.maleGuestCount;
+        entry.female += reservation.femaleGuestCount;
+        counts.set(key, entry);
+      }
+    }
+
+    return counts;
+  }
+
+  private async applyAggregatedCountsToDays(
+    tx: Prisma.TransactionClient,
+    mawkibId: number,
+    counts: Map<string, DayOccupancyTotals>,
+  ) {
+    for (const [dateKey, occupancy] of counts) {
+      const day = parseDateOnly(dateKey);
+      await tx.mawkibDailyInventory.upsert({
+        where: {
+          mawkibId_date: { mawkibId, date: day },
+        },
+        create: {
+          mawkibId,
+          date: day,
+          reservedMale: occupancy.male,
+          reservedFemale: occupancy.female,
+        },
+        update: {
+          reservedMale: occupancy.male,
+          reservedFemale: occupancy.female,
+        },
+      });
+    }
   }
 
   private async applyDeltaToDays(
@@ -414,21 +505,214 @@ export class MawkibInventoryService implements OnModuleInit {
       },
     });
 
-    await this.prisma.$transaction(async (tx) => {
-      for (const reservation of confirmed) {
-        const days = reservationOccupiedDays(reservation);
-        if (days.length === 0) continue;
+    let estimatedUpserts = 0;
+    for (const reservation of confirmed) {
+      estimatedUpserts += reservationOccupiedDays(reservation).length;
+    }
 
-        await this.applyDeltaToDays(
-          tx,
-          reservation.mawkibId,
-          days,
-          reservation.maleGuestCount,
-          reservation.femaleGuestCount,
-          1,
-        );
-      }
+    const horizonDayKeys = new Set(
+      eachDateInRange(rangeStart, rangeEnd).map((day) => formatDateOnly(day)),
+    );
+    const aggregated = this.aggregateOccupancyByDay(confirmed, horizonDayKeys);
+    const aggregatedUpserts = aggregated.size;
+
+    // #region agent log
+    agentDebugLog(
+      'mawkib-inventory.service.ts:rebuildMawkibInventory',
+      'rebuildMawkibInventory before transaction',
+      {
+        mawkibId,
+        confirmedCount: confirmed.length,
+        horizonDays: horizonDayKeys.size,
+        estimatedUpserts,
+        aggregatedUpserts,
+      },
+      'H1',
+    );
+    // #endregion
+
+    const txStartedAt = Date.now();
+    try {
+      await this.prisma.$transaction(
+        async (tx) => {
+          await this.applyAggregatedCountsToDays(tx, mawkibId, aggregated);
+        },
+        { timeout: MAWKIB_INVENTORY_REBUILD_TX_TIMEOUT_MS },
+      );
+    } catch (error) {
+      // #region agent log
+      agentDebugLog(
+        'mawkib-inventory.service.ts:rebuildMawkibInventory',
+        'rebuildMawkibInventory transaction failed',
+        {
+          mawkibId,
+          elapsedMs: Date.now() - txStartedAt,
+          estimatedUpserts,
+          aggregatedUpserts,
+          errorCode: (error as { code?: string }).code ?? 'unknown',
+        },
+        'H1',
+      );
+      // #endregion
+      throw error;
+    }
+
+    // #region agent log
+    agentDebugLog(
+      'mawkib-inventory.service.ts:rebuildMawkibInventory',
+      'rebuildMawkibInventory transaction completed',
+      {
+        mawkibId,
+        elapsedMs: Date.now() - txStartedAt,
+        estimatedUpserts,
+        aggregatedUpserts,
+      },
+      'H1',
+    );
+    // #endregion
+  }
+
+  async rebuildMawkibInventoryInRange(
+    mawkibId: number,
+    startDate: Date | string,
+    endDate: Date | string,
+  ) {
+    const mawkib = await this.prisma.mawkib.findUnique({
+      where: { id: mawkibId },
+      select: {
+        id: true,
+        serviceStartDate: true,
+        serviceEndDate: true,
+      },
     });
+
+    if (!mawkib) {
+      throw new NotFoundException('موکب یافت نشد');
+    }
+
+    this.assertDateRangeForMawkib(
+      startDate,
+      endDate,
+      mawkib.serviceStartDate,
+      mawkib.serviceEndDate,
+    );
+
+    const rangeStart = parseDateOnly(startDate);
+    const rangeEnd = parseDateOnly(endDate);
+    const rangeDayKeys = new Set(
+      eachDateInRange(rangeStart, rangeEnd).map((day) => formatDateOnly(day)),
+    );
+
+    await this.ensureDayRows(mawkibId, rangeStart, rangeEnd);
+
+    await this.prisma.mawkibDailyInventory.updateMany({
+      where: {
+        mawkibId,
+        date: { gte: rangeStart, lte: rangeEnd },
+      },
+      data: { reservedMale: 0, reservedFemale: 0 },
+    });
+
+    const confirmed = await this.prisma.reservation.findMany({
+      where: {
+        mawkibId,
+        status: ReservationStatus.Confirmed,
+      },
+      select: {
+        mawkibId: true,
+        reservationDate: true,
+        reservationEndDate: true,
+        maleGuestCount: true,
+        femaleGuestCount: true,
+      },
+    });
+
+    let reservationsProcessed = 0;
+    let estimatedUpserts = 0;
+    const overlappingReservations: ReservationOccupancySource[] = [];
+
+    for (const reservation of confirmed) {
+      if (!reservationOverlapsDateRange(reservation, rangeStart, rangeEnd)) {
+        continue;
+      }
+      const days = reservationOccupiedDays(reservation).filter((day) =>
+        rangeDayKeys.has(formatDateOnly(day)),
+      );
+      if (days.length === 0) continue;
+      reservationsProcessed += 1;
+      estimatedUpserts += days.length;
+      overlappingReservations.push(reservation);
+    }
+
+    const aggregated = this.aggregateOccupancyByDay(
+      overlappingReservations,
+      rangeDayKeys,
+    );
+    const aggregatedUpserts = aggregated.size;
+
+    // #region agent log
+    agentDebugLog(
+      'mawkib-inventory.service.ts:rebuildMawkibInventoryInRange',
+      'rebuildMawkibInventoryInRange before transaction',
+      {
+        mawkibId,
+        rangeDays: rangeDayKeys.size,
+        confirmedCount: confirmed.length,
+        reservationsProcessed,
+        estimatedUpserts,
+        aggregatedUpserts,
+      },
+      'H4',
+    );
+    // #endregion
+
+    const txStartedAt = Date.now();
+    try {
+      await this.prisma.$transaction(
+        async (tx) => {
+          await this.applyAggregatedCountsToDays(tx, mawkibId, aggregated);
+        },
+        { timeout: MAWKIB_INVENTORY_REBUILD_TX_TIMEOUT_MS },
+      );
+    } catch (error) {
+      // #region agent log
+      agentDebugLog(
+        'mawkib-inventory.service.ts:rebuildMawkibInventoryInRange',
+        'rebuildMawkibInventoryInRange transaction failed',
+        {
+          mawkibId,
+          elapsedMs: Date.now() - txStartedAt,
+          estimatedUpserts,
+          aggregatedUpserts,
+          errorCode: (error as { code?: string }).code ?? 'unknown',
+        },
+        'H4',
+      );
+      // #endregion
+      throw error;
+    }
+
+    // #region agent log
+    agentDebugLog(
+      'mawkib-inventory.service.ts:rebuildMawkibInventoryInRange',
+      'rebuildMawkibInventoryInRange transaction completed',
+      {
+        mawkibId,
+        elapsedMs: Date.now() - txStartedAt,
+        estimatedUpserts,
+        aggregatedUpserts,
+      },
+      'H4',
+    );
+    // #endregion
+
+    return {
+      mawkibId,
+      startDate: formatDateOnly(rangeStart),
+      endDate: formatDateOnly(rangeEnd),
+      daysUpdated: rangeDayKeys.size,
+      reservationsProcessed,
+    };
   }
 
   async getInventoryRange(
@@ -531,6 +815,8 @@ export class MawkibInventoryService implements OnModuleInit {
       result.set(mawkib.id, {
         maleCapacity: mawkib.maleCapacity,
         femaleCapacity: mawkib.femaleCapacity,
+        reservedMale,
+        reservedFemale,
         availableMale: Math.max(0, mawkib.maleCapacity - reservedMale),
         availableFemale: Math.max(0, mawkib.femaleCapacity - reservedFemale),
       });
@@ -571,6 +857,8 @@ export class MawkibInventoryService implements OnModuleInit {
       return {
         maleCapacity,
         femaleCapacity,
+        reservedMale: 0,
+        reservedFemale: 0,
         availableMale: maleCapacity,
         availableFemale: femaleCapacity,
       };
@@ -596,11 +884,15 @@ export class MawkibInventoryService implements OnModuleInit {
     const rowByDate = new Map(rows.map((row) => [formatDateOnly(row.date), row]));
     let minMale = Number.POSITIVE_INFINITY;
     let minFemale = Number.POSITIVE_INFINITY;
+    let maxReservedMale = 0;
+    let maxReservedFemale = 0;
 
     for (const day of occupancyDays) {
       const row = rowByDate.get(formatDateOnly(day));
       const reservedMale = row?.reservedMale ?? 0;
       const reservedFemale = row?.reservedFemale ?? 0;
+      maxReservedMale = Math.max(maxReservedMale, reservedMale);
+      maxReservedFemale = Math.max(maxReservedFemale, reservedFemale);
       minMale = Math.min(minMale, Math.max(0, maleCapacity - reservedMale));
       minFemale = Math.min(minFemale, Math.max(0, femaleCapacity - reservedFemale));
     }
@@ -608,6 +900,8 @@ export class MawkibInventoryService implements OnModuleInit {
     return {
       maleCapacity,
       femaleCapacity,
+      reservedMale: maxReservedMale,
+      reservedFemale: maxReservedFemale,
       availableMale: minMale === Number.POSITIVE_INFINITY ? 0 : minMale,
       availableFemale: minFemale === Number.POSITIVE_INFINITY ? 0 : minFemale,
     };

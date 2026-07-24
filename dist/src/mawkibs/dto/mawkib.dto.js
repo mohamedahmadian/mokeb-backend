@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MawkibInventoryQueryDto = exports.AdminSearchMawkibDto = exports.SearchMawkibDto = exports.UpdateMawkibDto = exports.CreateMawkibDto = exports.MawkibAmenitySearchFields = exports.MAWKIB_AMENITY_FILTER_KEYS = exports.MawkibCapacityFilter = void 0;
+exports.MawkibInventoryReconcileDto = exports.MawkibInventoryQueryDto = exports.AdminSearchMawkibDto = exports.SearchMawkibDto = exports.UpdateMawkibDto = exports.CreateMawkibDto = exports.MawkibAmenitySearchFields = exports.MAWKIB_AMENITY_FILTER_KEYS = exports.MawkibCapacityFilter = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
@@ -91,6 +91,7 @@ __decorate([
 class CreateMawkibDto {
     name;
     address;
+    neshanAddressUrl;
     latitude;
     longitude;
     phoneNumber;
@@ -147,6 +148,11 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateMawkibDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "neshanAddressUrl", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
@@ -380,6 +386,7 @@ __decorate([
 class UpdateMawkibDto {
     name;
     address;
+    neshanAddressUrl;
     latitude;
     longitude;
     phoneNumber;
@@ -437,6 +444,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateMawkibDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", Object)
+], UpdateMawkibDto.prototype, "neshanAddressUrl", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
@@ -953,4 +965,17 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], MawkibInventoryQueryDto.prototype, "endDate", void 0);
+class MawkibInventoryReconcileDto {
+    startDate;
+    endDate;
+}
+exports.MawkibInventoryReconcileDto = MawkibInventoryReconcileDto;
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], MawkibInventoryReconcileDto.prototype, "startDate", void 0);
+__decorate([
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], MawkibInventoryReconcileDto.prototype, "endDate", void 0);
 //# sourceMappingURL=mawkib.dto.js.map

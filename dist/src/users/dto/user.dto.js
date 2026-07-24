@@ -25,6 +25,8 @@ class CreateUserDto {
     password;
     province;
     city;
+    address;
+    carPlate;
     description;
     whatsapp;
     telegram;
@@ -93,6 +95,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
+], CreateUserDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "carPlate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
 ], CreateUserDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
@@ -135,6 +147,8 @@ class UpdateUserDto {
     passportNumber;
     province;
     city;
+    address;
+    carPlate;
     description;
     whatsapp;
     telegram;
@@ -197,6 +211,16 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "city", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "carPlate", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
@@ -265,6 +289,8 @@ class CreateQuickPilgrimDto {
     passportNumber;
     province;
     city;
+    address;
+    carPlate;
     password;
     description;
     whatsapp;
@@ -332,6 +358,16 @@ __decorate([
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateQuickPilgrimDto.prototype, "carPlate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(4),
     __metadata("design:type", String)
 ], CreateQuickPilgrimDto.prototype, "password", void 0);
@@ -372,6 +408,8 @@ class ListUsersDto {
     nationalId;
     province;
     city;
+    address;
+    carPlate;
     isActive;
     search;
 }
@@ -406,6 +444,16 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], ListUsersDto.prototype, "city", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ListUsersDto.prototype, "address", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ListUsersDto.prototype, "carPlate", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),

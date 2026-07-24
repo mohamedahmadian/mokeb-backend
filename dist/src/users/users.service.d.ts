@@ -27,6 +27,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -58,6 +60,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -89,6 +93,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -122,6 +128,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -153,6 +161,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -191,6 +201,8 @@ export declare class UsersService {
             passportNumber: string | null;
             province: string | null;
             city: string | null;
+            address: string | null;
+            carPlate: string | null;
             description: string | null;
             whatsapp: string | null;
             telegram: string | null;
@@ -227,6 +239,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -258,6 +272,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -291,6 +307,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -326,6 +344,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;
@@ -357,6 +377,8 @@ export declare class UsersService {
         passportNumber: string | null;
         province: string | null;
         city: string | null;
+        address: string | null;
+        carPlate: string | null;
         description: string | null;
         whatsapp: string | null;
         telegram: string | null;

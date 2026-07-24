@@ -165,6 +165,8 @@ let UsersService = class UsersService {
                 passwordHash,
                 province: dto.province,
                 city: dto.city,
+                address: dto.address?.trim() || null,
+                carPlate: dto.carPlate?.trim() || null,
                 description: dto.description,
                 whatsapp: dto.whatsapp,
                 telegram: dto.telegram,
@@ -254,6 +256,9 @@ let UsersService = class UsersService {
             ...(query.nationalId?.trim() && {
                 nationalId: { contains: query.nationalId.trim(), mode: 'insensitive' },
             }),
+            ...(query.carPlate?.trim() && {
+                carPlate: { contains: query.carPlate.trim(), mode: 'insensitive' },
+            }),
             ...(query.province?.trim() && {
                 province: { contains: query.province.trim(), mode: 'insensitive' },
             }),
@@ -264,6 +269,12 @@ let UsersService = class UsersService {
                 OR: [
                     { fullName: { contains: term, mode: 'insensitive' } },
                     { mobileNumber: { contains: term, mode: 'insensitive' } },
+                    { nationalId: { contains: term, mode: 'insensitive' } },
+                    { carPlate: { contains: term, mode: 'insensitive' } },
+                    { address: { contains: term, mode: 'insensitive' } },
+                    { province: { contains: term, mode: 'insensitive' } },
+                    { city: { contains: term, mode: 'insensitive' } },
+                    { description: { contains: term, mode: 'insensitive' } },
                 ],
             }),
             ...(query.mawkibId
@@ -293,9 +304,12 @@ let UsersService = class UsersService {
             }
         }
         const isQuickSearch = !!query.search?.trim() &&
+            query.page === undefined &&
             !query.fullName?.trim() &&
             !query.mobileNumber?.trim() &&
             !query.nationalId?.trim() &&
+            !query.carPlate?.trim() &&
+            !query.address?.trim() &&
             !query.province?.trim() &&
             !query.city?.trim() &&
             query.isActive === undefined &&
@@ -387,6 +401,12 @@ let UsersService = class UsersService {
             if (dto.passportNumber !== undefined) {
                 data.passportNumber = dto.passportNumber.trim() || null;
             }
+            if (dto.carPlate !== undefined) {
+                data.carPlate = dto.carPlate.trim() || null;
+            }
+            if (dto.address !== undefined) {
+                data.address = dto.address.trim() || null;
+            }
             if (Object.keys(data).length > 0) {
                 const updated = await this.prisma.user.update({
                     where: { id: existing.id },
@@ -415,6 +435,8 @@ let UsersService = class UsersService {
             password,
             province: dto.province?.trim() || undefined,
             city: dto.city?.trim() || undefined,
+            address: dto.address?.trim() || undefined,
+            carPlate: dto.carPlate?.trim() || undefined,
             description: dto.description?.trim() || undefined,
             whatsapp: dto.whatsapp?.trim() || undefined,
             telegram: dto.telegram?.trim() || undefined,

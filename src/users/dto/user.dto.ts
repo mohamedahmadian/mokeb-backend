@@ -62,6 +62,14 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  carPlate?: string;
+
+  @IsOptional()
+  @IsString()
   description?: string;
 
   @IsOptional()
@@ -130,6 +138,14 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  carPlate?: string;
 
   @IsOptional()
   @IsString()
@@ -223,6 +239,14 @@ export class CreateQuickPilgrimDto {
 
   @IsOptional()
   @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  carPlate?: string;
+
+  @IsOptional()
+  @IsString()
   @MinLength(4)
   password?: string;
 
@@ -275,6 +299,14 @@ export class ListUsersDto {
   @IsOptional()
   @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  carPlate?: string;
 
   @IsOptional()
   @Transform(({ value }) => value === 'true' || value === true)

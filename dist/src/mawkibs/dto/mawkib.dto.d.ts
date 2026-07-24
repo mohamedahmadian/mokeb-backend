@@ -19,6 +19,7 @@ export declare class MawkibAmenitySearchFields {
 export declare class CreateMawkibDto {
     name: string;
     address: string;
+    neshanAddressUrl?: string;
     latitude?: number;
     longitude?: number;
     phoneNumber: string;
@@ -67,6 +68,7 @@ export declare class CreateMawkibDto {
 export declare class UpdateMawkibDto {
     name?: string;
     address?: string;
+    neshanAddressUrl?: string | null;
     latitude?: number;
     longitude?: number;
     phoneNumber?: string;
@@ -157,6 +159,10 @@ export declare class AdminSearchMawkibDto extends MawkibAmenitySearchFields {
     all?: boolean;
 }
 export declare class MawkibInventoryQueryDto {
+    startDate: string;
+    endDate: string;
+}
+export declare class MawkibInventoryReconcileDto {
     startDate: string;
     endDate: string;
 }

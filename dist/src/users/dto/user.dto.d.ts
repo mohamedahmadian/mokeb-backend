@@ -11,6 +11,8 @@ export declare class CreateUserDto {
     password: string;
     province?: string;
     city?: string;
+    address?: string;
+    carPlate?: string;
     description?: string;
     whatsapp?: string;
     telegram?: string;
@@ -30,6 +32,8 @@ export declare class UpdateUserDto {
     passportNumber?: string | null;
     province?: string;
     city?: string;
+    address?: string;
+    carPlate?: string;
     description?: string;
     whatsapp?: string;
     telegram?: string;
@@ -55,6 +59,8 @@ export declare class CreateQuickPilgrimDto {
     passportNumber?: string;
     province?: string;
     city?: string;
+    address?: string;
+    carPlate?: string;
     password?: string;
     description?: string;
     whatsapp?: string;
@@ -70,6 +76,8 @@ export declare class ListUsersDto {
     nationalId?: string;
     province?: string;
     city?: string;
+    address?: string;
+    carPlate?: string;
     isActive?: boolean;
     search?: string;
 }
