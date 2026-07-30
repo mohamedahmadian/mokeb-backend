@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpsertMealPlanEntryDto = exports.AddMealPlanDayDto = exports.SaveMealPlansDto = exports.MealPlanEntryDto = void 0;
+exports.MarkMealServedDto = exports.UpsertMealPlanEntryDto = exports.AddMealPlanDayDto = exports.SaveMealPlansDto = exports.MealPlanEntryDto = void 0;
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
@@ -18,6 +18,7 @@ class MealPlanEntryDto {
     date;
     mealType;
     isRequired;
+    guestCount;
 }
 exports.MealPlanEntryDto = MealPlanEntryDto;
 __decorate([
@@ -38,6 +39,13 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], MealPlanEntryDto.prototype, "isRequired", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], MealPlanEntryDto.prototype, "guestCount", void 0);
 class SaveMealPlansDto {
     entries;
 }
@@ -60,6 +68,7 @@ class UpsertMealPlanEntryDto {
     date;
     mealType;
     isRequired;
+    guestCount;
 }
 exports.UpsertMealPlanEntryDto = UpsertMealPlanEntryDto;
 __decorate([
@@ -74,4 +83,21 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpsertMealPlanEntryDto.prototype, "isRequired", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], UpsertMealPlanEntryDto.prototype, "guestCount", void 0);
+class MarkMealServedDto {
+    guestCount;
+}
+exports.MarkMealServedDto = MarkMealServedDto;
+__decorate([
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], MarkMealServedDto.prototype, "guestCount", void 0);
 //# sourceMappingURL=meal-plan.dto.js.map

@@ -12,6 +12,7 @@ enum RoleName {
   Pilgrim
   MawkibOwner
   HonoraryServant
+  MawkibServant
 }
 
 enum MawkibStatus {
@@ -107,8 +108,15 @@ model User {
   eitaa        String?
   email        String?
   isActive     Boolean  @default(true)
+  servantMawkibId Int?
+  servantOwnerUserId Int?
+  servantAllMawkibsAccess Boolean @default(false)
   createdAt    DateTime @default(now())
 
+  servantMawkib          Mawkib? @relation("MawkibServants", fields: [servantMawkibId], references: [id], onDelete: SetNull)
+  servantOwner           User?   @relation("OwnerManagedServants", fields: [servantOwnerUserId], references: [id], onDelete: SetNull)
+  managedServants        User[]  @relation("OwnerManagedServants")
+  mawkibServantAccesses  MawkibServantAccess[]
   roles                  UserRole[]
   ownedMawkibs           Mawkib[]                  @relation("MawkibOwner")
   pilgrimReservations    Reservation[]             @relation("Pilgrim")
@@ -123,8 +131,40 @@ model User {
   reservationEventsCreated               ReservationEvent[] @relation("ReservationEventCreator")
   mawkibFeedbacksAuthored              MawkibFeedback[] @relation("MawkibFeedbackAuthor")
   mawkibFeedbacksReplied               MawkibFeedback[] @relation("MawkibFeedbackReplier")
+  fastReceptionPattern                 UserFastReceptionPattern?
 
   @@map("users")
+}
+
+model UserFastReceptionPattern {
+  userId Int @id
+
+  acceptanceType       MawkibAcceptanceType       @default(Group)
+  stayDurationMode     MawkibStayDurationMode     @default(Free)
+  fixedStayDays        Int?
+  reservationStartMode MawkibReservationStartMode @default(UserSelect)
+  individualGuestGender UserGender?
+
+  defaultMawkibId Int?
+  defaultMawkib   Mawkib? @relation(fields: [defaultMawkibId], references: [id], onDelete: SetNull)
+
+  formShowNationalId          Boolean @default(false)
+  formShowPassportNumber      Boolean @default(false)
+  formShowReservationCode     Boolean @default(false)
+  formShowCarPlate            Boolean @default(false)
+  formShowGender              Boolean @default(false)
+  formShowPassword            Boolean @default(false)
+  formShowLocation            Boolean @default(false)
+  formShowNationalIdCardImage Boolean @default(false)
+  formShowBirthDate           Boolean @default(false)
+  formShowTravelOrigin        Boolean @default(false)
+  formShowDescription         Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_fast_reception_patterns")
 }
 
 model Role {
@@ -157,6 +197,21 @@ enum MawkibCity {
   Qom
   Najaf
   Karbala
+}
+
+enum MawkibAcceptanceType {
+  Individual
+  Group
+}
+
+enum MawkibStayDurationMode {
+  Fixed
+  Free
+}
+
+enum MawkibReservationStartMode {
+  CurrentDay
+  UserSelect
 }
 
 model Mawkib {
@@ -205,18 +260,44 @@ model Mawkib {
   recordCheckInOnReservationConfirm Boolean @default(false)
   skipCapacityCheckEnabled Boolean @default(false)
   mealPlanManagementEnabled Boolean @default(false)
+  acceptanceType              MawkibAcceptanceType        @default(Group)
+  stayDurationMode            MawkibStayDurationMode      @default(Free)
+  fixedStayDays               Int?
+  reservationStartMode        MawkibReservationStartMode  @default(UserSelect)
+  formShowNationalId          Boolean                     @default(false)
+  formShowPassportNumber      Boolean                     @default(false)
+  formShowReservationCode     Boolean                     @default(false)
+  formShowCarPlate            Boolean                     @default(false)
+  formShowGender              Boolean                     @default(false)
+  formShowPassword            Boolean                     @default(false)
+  formShowLocation            Boolean                     @default(false)
+  formShowNationalIdCardImage Boolean                     @default(false)
   ownerUserId      Int
   status           MawkibStatus @default(Pending)
   createdAt        DateTime     @default(now())
 
   owner        User          @relation("MawkibOwner", fields: [ownerUserId], references: [id])
+  servants     User[]        @relation("MawkibServants")
+  servantAccesses MawkibServantAccess[]
   reservations Reservation[]
   dailyInventory MawkibDailyInventory[]
   honoraryVolunteerApplications HonoraryVolunteerApplication[]
   feedbacks    MawkibFeedback[]
   images       MawkibImage[]
+  fastReceptionPatterns UserFastReceptionPattern[]
 
   @@map("mawkibs")
+}
+
+model MawkibServantAccess {
+  servantUserId Int
+  mawkibId      Int
+
+  servant User   @relation(fields: [servantUserId], references: [id], onDelete: Cascade)
+  mawkib  Mawkib @relation(fields: [mawkibId], references: [id], onDelete: Cascade)
+
+  @@id([servantUserId, mawkibId])
+  @@map("mawkib_servant_access")
 }
 
 model MawkibImage {

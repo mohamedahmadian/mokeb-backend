@@ -16,6 +16,7 @@ import { UploadsModule } from './uploads/uploads.module';
 import { ReportsModule } from './reports/reports.module';
 import { CronsModule } from './crons/crons.module';
 import { MealPlansModule } from './meal-plans/meal-plans.module';
+import { FastReceptionPatternModule } from './fast-reception-pattern/fast-reception-pattern.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { MealPlansModule } from './meal-plans/meal-plans.module';
     ReportsModule,
     CronsModule,
     MealPlansModule,
+    FastReceptionPatternModule,
   ],
 })
 export class AppModule implements NestModule {

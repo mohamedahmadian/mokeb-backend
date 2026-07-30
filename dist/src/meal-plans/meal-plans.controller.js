@@ -48,8 +48,8 @@ let MealPlansController = class MealPlansController {
     removeDay(reservationId, date, user) {
         return this.service.removeDay(reservationId, date, user);
     }
-    markServed(id, user) {
-        return this.service.markServed(id, user);
+    markServed(id, dto, user) {
+        return this.service.markServed(id, dto.guestCount, user);
     }
 };
 exports.MealPlansController = MealPlansController;
@@ -116,9 +116,10 @@ __decorate([
 __decorate([
     (0, common_1.Patch)(':id/serve'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
-    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:paramtypes", [Number, meal_plan_dto_1.MarkMealServedDto, Object]),
     __metadata("design:returntype", void 0)
 ], MealPlansController.prototype, "markServed", null);
 exports.MealPlansController = MealPlansController = __decorate([

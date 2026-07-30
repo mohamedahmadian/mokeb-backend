@@ -19,25 +19,25 @@ export declare class MawkibFeedbackController {
                 fullName: string;
             };
         };
-        repliedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        } | null;
         author: {
             id: number;
             mobileNumber: string;
             fullName: string;
         };
+        repliedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        } | null;
     } & {
         id: number;
         createdAt: Date;
         mawkibId: number;
+        updatedAt: Date;
+        authorUserId: number;
         content: string;
         repliedAt: Date | null;
-        updatedAt: Date;
         repliedByUserId: number | null;
-        authorUserId: number;
         ownerReply: string | null;
     }>;
     findAllAdmin(filters: MawkibFeedbackFiltersDto): Promise<({
@@ -52,25 +52,25 @@ export declare class MawkibFeedbackController {
                 fullName: string;
             };
         };
-        repliedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        } | null;
         author: {
             id: number;
             mobileNumber: string;
             fullName: string;
         };
+        repliedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        } | null;
     } & {
         id: number;
         createdAt: Date;
         mawkibId: number;
+        updatedAt: Date;
+        authorUserId: number;
         content: string;
         repliedAt: Date | null;
-        updatedAt: Date;
         repliedByUserId: number | null;
-        authorUserId: number;
         ownerReply: string | null;
     })[]>;
     findMine(filters: MawkibFeedbackFiltersDto, user: AuthUser): Promise<({
@@ -85,25 +85,25 @@ export declare class MawkibFeedbackController {
                 fullName: string;
             };
         };
-        repliedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        } | null;
         author: {
             id: number;
             mobileNumber: string;
             fullName: string;
         };
+        repliedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        } | null;
     } & {
         id: number;
         createdAt: Date;
         mawkibId: number;
+        updatedAt: Date;
+        authorUserId: number;
         content: string;
         repliedAt: Date | null;
-        updatedAt: Date;
         repliedByUserId: number | null;
-        authorUserId: number;
         ownerReply: string | null;
     })[]>;
     findForOwner(filters: MawkibFeedbackFiltersDto, user: AuthUser): Promise<({
@@ -118,25 +118,25 @@ export declare class MawkibFeedbackController {
                 fullName: string;
             };
         };
-        repliedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        } | null;
         author: {
             id: number;
             mobileNumber: string;
             fullName: string;
         };
+        repliedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        } | null;
     } & {
         id: number;
         createdAt: Date;
         mawkibId: number;
+        updatedAt: Date;
+        authorUserId: number;
         content: string;
         repliedAt: Date | null;
-        updatedAt: Date;
         repliedByUserId: number | null;
-        authorUserId: number;
         ownerReply: string | null;
     })[]>;
     findOne(id: number, user: AuthUser): Promise<{
@@ -151,25 +151,25 @@ export declare class MawkibFeedbackController {
                 fullName: string;
             };
         };
-        repliedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        } | null;
         author: {
             id: number;
             mobileNumber: string;
             fullName: string;
         };
+        repliedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        } | null;
     } & {
         id: number;
         createdAt: Date;
         mawkibId: number;
+        updatedAt: Date;
+        authorUserId: number;
         content: string;
         repliedAt: Date | null;
-        updatedAt: Date;
         repliedByUserId: number | null;
-        authorUserId: number;
         ownerReply: string | null;
     }>;
     updateOwn(id: number, dto: UpdateMawkibFeedbackDto, user: AuthUser): Promise<{
@@ -184,25 +184,25 @@ export declare class MawkibFeedbackController {
                 fullName: string;
             };
         };
-        repliedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        } | null;
         author: {
             id: number;
             mobileNumber: string;
             fullName: string;
         };
+        repliedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        } | null;
     } & {
         id: number;
         createdAt: Date;
         mawkibId: number;
+        updatedAt: Date;
+        authorUserId: number;
         content: string;
         repliedAt: Date | null;
-        updatedAt: Date;
         repliedByUserId: number | null;
-        authorUserId: number;
         ownerReply: string | null;
     }>;
     deleteOwn(id: number, user: AuthUser): Promise<{
@@ -221,25 +221,25 @@ export declare class MawkibFeedbackController {
                 fullName: string;
             };
         };
-        repliedBy: {
-            id: number;
-            mobileNumber: string;
-            fullName: string;
-        } | null;
         author: {
             id: number;
             mobileNumber: string;
             fullName: string;
         };
+        repliedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        } | null;
     } & {
         id: number;
         createdAt: Date;
         mawkibId: number;
+        updatedAt: Date;
+        authorUserId: number;
         content: string;
         repliedAt: Date | null;
-        updatedAt: Date;
         repliedByUserId: number | null;
-        authorUserId: number;
         ownerReply: string | null;
     }>;
 }

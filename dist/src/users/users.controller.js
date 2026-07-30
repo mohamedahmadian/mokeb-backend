@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const users_service_1 = require("./users.service");
 const user_dto_1 = require("./dto/user.dto");
+const servant_dto_1 = require("./dto/servant.dto");
 const jwt_auth_guard_1 = require("../common/guards/jwt-auth.guard");
 const roles_guard_1 = require("../common/guards/roles.guard");
 const roles_decorator_1 = require("../common/decorators/roles.decorator");
@@ -29,10 +30,34 @@ let UsersController = class UsersController {
     findMe(user) {
         return this.usersService.findOne(user.id);
     }
+    findServants(query, user) {
+        return this.usersService.findServantsForOwner(user.id, query);
+    }
+    getServantMawkibAccess(id, user) {
+        return this.usersService.getServantMawkibAccessForOwner(id, user.id);
+    }
+    updateServantMawkibAccess(id, dto, user) {
+        return this.usersService.updateServantMawkibAccessForOwner(id, dto, user.id);
+    }
+    findServant(id, user) {
+        return this.usersService.getServantForOwner(id, user.id);
+    }
+    createServant(dto, user) {
+        return this.usersService.createServantForOwner(dto, user.id);
+    }
+    updateServant(id, dto, user) {
+        return this.usersService.updateServantForOwner(id, dto, user.id);
+    }
+    removeServant(id, user) {
+        return this.usersService.removeServantForOwner(id, user.id);
+    }
     findPilgrims(query, user) {
         const scope = query.scope ?? user_dto_1.PilgrimListScope.Mine;
         const isAdmin = user.roles.includes(client_1.RoleName.Admin);
-        const ownerId = !isAdmin && scope === user_dto_1.PilgrimListScope.Mine ? user.id : undefined;
+        const isServant = user.roles.includes(client_1.RoleName.MawkibServant);
+        const ownerId = !isAdmin && !isServant && scope === user_dto_1.PilgrimListScope.Mine
+            ? user.id
+            : undefined;
         return this.usersService.findPilgrims(query, ownerId);
     }
     findAll(query) {
@@ -63,15 +88,80 @@ let UsersController = class UsersController {
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Get)('me'),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim, client_1.RoleName.HonoraryServant),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim, client_1.RoleName.HonoraryServant, client_1.RoleName.MawkibServant),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "findMe", null);
 __decorate([
+    (0, common_1.Get)('servants'),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Query)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [servant_dto_1.ListServantsDto, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "findServants", null);
+__decorate([
+    (0, common_1.Get)('servants/:id/mawkib-access'),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "getServantMawkibAccess", null);
+__decorate([
+    (0, common_1.Put)('servants/:id/mawkib-access'),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, servant_dto_1.UpdateServantMawkibAccessDto, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateServantMawkibAccess", null);
+__decorate([
+    (0, common_1.Get)('servants/:id'),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "findServant", null);
+__decorate([
+    (0, common_1.Post)('servants'),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [servant_dto_1.CreateServantDto, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "createServant", null);
+__decorate([
+    (0, common_1.Patch)('servants/:id'),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, servant_dto_1.UpdateServantDto, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateServant", null);
+__decorate([
+    (0, common_1.Delete)('servants/:id'),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibOwner),
+    __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Object]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "removeServant", null);
+__decorate([
     (0, common_1.Get)('pilgrims'),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.MawkibServant),
     __param(0, (0, common_1.Query)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
@@ -105,7 +195,7 @@ __decorate([
 ], UsersController.prototype, "create", null);
 __decorate([
     (0, common_1.Post)('quick-pilgrim'),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.MawkibServant),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [user_dto_1.CreateQuickPilgrimDto]),
@@ -113,7 +203,7 @@ __decorate([
 ], UsersController.prototype, "createQuickPilgrim", null);
 __decorate([
     (0, common_1.Patch)(':id'),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim, client_1.RoleName.MawkibServant),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),

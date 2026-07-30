@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
 const mawkibs_service_1 = require("../mawkibs/mawkibs.service");
+const servant_mawkib_access_service_1 = require("../users/servant-mawkib-access.service");
 const users_service_1 = require("../users/users.service");
 const reservation_events_service_1 = require("./reservation-events.service");
 const reservation_event_util_1 = require("./reservation-event.util");
@@ -29,6 +30,7 @@ const reservation_lookup_util_1 = require("./reservation-lookup.util");
 const meal_plans_service_1 = require("../meal-plans/meal-plans.service");
 const attendance_roster_dto_1 = require("./dto/attendance-roster.dto");
 const attendance_roster_util_1 = require("./attendance-roster.util");
+const mawkib_acceptance_pattern_util_1 = require("../mawkibs/mawkib-acceptance-pattern.util");
 const reviewUserSelect = {
     id: true,
     fullName: true,
@@ -108,12 +110,14 @@ let ReservationsService = class ReservationsService {
     prisma;
     mawkibsService;
     usersService;
+    servantMawkibAccess;
     reservationEventsService;
     mealPlansService;
-    constructor(prisma, mawkibsService, usersService, reservationEventsService, mealPlansService) {
+    constructor(prisma, mawkibsService, usersService, servantMawkibAccess, reservationEventsService, mealPlansService) {
         this.prisma = prisma;
         this.mawkibsService = mawkibsService;
         this.usersService = usersService;
+        this.servantMawkibAccess = servantMawkibAccess;
         this.reservationEventsService = reservationEventsService;
         this.mealPlansService = mealPlansService;
     }
@@ -123,6 +127,8 @@ let ReservationsService = class ReservationsService {
             mawkibId: reservation.mawkibId,
             reservationDate: reservation.reservationDate,
             reservationEndDate: reservation.reservationEndDate,
+            maleGuestCount: reservation.maleGuestCount,
+            femaleGuestCount: reservation.femaleGuestCount,
         });
     }
     statusAuditFields(userId) {
@@ -389,12 +395,10 @@ let ReservationsService = class ReservationsService {
         const filtered = this.sortByCreatedAt(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
         return this.applyListPagination(filtered, search);
     }
-    async findByMawkibOwner(ownerUserId, search) {
-        const mawkibs = await this.prisma.mawkib.findMany({
-            where: { ownerUserId },
-            select: { id: true },
-        });
-        const mawkibIds = mawkibs.map((m) => m.id);
+    async findByMawkibIds(mawkibIds, search) {
+        if (mawkibIds.length === 0) {
+            return this.applyListPagination([], search);
+        }
         if (search?.mawkibId && !mawkibIds.includes(search.mawkibId)) {
             return this.applyListPagination([], search);
         }
@@ -409,6 +413,20 @@ let ReservationsService = class ReservationsService {
         });
         const filtered = this.sortByCreatedAt(this.applyLookupRanking(this.filterReservationsByMobileSearch(this.filterByGuestCountTotal(items, search), search), search), search);
         return this.applyListPagination(filtered, search);
+    }
+    async findByMawkibOwner(ownerUserId, search) {
+        const mawkibs = await this.prisma.mawkib.findMany({
+            where: { ownerUserId },
+            select: { id: true },
+        });
+        return this.findByMawkibIds(mawkibs.map((m) => m.id), search);
+    }
+    async findByMawkibServant(userId, search) {
+        const mawkibIds = await this.servantMawkibAccess.getAccessibleMawkibIds(userId);
+        if (mawkibIds.length === 0) {
+            return this.applyListPagination([], search);
+        }
+        return this.findByMawkibIds(mawkibIds, search);
     }
     async getPendingCountsByMawkib(user) {
         const isAdmin = user.roles.includes(client_1.RoleName.Admin);
@@ -573,11 +591,16 @@ let ReservationsService = class ReservationsService {
         const reservation = await this.findOne(id);
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
         const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
+        const isServant = currentUser.roles.includes(client_1.RoleName.MawkibServant);
         if (isAdmin) {
             return reservation;
         }
         if (isOwner) {
             await this.mawkibsService.assertOwnerAccess(reservation.mawkibId, currentUser.id);
+            return reservation;
+        }
+        if (isServant) {
+            await this.mawkibsService.assertServantAccess(reservation.mawkibId, currentUser.id);
             return reservation;
         }
         if (reservation.pilgrimUserId !== currentUser.id &&
@@ -594,6 +617,52 @@ let ReservationsService = class ReservationsService {
         if (existing) {
             throw new common_1.BadRequestException('این کد رزرو قبلاً ثبت شده است');
         }
+    }
+    applyAcceptancePatternToReservation(mawkib, input) {
+        let dates;
+        try {
+            dates = (0, mawkib_acceptance_pattern_util_1.resolveReservationDatesForAcceptancePattern)(mawkib, {
+                reservationDate: input.reservationDate,
+                reservationEndDate: input.reservationEndDate,
+            });
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                throw new common_1.BadRequestException((0, mawkib_acceptance_pattern_util_1.acceptancePatternErrorMessage)(error.message));
+            }
+            throw error;
+        }
+        const counts = (0, mawkib_acceptance_pattern_util_1.normalizeGuestCountsForAcceptancePattern)(mawkib, input.maleGuestCount, input.femaleGuestCount);
+        let companions = input.companions?.trim() || undefined;
+        if (mawkib.acceptanceType === client_1.MawkibAcceptanceType.Individual) {
+            companions = undefined;
+        }
+        try {
+            (0, mawkib_acceptance_pattern_util_1.assertReservationMatchesAcceptancePattern)(mawkib, {
+                ...counts,
+                companions,
+                reservationDate: dates.reservationDate,
+                reservationEndDate: dates.reservationEndDate,
+            });
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                throw new common_1.BadRequestException((0, mawkib_acceptance_pattern_util_1.acceptancePatternErrorMessage)(error.message));
+            }
+            throw error;
+        }
+        const reservationDate = (0, date_util_1.parseDateOnly)(dates.reservationDate);
+        const reservationEndDate = (0, date_util_1.parseDateOnly)(dates.reservationEndDate);
+        if (reservationEndDate < reservationDate) {
+            throw new common_1.BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
+        }
+        return {
+            reservationDate,
+            reservationEndDate,
+            maleGuestCount: counts.maleGuestCount,
+            femaleGuestCount: counts.femaleGuestCount,
+            companions,
+        };
     }
     async createWithTrackingCode(data, options, include = reservationInclude) {
         (0, reservation_guest_count_util_1.assertHasGuestCount)(data.maleGuestCount, data.femaleGuestCount);
@@ -705,28 +774,62 @@ let ReservationsService = class ReservationsService {
         if (!mawkib || mawkib.status !== client_1.MawkibStatus.Approved) {
             throw new common_1.BadRequestException('موکب یافت نشد یا تایید نشده است');
         }
-        this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
+        await this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
         const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
+        const isServant = currentUser.roles.includes(client_1.RoleName.MawkibServant);
+        let isStaffForMawkib = isAdmin;
         if (!isAdmin && isOwner) {
             await this.mawkibsService.assertOwnerAccess(dto.mawkibId, currentUser.id);
+            isStaffForMawkib = true;
         }
-        const reservationDate = (0, date_util_1.parseDateOnly)(dto.reservationDate);
-        const reservationEndDate = (0, date_util_1.parseDateOnly)(dto.reservationEndDate ?? dto.reservationDate);
-        if (reservationEndDate < reservationDate) {
-            throw new common_1.BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
+        else if (!isAdmin && isServant) {
+            await this.mawkibsService.assertServantAccess(dto.mawkibId, currentUser.id);
+            isStaffForMawkib = true;
         }
+        let patternApplied;
+        if (dto.skipMawkibAcceptancePattern === true) {
+            if (!isStaffForMawkib) {
+                throw new common_1.ForbiddenException('شما مجوز ثبت رزرو با الگوی پذیرش سریع را ندارید');
+            }
+            const reservationDate = (0, date_util_1.parseDateOnly)(dto.reservationDate);
+            const reservationEndDate = (0, date_util_1.parseDateOnly)(dto.reservationEndDate ?? dto.reservationDate);
+            if (reservationEndDate < reservationDate) {
+                throw new common_1.BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
+            }
+            patternApplied = {
+                reservationDate,
+                reservationEndDate,
+                maleGuestCount: dto.maleGuestCount,
+                femaleGuestCount: dto.femaleGuestCount,
+                companions: dto.companions?.trim() || undefined,
+            };
+        }
+        else {
+            patternApplied = this.applyAcceptancePatternToReservation(mawkib, {
+                reservationDate: dto.reservationDate,
+                reservationEndDate: dto.reservationEndDate,
+                maleGuestCount: dto.maleGuestCount,
+                femaleGuestCount: dto.femaleGuestCount,
+                companions: dto.companions,
+            });
+        }
+        const reservationDate = patternApplied.reservationDate;
+        const reservationEndDate = patternApplied.reservationEndDate;
+        const maleGuestCount = patternApplied.maleGuestCount;
+        const femaleGuestCount = patternApplied.femaleGuestCount;
+        const companions = patternApplied.companions;
         await this.mawkibsService.assertReservationServiceStart(dto.mawkibId, reservationDate);
         await this.mawkibsService.assertMaxReservationDays(dto.mawkibId, reservationDate, reservationEndDate);
-        const skipCapacity = dto.skipCapacityCheck === true && (isAdmin || isOwner);
-        if (dto.skipCapacityCheck === true && !isAdmin && !isOwner) {
+        const skipCapacity = dto.skipCapacityCheck === true && (isAdmin || (isOwner && isStaffForMawkib));
+        if (dto.skipCapacityCheck === true && !isAdmin && !(isOwner && isStaffForMawkib)) {
             throw new common_1.ForbiddenException('شما مجوز ثبت رزرو بدون بررسی ظرفیت را ندارید');
         }
-        if (dto.trackingCode && !isAdmin && !isOwner) {
+        if (dto.trackingCode && !(isAdmin || (isOwner && isStaffForMawkib))) {
             throw new common_1.ForbiddenException('شما مجوز تعیین کد رزرو را ندارید');
         }
         if (!skipCapacity) {
-            await this.mawkibsService.assertCapacityInRange(dto.mawkibId, dto.maleGuestCount, dto.femaleGuestCount, reservationDate, reservationEndDate);
+            await this.mawkibsService.assertCapacityInRange(dto.mawkibId, maleGuestCount, femaleGuestCount, reservationDate, reservationEndDate);
         }
         let pilgrimUserId;
         if (dto.pilgrimUserId) {
@@ -752,11 +855,11 @@ let ReservationsService = class ReservationsService {
             mawkibId: dto.mawkibId,
             reservationDate,
             reservationEndDate,
-            maleGuestCount: dto.maleGuestCount,
-            femaleGuestCount: dto.femaleGuestCount,
+            maleGuestCount,
+            femaleGuestCount,
         });
         const plannedTimes = (0, reservation_occupancy_util_1.resolvePlannedTimes)(dto, mawkib);
-        const autoConfirmed = isAdmin || isOwner;
+        const autoConfirmed = isStaffForMawkib;
         const checkInOnConfirm = autoConfirmed
             ? this.resolveActualCheckInOnConfirm(mawkib, null)
             : undefined;
@@ -768,11 +871,11 @@ let ReservationsService = class ReservationsService {
             reservationEndDate,
             plannedCheckInTime: plannedTimes.plannedCheckInTime,
             plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
-            maleGuestCount: dto.maleGuestCount,
-            femaleGuestCount: dto.femaleGuestCount,
+            maleGuestCount,
+            femaleGuestCount,
             pilgrimMobile: dto.pilgrimMobile,
             description: dto.description,
-            companions: dto.companions?.trim() || undefined,
+            companions,
             status: autoConfirmed
                 ? client_1.ReservationStatus.Confirmed
                 : client_1.ReservationStatus.Pending,
@@ -780,7 +883,7 @@ let ReservationsService = class ReservationsService {
             ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
         }, {
             customTrackingCode: dto.trackingCode,
-            allowCustomTrackingCode: isAdmin || isOwner,
+            allowCustomTrackingCode: isAdmin || (isOwner && isStaffForMawkib),
         });
         await this.syncCheckInEventOnConfirm(reservation.id, checkInOnConfirm, currentUser.id);
         if (reservation.status === client_1.ReservationStatus.Confirmed) {
@@ -796,15 +899,22 @@ let ReservationsService = class ReservationsService {
         if (!mawkib || mawkib.status !== client_1.MawkibStatus.Approved) {
             throw new common_1.BadRequestException('موکب یافت نشد یا تایید نشده است');
         }
-        this.mawkibsService.assertOnlineReservationAllowed(mawkib);
-        const reservationDate = (0, date_util_1.parseDateOnly)(dto.reservationDate);
-        const reservationEndDate = (0, date_util_1.parseDateOnly)(dto.reservationEndDate ?? dto.reservationDate);
-        if (reservationEndDate < reservationDate) {
-            throw new common_1.BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
-        }
+        await this.mawkibsService.assertOnlineReservationAllowed(mawkib);
+        const patternApplied = this.applyAcceptancePatternToReservation(mawkib, {
+            reservationDate: dto.reservationDate,
+            reservationEndDate: dto.reservationEndDate,
+            maleGuestCount: dto.maleGuestCount,
+            femaleGuestCount: dto.femaleGuestCount,
+            companions: dto.companions,
+        });
+        const reservationDate = patternApplied.reservationDate;
+        const reservationEndDate = patternApplied.reservationEndDate;
+        const maleGuestCount = patternApplied.maleGuestCount;
+        const femaleGuestCount = patternApplied.femaleGuestCount;
+        const companions = patternApplied.companions;
         await this.mawkibsService.assertReservationServiceStart(dto.mawkibId, reservationDate);
         await this.mawkibsService.assertMaxReservationDays(dto.mawkibId, reservationDate, reservationEndDate);
-        await this.mawkibsService.assertCapacityInRange(dto.mawkibId, dto.maleGuestCount, dto.femaleGuestCount, reservationDate, reservationEndDate);
+        await this.mawkibsService.assertCapacityInRange(dto.mawkibId, maleGuestCount, femaleGuestCount, reservationDate, reservationEndDate);
         const mobileNumber = dto.mobileNumber.trim();
         const pilgrim = await this.usersService.createQuickPilgrim({
             firstName: dto.firstName,
@@ -825,8 +935,8 @@ let ReservationsService = class ReservationsService {
             mawkibId: dto.mawkibId,
             reservationDate,
             reservationEndDate,
-            maleGuestCount: dto.maleGuestCount,
-            femaleGuestCount: dto.femaleGuestCount,
+            maleGuestCount,
+            femaleGuestCount,
         });
         const plannedTimes = (0, reservation_occupancy_util_1.resolvePlannedTimes)(dto, mawkib);
         const autoApproved = mawkib.autoApprovePilgrimReservations === true;
@@ -844,12 +954,12 @@ let ReservationsService = class ReservationsService {
             reservationEndDate,
             plannedCheckInTime: plannedTimes.plannedCheckInTime,
             plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
-            maleGuestCount: dto.maleGuestCount,
-            femaleGuestCount: dto.femaleGuestCount,
+            maleGuestCount,
+            femaleGuestCount,
             pilgrimMobile: mobileNumber,
             description: dto.description?.trim() || undefined,
             travelOrigin: dto.travelOrigin?.trim() || undefined,
-            companions: dto.companions?.trim() || undefined,
+            companions,
             status: initialStatus,
             ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
         }, undefined, {
@@ -976,6 +1086,7 @@ let ReservationsService = class ReservationsService {
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
         const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner);
         const isPilgrim = currentUser.roles.includes(client_1.RoleName.Pilgrim);
+        const isServant = currentUser.roles.includes(client_1.RoleName.MawkibServant);
         if (reservation.status === client_1.ReservationStatus.Cancelled) {
             throw new common_1.BadRequestException('این رزرو قبلاً لغو شده است');
         }
@@ -985,7 +1096,7 @@ let ReservationsService = class ReservationsService {
         this.assertConfirmedReservationStillActive(reservation);
         if (isAdmin) {
         }
-        else if (isPilgrim && !isAdmin && !isOwner) {
+        else if (isPilgrim && !isAdmin && !isOwner && !isServant) {
             if (reservation.pilgrimUserId !== currentUser.id) {
                 throw new common_1.ForbiddenException('فقط رزروهای خودتان را می‌توانید لغو کنید');
             }
@@ -993,11 +1104,14 @@ let ReservationsService = class ReservationsService {
         else if (isOwner && !isAdmin) {
             await this.mawkibsService.assertOwnerAccess(reservation.mawkibId, currentUser.id);
         }
+        else if (isServant && !isAdmin && !isOwner) {
+            await this.mawkibsService.assertServantAccess(reservation.mawkibId, currentUser.id);
+        }
         else {
             throw new common_1.ForbiddenException('شما مجوز لغو این رزرو را ندارید');
         }
         const note = dto.note?.trim() || undefined;
-        const isStaffCancel = isAdmin || isOwner;
+        const isStaffCancel = isAdmin || isOwner || isServant;
         if (reservation.status === client_1.ReservationStatus.Confirmed) {
             await this.mawkibsService.syncInventoryOnReservationCancelled(reservation);
         }
@@ -1039,77 +1153,59 @@ let ReservationsService = class ReservationsService {
         if (!mawkib || mawkib.status !== client_1.MawkibStatus.Approved) {
             throw new common_1.BadRequestException('موکب یافت نشد یا تایید نشده است');
         }
-        this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
-        const extensionStartStr = (0, reservation_extend_util_1.computeExtensionStartDate)(source.reservationEndDate ?? source.reservationDate);
-        const extensionStart = (0, date_util_1.parseDateOnly)(extensionStartStr);
-        let extensionEnd;
+        await this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
+        const reservationStartStr = (0, date_util_1.formatDateOnly)((0, date_util_1.parseDateOnly)(source.reservationDate));
+        const currentEndStr = (0, reservation_extend_util_1.currentReservationEndDate)(source.reservationEndDate, source.reservationDate);
+        const currentEnd = (0, date_util_1.parseDateOnly)(currentEndStr);
+        let newEndStr;
         if (isPilgrimOnly) {
             if (dto.reservationEndDate || dto.stayDays) {
                 throw new common_1.BadRequestException('زائر نمی‌تواند بازه تمدید را به‌صورت دستی تنظیم کند');
             }
-            extensionEnd = (0, date_util_1.parseDateOnly)((0, reservation_extend_util_1.defaultExtensionEndDate)(source.reservationEndDate, mawkib.defaultReservationDays));
+            newEndStr = (0, reservation_extend_util_1.defaultExtendedEndDate)(currentEndStr, mawkib.defaultReservationDays);
+        }
+        else if (dto.reservationEndDate) {
+            newEndStr = dto.reservationEndDate.slice(0, 10);
+        }
+        else if (dto.stayDays) {
+            newEndStr = (0, reservation_extend_util_1.computeExtendedEndDate)(currentEndStr, dto.stayDays);
         }
         else {
-            if (dto.reservationEndDate) {
-                extensionEnd = (0, date_util_1.parseDateOnly)(dto.reservationEndDate);
-            }
-            else if (dto.stayDays) {
-                extensionEnd = (0, date_util_1.parseDateOnly)((0, reservation_extend_util_1.computeExtensionEndDate)(extensionStartStr, dto.stayDays));
-            }
-            else {
-                extensionEnd = (0, date_util_1.parseDateOnly)((0, reservation_extend_util_1.defaultExtensionEndDate)(source.reservationEndDate, mawkib.defaultReservationDays));
-            }
+            newEndStr = (0, reservation_extend_util_1.defaultExtendedEndDate)(currentEndStr, mawkib.defaultReservationDays);
         }
-        if (extensionEnd < extensionStart) {
-            throw new common_1.BadRequestException('تاریخ پایان تمدید نمی‌تواند قبل از تاریخ شروع باشد');
+        const newEnd = (0, date_util_1.parseDateOnly)(newEndStr);
+        if (newEndStr < reservationStartStr) {
+            throw new common_1.BadRequestException('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد');
         }
-        await this.mawkibsService.assertReservationServiceStart(source.mawkibId, extensionStart);
-        await this.mawkibsService.assertMaxReservationDays(source.mawkibId, extensionStart, extensionEnd);
-        await this.mawkibsService.assertCapacityInRange(source.mawkibId, source.maleGuestCount, source.femaleGuestCount, extensionStart, extensionEnd);
+        if (newEndStr === currentEndStr) {
+            throw new common_1.BadRequestException('تاریخ پایان جدید با تاریخ فعلی یکسان است');
+        }
+        if (newEndStr < currentEndStr) {
+            throw new common_1.BadRequestException('تاریخ پایان جدید نمی‌تواند قبل از تاریخ پایان فعلی باشد');
+        }
+        await this.mawkibsService.assertMaxReservationDays(source.mawkibId, (0, date_util_1.parseDateOnly)(reservationStartStr), newEnd);
+        await this.mawkibsService.assertCapacityInRange(source.mawkibId, source.maleGuestCount, source.femaleGuestCount, currentEnd, newEnd);
         await this.assertNoConflictingReservation({
             pilgrimUserId: source.pilgrimUserId,
             mawkibId: source.mawkibId,
-            reservationDate: extensionStart,
-            reservationEndDate: extensionEnd,
+            reservationDate: source.reservationDate,
+            reservationEndDate: newEnd,
             maleGuestCount: source.maleGuestCount,
             femaleGuestCount: source.femaleGuestCount,
             excludeReservationId: sourceId,
         });
-        const plannedTimes = (0, reservation_occupancy_util_1.resolvePlannedTimes)({
-            plannedCheckInTime: source.plannedCheckInTime ?? undefined,
-            plannedCheckOutTime: source.plannedCheckOutTime ?? undefined,
-        }, mawkib);
-        const extensionNote = `تمدید رزرو ${source.trackingCode}`;
-        const autoConfirmed = isAdmin || isOwner;
-        const checkInOnConfirm = autoConfirmed
-            ? this.resolveActualCheckInOnConfirm(mawkib, null)
-            : undefined;
-        const reservation = await this.createWithTrackingCode({
-            mawkibId: source.mawkibId,
-            pilgrimUserId: source.pilgrimUserId,
-            reservedByUserId: currentUser.id,
-            reservationDate: extensionStart,
-            reservationEndDate: extensionEnd,
-            plannedCheckInTime: plannedTimes.plannedCheckInTime,
-            plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
-            maleGuestCount: source.maleGuestCount,
-            femaleGuestCount: source.femaleGuestCount,
-            pilgrimMobile: source.pilgrimMobile,
-            description: extensionNote,
-            companions: source.companions ?? undefined,
-            travelOrigin: source.travelOrigin ?? undefined,
-            status: autoConfirmed
-                ? client_1.ReservationStatus.Confirmed
-                : client_1.ReservationStatus.Pending,
-            ...(autoConfirmed ? this.statusAuditFields(currentUser.id) : {}),
-            ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
+        const updated = await this.prisma.reservation.update({
+            where: { id: sourceId },
+            data: {
+                reservationEndDate: newEnd,
+            },
+            include: reservationInclude,
         });
-        await this.syncCheckInEventOnConfirm(reservation.id, checkInOnConfirm, currentUser.id);
-        if (reservation.status === client_1.ReservationStatus.Confirmed) {
-            await this.mawkibsService.syncInventoryOnReservationConfirmed(reservation);
+        if (source.status === client_1.ReservationStatus.Confirmed) {
+            await this.mawkibsService.syncInventoryOnEndDateChange(source, currentEnd, newEnd);
         }
-        await this.maybeGenerateMealPlans(reservation);
-        return reservation;
+        await this.maybeGenerateMealPlans(updated);
+        return updated;
     }
     async remove(id) {
         const reservation = await this.findOne(id);
@@ -1697,6 +1793,7 @@ exports.ReservationsService = ReservationsService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         mawkibs_service_1.MawkibsService,
         users_service_1.UsersService,
+        servant_mawkib_access_service_1.ServantMawkibAccessService,
         reservation_events_service_1.ReservationEventsService,
         meal_plans_service_1.MealPlansService])
 ], ReservationsService);

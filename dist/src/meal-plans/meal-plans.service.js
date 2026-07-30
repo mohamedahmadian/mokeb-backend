@@ -26,6 +26,7 @@ const mealPlanSelect = {
     reservationId: true,
     date: true,
     mealType: true,
+    guestCount: true,
     isRequired: true,
     isServed: true,
     servedAt: true,
@@ -47,6 +48,8 @@ let MealPlansService = class MealPlansService {
                 status: true,
                 reservationDate: true,
                 reservationEndDate: true,
+                maleGuestCount: true,
+                femaleGuestCount: true,
             },
         });
         if (!reservation) {
@@ -71,12 +74,16 @@ let MealPlansService = class MealPlansService {
     stayDates(reservationDate, reservationEndDate) {
         return (0, date_util_1.eachMealPlanDayInStay)(reservationDate, reservationEndDate);
     }
-    buildDefaultMealPlanRows(reservationId, reservationDate, reservationEndDate) {
+    guestCountFromReservation(maleGuestCount, femaleGuestCount) {
+        return Math.max(1, maleGuestCount + femaleGuestCount);
+    }
+    buildDefaultMealPlanRows(reservationId, reservationDate, reservationEndDate, guestCount) {
         const days = this.stayDates(reservationDate, reservationEndDate);
         return days.flatMap((day) => MEAL_TYPES.map((mealType) => ({
             reservationId,
             date: day,
             mealType,
+            guestCount,
             isRequired: true,
         })));
     }
@@ -88,7 +95,8 @@ let MealPlansService = class MealPlansService {
         if (!mawkib?.mealPlanManagementEnabled) {
             return;
         }
-        const data = this.buildDefaultMealPlanRows(params.reservationId, params.reservationDate, params.reservationEndDate);
+        const guestCount = this.guestCountFromReservation(params.maleGuestCount, params.femaleGuestCount);
+        const data = this.buildDefaultMealPlanRows(params.reservationId, params.reservationDate, params.reservationEndDate, guestCount);
         if (data.length === 0) {
             return;
         }
@@ -112,10 +120,11 @@ let MealPlansService = class MealPlansService {
         if (days.length === 0) {
             throw new common_1.BadRequestException('بازه اقامت رزرو برای ایجاد برنامه غذایی معتبر نیست');
         }
+        const guestCount = this.guestCountFromReservation(reservation.maleGuestCount, reservation.femaleGuestCount);
         await this.prisma.$transaction(async (tx) => {
             await tx.mealPlan.deleteMany({ where: { reservationId } });
             await tx.mealPlan.createMany({
-                data: this.buildDefaultMealPlanRows(reservationId, reservation.reservationDate, reservation.reservationEndDate),
+                data: this.buildDefaultMealPlanRows(reservationId, reservation.reservationDate, reservation.reservationEndDate, guestCount),
             });
         });
         return this.findByReservation(reservationId, user);
@@ -152,10 +161,15 @@ let MealPlansService = class MealPlansService {
                             date,
                             mealType: entry.mealType,
                             isRequired: entry.isRequired,
+                            ...(entry.guestCount != null && !current.isServed
+                                ? { guestCount: entry.guestCount }
+                                : {}),
                         },
                     });
                 }
                 else {
+                    const guestCount = entry.guestCount ??
+                        this.guestCountFromReservation(reservation.maleGuestCount, reservation.femaleGuestCount);
                     await tx.mealPlan.upsert({
                         where: {
                             reservationId_date_mealType: {
@@ -169,9 +183,11 @@ let MealPlansService = class MealPlansService {
                             date,
                             mealType: entry.mealType,
                             isRequired: entry.isRequired,
+                            guestCount,
                         },
                         update: {
                             isRequired: entry.isRequired,
+                            ...(entry.guestCount != null ? { guestCount: entry.guestCount } : {}),
                         },
                     });
                 }
@@ -183,11 +199,13 @@ let MealPlansService = class MealPlansService {
         const reservation = await this.assertReservationAccess(reservationId, user);
         this.assertMealPlanEligible(reservation.status);
         const date = (0, date_util_1.parseDateOnly)(dto.date);
+        const guestCount = this.guestCountFromReservation(reservation.maleGuestCount, reservation.femaleGuestCount);
         await this.prisma.mealPlan.createMany({
             data: MEAL_TYPES.map((mealType) => ({
                 reservationId,
                 date,
                 mealType,
+                guestCount,
                 isRequired: true,
             })),
             skipDuplicates: true,
@@ -219,6 +237,7 @@ let MealPlansService = class MealPlansService {
         if (existing?.isServed && !dto.isRequired) {
             throw new common_1.BadRequestException('وعده تحویل‌داده‌شده را نمی‌توان لغو کرد');
         }
+        const guestCount = this.guestCountFromReservation(reservation.maleGuestCount, reservation.femaleGuestCount);
         await this.prisma.mealPlan.upsert({
             where: {
                 reservationId_date_mealType: {
@@ -232,9 +251,11 @@ let MealPlansService = class MealPlansService {
                 date,
                 mealType: dto.mealType,
                 isRequired: dto.isRequired,
+                guestCount: dto.guestCount ?? guestCount,
             },
             update: {
                 isRequired: dto.isRequired,
+                ...(dto.guestCount != null ? { guestCount: dto.guestCount } : {}),
             },
         });
         return this.findByReservation(reservationId, user);
@@ -263,7 +284,7 @@ let MealPlansService = class MealPlansService {
             notice: activeOnCheckoutDay > 0 ? exports.MEAL_PLAN_MANUAL_CANCEL_TODAY_MESSAGE : undefined,
         };
     }
-    async markServed(mealPlanId, user) {
+    async markServed(mealPlanId, guestCount, user) {
         const row = await this.prisma.mealPlan.findUnique({
             where: { id: mealPlanId },
             include: {
@@ -287,6 +308,7 @@ let MealPlansService = class MealPlansService {
             where: { id: mealPlanId },
             data: {
                 isServed: true,
+                guestCount,
                 servedAt: new Date(),
             },
             select: mealPlanSelect,
@@ -355,6 +377,7 @@ let MealPlansService = class MealPlansService {
                     },
                     select: {
                         id: true,
+                        guestCount: true,
                         isServed: true,
                     },
                 },
@@ -369,6 +392,7 @@ let MealPlansService = class MealPlansService {
             const isPresent = presence === client_1.ReservationPresenceState.PRESENT;
             const mealPlan = reservation.mealPlans[0];
             const isServed = mealPlan?.isServed ?? false;
+            const guestCount = mealPlan?.guestCount ?? 1;
             return {
                 reservationId: reservation.id,
                 mealPlanId: mealPlan?.id ?? null,
@@ -379,6 +403,7 @@ let MealPlansService = class MealPlansService {
                 gender: reservation.pilgrim.gender,
                 maleGuestCount: reservation.maleGuestCount,
                 femaleGuestCount: reservation.femaleGuestCount,
+                guestCount,
                 isPresent,
                 presence: isPresent ? 'دارد' : 'ندارد',
                 isServed,

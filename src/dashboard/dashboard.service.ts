@@ -3,6 +3,7 @@ import { MawkibStatus, ReservationStatus, RoleName } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MawkibsService } from '../mawkibs/mawkibs.service';
 import { AuthUser } from '../common/decorators/current-user.decorator';
+import { ServantMawkibAccessService } from '../users/servant-mawkib-access.service';
 
 export interface CapacityStats {
   totalMawkibs: number;
@@ -20,6 +21,7 @@ export class DashboardService {
   constructor(
     private prisma: PrismaService,
     private mawkibsService: MawkibsService,
+    private servantMawkibAccess: ServantMawkibAccessService,
   ) {}
 
   private async computeCapacityStats(ownerUserId?: number): Promise<CapacityStats> {
@@ -61,14 +63,104 @@ export class DashboardService {
     };
   }
 
+  private async computeCapacityStatsForMawkibIds(
+    mawkibIds: number[],
+  ): Promise<CapacityStats> {
+    if (mawkibIds.length === 0) {
+      return {
+        totalMawkibs: 0,
+        totalMaleCapacity: 0,
+        totalFemaleCapacity: 0,
+        totalCapacity: 0,
+        emptyMaleCapacity: 0,
+        emptyFemaleCapacity: 0,
+        emptyCapacity: 0,
+        filledCapacity: 0,
+      };
+    }
+
+    const mawkibs = await this.prisma.mawkib.findMany({
+      where: {
+        id: { in: mawkibIds },
+        status: MawkibStatus.Approved,
+      },
+      select: { id: true, maleCapacity: true, femaleCapacity: true },
+    });
+
+    let totalMaleCapacity = 0;
+    let totalFemaleCapacity = 0;
+    let emptyMaleCapacity = 0;
+    let emptyFemaleCapacity = 0;
+
+    const snapshots = await this.mawkibsService.getCapacitySnapshotsForMawkibs(mawkibs);
+
+    for (const mawkib of mawkibs) {
+      totalMaleCapacity += mawkib.maleCapacity;
+      totalFemaleCapacity += mawkib.femaleCapacity;
+      const snapshot = snapshots.get(mawkib.id)!;
+      emptyMaleCapacity += snapshot.availableMale;
+      emptyFemaleCapacity += snapshot.availableFemale;
+    }
+
+    const totalCap = totalMaleCapacity + totalFemaleCapacity;
+    const emptyCap = emptyMaleCapacity + emptyFemaleCapacity;
+
+    return {
+      totalMawkibs: mawkibs.length,
+      totalMaleCapacity,
+      totalFemaleCapacity,
+      totalCapacity: totalCap,
+      emptyMaleCapacity,
+      emptyFemaleCapacity,
+      emptyCapacity: emptyCap,
+      filledCapacity: totalCap - emptyCap,
+    };
+  }
+
   async getStats(user: AuthUser) {
     const isAdmin = user.roles.includes(RoleName.Admin);
     const isMawkibOwner =
       user.roles.includes(RoleName.MawkibOwner) && !isAdmin;
+    const isMawkibServant =
+      user.roles.includes(RoleName.MawkibServant) &&
+      !isAdmin &&
+      !isMawkibOwner;
     const isPilgrim =
       user.roles.includes(RoleName.Pilgrim) &&
       !isAdmin &&
-      !user.roles.includes(RoleName.MawkibOwner);
+      !user.roles.includes(RoleName.MawkibOwner) &&
+      !isMawkibServant;
+
+    if (isMawkibServant) {
+      const mawkibIds = await this.servantMawkibAccess.getAccessibleMawkibIds(
+        user.id,
+      );
+      const reservationWhere =
+        mawkibIds.length > 0
+          ? { mawkibId: { in: mawkibIds } }
+          : { mawkibId: -1 as number };
+
+      const [myMawkibsStats, totalReservations, confirmedReservations, cancelledReservations] =
+        await Promise.all([
+          this.computeCapacityStatsForMawkibIds(mawkibIds),
+          this.prisma.reservation.count({ where: reservationWhere }),
+          this.prisma.reservation.count({
+            where: { ...reservationWhere, status: ReservationStatus.Confirmed },
+          }),
+          this.prisma.reservation.count({
+            where: { ...reservationWhere, status: ReservationStatus.Cancelled },
+          }),
+        ]);
+
+      return {
+        myMawkibsStats,
+        mawkibServantStats: {
+          totalReservations,
+          confirmedReservations,
+          cancelledReservations,
+        },
+      };
+    }
 
     if (isPilgrim) {
       const [capacityStats, total, pending, confirmed, cancelled] = await Promise.all([

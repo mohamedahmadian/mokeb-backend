@@ -15,10 +15,12 @@ const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
 const mawkib_search_utils_1 = require("./mawkib-search.utils");
 const mawkib_reservation_constants_1 = require("./mawkib-reservation.constants");
+const mawkib_acceptance_pattern_util_1 = require("./mawkib-acceptance-pattern.util");
 const mawkib_dto_1 = require("./dto/mawkib.dto");
 const date_util_1 = require("../common/utils/date.util");
 const capacity_types_1 = require("../common/types/capacity.types");
 const mawkib_inventory_service_1 = require("./mawkib-inventory.service");
+const servant_mawkib_access_service_1 = require("../users/servant-mawkib-access.service");
 const mawkibInclude = {
     owner: { select: { id: true, fullName: true, mobileNumber: true, province: true, city: true } },
     _count: { select: { reservations: true } },
@@ -27,9 +29,11 @@ const mawkibInclude = {
 let MawkibsService = class MawkibsService {
     prisma;
     inventoryService;
-    constructor(prisma, inventoryService) {
+    servantMawkibAccess;
+    constructor(prisma, inventoryService, servantMawkibAccess) {
         this.prisma = prisma;
         this.inventoryService = inventoryService;
+        this.servantMawkibAccess = servantMawkibAccess;
     }
     applyAmenityFilters(where, search) {
         if (!search)
@@ -140,8 +144,37 @@ let MawkibsService = class MawkibsService {
                 availableFemaleCapacity: snapshot.availableFemale,
                 reservedMaleCapacity: snapshot.reservedMale,
                 reservedFemaleCapacity: snapshot.reservedFemale,
+                reservationFormConfig: (0, mawkib_acceptance_pattern_util_1.buildMawkibReservationFormConfig)(mawkib),
             };
         });
+    }
+    resolveAcceptancePatternForSave(input, existing) {
+        try {
+            return (0, mawkib_acceptance_pattern_util_1.normalizeMawkibAcceptancePatternFields)({
+                acceptanceType: input.acceptanceType ?? existing?.acceptanceType,
+                stayDurationMode: input.stayDurationMode ?? existing?.stayDurationMode,
+                fixedStayDays: input.fixedStayDays !== undefined
+                    ? input.fixedStayDays
+                    : existing?.fixedStayDays,
+                reservationStartMode: input.reservationStartMode ?? existing?.reservationStartMode,
+                maxReservationDays: input.maxReservationDays ?? existing?.maxReservationDays,
+                formShowNationalId: input.formShowNationalId ?? existing?.formShowNationalId,
+                formShowPassportNumber: input.formShowPassportNumber ?? existing?.formShowPassportNumber,
+                formShowReservationCode: input.formShowReservationCode ?? existing?.formShowReservationCode,
+                formShowCarPlate: input.formShowCarPlate ?? existing?.formShowCarPlate,
+                formShowGender: input.formShowGender ?? existing?.formShowGender,
+                formShowPassword: input.formShowPassword ?? existing?.formShowPassword,
+                formShowLocation: input.formShowLocation ?? existing?.formShowLocation,
+                formShowNationalIdCardImage: input.formShowNationalIdCardImage ??
+                    existing?.formShowNationalIdCardImage,
+            });
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                throw new common_1.BadRequestException((0, mawkib_acceptance_pattern_util_1.acceptancePatternErrorMessage)(error.message));
+            }
+            throw error;
+        }
     }
     hasReservationAvailabilitySearch(search) {
         if (!search)
@@ -407,7 +440,10 @@ let MawkibsService = class MawkibsService {
             throw new common_1.NotFoundException('موکب یافت نشد');
         }
         if (!isAdmin && userId && mawkib.ownerUserId !== userId) {
-            throw new common_1.ForbiddenException('شما مجوز مشاهده این موکب را ندارید');
+            const hasAccess = await this.servantMawkibAccess.hasAccess(userId, id);
+            if (!hasAccess) {
+                throw new common_1.ForbiddenException('شما مجوز مشاهده این موکب را ندارید');
+            }
         }
         const [enriched] = await this.enrichWithTodayCapacity([mawkib]);
         return enriched;
@@ -426,15 +462,31 @@ let MawkibsService = class MawkibsService {
         if (!owner) {
             throw new common_1.NotFoundException('مسئول موکب یافت نشد');
         }
-        const { ownerUserId: _ownerUserId, serviceStartDate, serviceEndDate, status, galleryImageUrls, maxReservationDays, defaultReservationDays, ...fields } = dto;
+        const { ownerUserId: _ownerUserId, serviceStartDate, serviceEndDate, status, galleryImageUrls, maxReservationDays, defaultReservationDays, acceptanceType, stayDurationMode, fixedStayDays, reservationStartMode, formShowNationalId, formShowPassportNumber, formShowReservationCode, formShowCarPlate, formShowGender, formShowPassword, formShowLocation, formShowNationalIdCardImage, ...fields } = dto;
         const reservationDayFields = (0, mawkib_reservation_constants_1.normalizeMawkibReservationDayFields)({
             maxReservationDays,
             defaultReservationDays,
+        });
+        const acceptancePatternFields = this.resolveAcceptancePatternForSave({
+            acceptanceType,
+            stayDurationMode,
+            fixedStayDays,
+            reservationStartMode,
+            maxReservationDays: reservationDayFields.maxReservationDays,
+            formShowNationalId,
+            formShowPassportNumber,
+            formShowReservationCode,
+            formShowCarPlate,
+            formShowGender,
+            formShowPassword,
+            formShowLocation,
+            formShowNationalIdCardImage,
         });
         const created = await this.prisma.mawkib.create({
             data: {
                 ...fields,
                 ...reservationDayFields,
+                ...acceptancePatternFields,
                 serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : undefined,
                 serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : undefined,
                 status: isAdmin ? (status ?? client_1.MawkibStatus.Approved) : client_1.MawkibStatus.Pending,
@@ -461,16 +513,48 @@ let MawkibsService = class MawkibsService {
         }
         const ownerUserId = isAdmin ? dto.ownerUserId : undefined;
         const status = isAdmin ? dto.status : undefined;
-        const { ownerUserId: _o, status: _s, serviceStartDate, serviceEndDate, galleryImageUrls, maxReservationDays, defaultReservationDays, ...fields } = dto;
-        const reservationDayFields = maxReservationDays !== undefined || defaultReservationDays !== undefined
+        const { ownerUserId: _o, status: _s, serviceStartDate, serviceEndDate, galleryImageUrls, maxReservationDays, defaultReservationDays, acceptanceType, stayDurationMode, fixedStayDays, reservationStartMode, formShowNationalId, formShowPassportNumber, formShowReservationCode, formShowCarPlate, formShowGender, formShowPassword, formShowLocation, formShowNationalIdCardImage, ...fields } = dto;
+        const normalizedReservationDays = maxReservationDays !== undefined || defaultReservationDays !== undefined
             ? (0, mawkib_reservation_constants_1.normalizeMawkibReservationDayFields)({
                 maxReservationDays: maxReservationDays ?? mawkib.maxReservationDays,
                 defaultReservationDays: defaultReservationDays ?? mawkib.defaultReservationDays,
             })
+            : null;
+        const reservationDayFields = normalizedReservationDays ?? {};
+        const acceptancePatternFields = acceptanceType !== undefined ||
+            stayDurationMode !== undefined ||
+            fixedStayDays !== undefined ||
+            reservationStartMode !== undefined ||
+            maxReservationDays !== undefined ||
+            formShowNationalId !== undefined ||
+            formShowPassportNumber !== undefined ||
+            formShowReservationCode !== undefined ||
+            formShowCarPlate !== undefined ||
+            formShowGender !== undefined ||
+            formShowPassword !== undefined ||
+            formShowLocation !== undefined ||
+            formShowNationalIdCardImage !== undefined
+            ? this.resolveAcceptancePatternForSave({
+                acceptanceType,
+                stayDurationMode,
+                fixedStayDays,
+                reservationStartMode,
+                maxReservationDays: normalizedReservationDays?.maxReservationDays ??
+                    mawkib.maxReservationDays,
+                formShowNationalId,
+                formShowPassportNumber,
+                formShowReservationCode,
+                formShowCarPlate,
+                formShowGender,
+                formShowPassword,
+                formShowLocation,
+                formShowNationalIdCardImage,
+            }, mawkib)
             : {};
         const data = {
             ...fields,
             ...reservationDayFields,
+            ...acceptancePatternFields,
             ...(serviceStartDate !== undefined && {
                 serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
             }),
@@ -557,7 +641,11 @@ let MawkibsService = class MawkibsService {
             throw new common_1.NotFoundException('موکب یافت نشد');
         }
         const isOwner = userId != null && mawkib.ownerUserId === userId;
-        if (mawkib.status !== client_1.MawkibStatus.Approved && !isAdmin && !isOwner) {
+        let isServant = false;
+        if (userId != null && !isOwner && !isAdmin) {
+            isServant = await this.servantMawkibAccess.hasAccess(userId, mawkibId);
+        }
+        if (mawkib.status !== client_1.MawkibStatus.Approved && !isAdmin && !isOwner && !isServant) {
             throw new common_1.NotFoundException('موکب یافت نشد');
         }
         return this.getInventoryRange(mawkibId, query);
@@ -679,7 +767,40 @@ let MawkibsService = class MawkibsService {
         }
         return mawkib;
     }
-    assertOnlineReservationAllowed(mawkib, currentUser) {
+    async assertServantAccess(mawkibId, userId) {
+        const mawkib = await this.prisma.mawkib.findUnique({
+            where: { id: mawkibId },
+        });
+        if (!mawkib) {
+            throw new common_1.NotFoundException('موکب یافت نشد');
+        }
+        const hasAccess = await this.servantMawkibAccess.hasAccess(userId, mawkibId);
+        if (!hasAccess) {
+            throw new common_1.ForbiddenException('شما مجوز دسترسی به این موکب را ندارید');
+        }
+        return mawkib;
+    }
+    async findAssignedMawkibForServant(userId) {
+        const mawkibIds = await this.servantMawkibAccess.getAccessibleMawkibIds(userId);
+        if (mawkibIds.length === 0) {
+            throw new common_1.NotFoundException('موکب مرتبط با حساب خادم یافت نشد');
+        }
+        return this.findOne(mawkibIds[0], userId, false);
+    }
+    async findAccessibleForServant(userId) {
+        const mawkibIds = await this.servantMawkibAccess.getAccessibleMawkibIds(userId);
+        if (mawkibIds.length === 0) {
+            return [];
+        }
+        const mawkibs = await this.prisma.mawkib.findMany({
+            where: { id: { in: mawkibIds } },
+            include: mawkibInclude,
+            orderBy: { name: 'asc' },
+        });
+        const enriched = await this.enrichWithTodayCapacity(mawkibs);
+        return this.enrichWithPresentCounts(enriched);
+    }
+    async assertOnlineReservationAllowed(mawkib, currentUser) {
         if (mawkib.onlineReservationEnabled) {
             return;
         }
@@ -689,8 +810,15 @@ let MawkibsService = class MawkibsService {
         const isAdmin = currentUser.roles.includes(client_1.RoleName.Admin);
         const isOwner = currentUser.roles.includes(client_1.RoleName.MawkibOwner) &&
             mawkib.ownerUserId === currentUser.id;
+        const isServant = currentUser.roles.includes(client_1.RoleName.MawkibServant);
         if (isAdmin || isOwner) {
             return;
+        }
+        if (isServant) {
+            const linked = await this.servantMawkibAccess.hasAccess(currentUser.id, mawkib.id);
+            if (linked) {
+                return;
+            }
         }
         throw new common_1.BadRequestException('امکان رزرو آنلاین این موکب غیرفعال است');
     }
@@ -699,6 +827,7 @@ exports.MawkibsService = MawkibsService;
 exports.MawkibsService = MawkibsService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        mawkib_inventory_service_1.MawkibInventoryService])
+        mawkib_inventory_service_1.MawkibInventoryService,
+        servant_mawkib_access_service_1.ServantMawkibAccessService])
 ], MawkibsService);
 //# sourceMappingURL=mawkibs.service.js.map

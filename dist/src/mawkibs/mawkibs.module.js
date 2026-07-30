@@ -11,11 +11,13 @@ const common_1 = require("@nestjs/common");
 const mawkibs_service_1 = require("./mawkibs.service");
 const mawkibs_controller_1 = require("./mawkibs.controller");
 const mawkib_inventory_service_1 = require("./mawkib-inventory.service");
+const users_module_1 = require("../users/users.module");
 let MawkibsModule = class MawkibsModule {
 };
 exports.MawkibsModule = MawkibsModule;
 exports.MawkibsModule = MawkibsModule = __decorate([
     (0, common_1.Module)({
+        imports: [users_module_1.UsersModule],
         controllers: [mawkibs_controller_1.MawkibsController],
         providers: [mawkibs_service_1.MawkibsService, mawkib_inventory_service_1.MawkibInventoryService],
         exports: [mawkibs_service_1.MawkibsService, mawkib_inventory_service_1.MawkibInventoryService],

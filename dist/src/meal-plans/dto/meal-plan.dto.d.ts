@@ -4,6 +4,7 @@ export declare class MealPlanEntryDto {
     date: string;
     mealType: MealType;
     isRequired: boolean;
+    guestCount?: number;
 }
 export declare class SaveMealPlansDto {
     entries: MealPlanEntryDto[];
@@ -15,4 +16,8 @@ export declare class UpsertMealPlanEntryDto {
     date: string;
     mealType: MealType;
     isRequired: boolean;
+    guestCount?: number;
+}
+export declare class MarkMealServedDto {
+    guestCount: number;
 }

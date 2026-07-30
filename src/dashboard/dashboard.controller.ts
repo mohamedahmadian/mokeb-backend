@@ -9,7 +9,7 @@ import type { AuthUser } from '../common/decorators/current-user.decorator';
 
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.Pilgrim)
+@Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.Pilgrim, RoleName.MawkibServant)
 export class DashboardController {
   constructor(private dashboardService: DashboardService) {}
 

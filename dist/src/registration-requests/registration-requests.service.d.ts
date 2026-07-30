@@ -154,6 +154,18 @@ export declare class RegistrationRequestsService {
             recordCheckInOnReservationConfirm: boolean;
             skipCapacityCheckEnabled: boolean;
             mealPlanManagementEnabled: boolean;
+            acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+            stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+            fixedStayDays: number | null;
+            reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+            formShowNationalId: boolean;
+            formShowPassportNumber: boolean;
+            formShowReservationCode: boolean;
+            formShowCarPlate: boolean;
+            formShowGender: boolean;
+            formShowPassword: boolean;
+            formShowLocation: boolean;
+            formShowNationalIdCardImage: boolean;
             ownerUserId: number;
         };
     }>;

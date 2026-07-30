@@ -49,6 +49,20 @@ export class MawkibsController {
     return this.mawkibsService.findByOwner(user.id, search);
   }
 
+  @Get('assigned')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.MawkibServant)
+  findAssigned(@CurrentUser() user: AuthUser) {
+    return this.mawkibsService.findAssignedMawkibForServant(user.id);
+  }
+
+  @Get('accessible')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.MawkibServant)
+  findAccessible(@CurrentUser() user: AuthUser) {
+    return this.mawkibsService.findAccessibleForServant(user.id);
+  }
+
   @Get('inventory/horizon')
   getInventoryHorizon() {
     return this.mawkibsService.getInventoryHorizon();
@@ -69,7 +83,7 @@ export class MawkibsController {
 
   @Get(':id/inventory')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.Pilgrim)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.MawkibServant, RoleName.Pilgrim)
   findInventory(
     @Param('id', ParseIntPipe) id: number,
     @Query() query: MawkibInventoryQueryDto,
@@ -107,7 +121,7 @@ export class MawkibsController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleName.Admin, RoleName.MawkibOwner)
+  @Roles(RoleName.Admin, RoleName.MawkibOwner, RoleName.MawkibServant)
   findOne(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: AuthUser,

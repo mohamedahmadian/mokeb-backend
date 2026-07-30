@@ -51,24 +51,24 @@ export declare class GuestReservationsController {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -84,8 +84,8 @@ export declare class GuestReservationsController {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -150,24 +150,24 @@ export declare class GuestReservationsController {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -183,8 +183,8 @@ export declare class GuestReservationsController {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
         id: number;
         description: string | null;
@@ -247,24 +247,24 @@ export declare class GuestReservationsController {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -280,8 +280,8 @@ export declare class GuestReservationsController {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -343,8 +343,8 @@ export declare class GuestReservationsController {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;

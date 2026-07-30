@@ -68,6 +68,18 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
@@ -135,6 +147,18 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
@@ -206,12 +230,25 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
         reservedMaleCapacity: number;
         reservedFemaleCapacity: number;
+        reservationFormConfig: import("./mawkib-acceptance-pattern.util").MawkibReservationFormConfig;
     })[] | import("./mawkibs.service").PaginatedMawkibsResult<{
         _count: {
             reservations: number;
@@ -278,12 +315,25 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
         reservedMaleCapacity: number;
         reservedFemaleCapacity: number;
+        reservationFormConfig: import("./mawkib-acceptance-pattern.util").MawkibReservationFormConfig;
     }>>;
     findMy(user: AuthUser, search: AdminSearchMawkibDto): Promise<({
         _count: {
@@ -351,6 +401,18 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
@@ -421,11 +483,195 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
     }>>;
+    findAssigned(user: AuthUser): Promise<{
+        _count: {
+            reservations: number;
+        };
+        owner: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            province: string | null;
+            city: string | null;
+        };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
+    } & {
+        id: number;
+        name: string;
+        imageUrl: string | null;
+        country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
+        description: string | null;
+        whatsapp: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        createdAt: Date;
+        status: import("@prisma/client").$Enums.MawkibStatus;
+        neshanAddressUrl: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        phoneNumber: string;
+        facilities: string | null;
+        services: string | null;
+        serviceStartDate: Date | null;
+        serviceEndDate: Date | null;
+        maleCapacity: number;
+        femaleCapacity: number;
+        distanceToShrine: string | null;
+        distanceToBusStation: string | null;
+        distanceToMetro: string | null;
+        lunchReception: boolean;
+        breakfastReception: boolean;
+        dinnerReception: boolean;
+        bathroom: boolean;
+        laundry: boolean;
+        parking: boolean;
+        internet: boolean;
+        familyFriendly: boolean;
+        elevator: boolean;
+        stairs: boolean;
+        maxReservationDays: number;
+        defaultReservationDays: number;
+        mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
+        rules: string | null;
+        telegramChannel: string | null;
+        websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
+        autoApprovePilgrimReservations: boolean;
+        recordCheckInOnReservationConfirm: boolean;
+        skipCapacityCheckEnabled: boolean;
+        mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
+        ownerUserId: number;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+        reservedMaleCapacity: number;
+        reservedFemaleCapacity: number;
+        reservationFormConfig: import("./mawkib-acceptance-pattern.util").MawkibReservationFormConfig;
+    }>;
+    findAccessible(user: AuthUser): Promise<({
+        _count: {
+            reservations: number;
+        };
+        owner: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            province: string | null;
+            city: string | null;
+        };
+        images: {
+            id: number;
+            createdAt: Date;
+            mawkibId: number;
+            sortOrder: number;
+            url: string;
+        }[];
+    } & {
+        id: number;
+        name: string;
+        imageUrl: string | null;
+        country: import("@prisma/client").$Enums.MawkibCountry;
+        address: string;
+        description: string | null;
+        whatsapp: string | null;
+        bale: string | null;
+        eitaa: string | null;
+        createdAt: Date;
+        status: import("@prisma/client").$Enums.MawkibStatus;
+        neshanAddressUrl: string | null;
+        latitude: number | null;
+        longitude: number | null;
+        phoneNumber: string;
+        facilities: string | null;
+        services: string | null;
+        serviceStartDate: Date | null;
+        serviceEndDate: Date | null;
+        maleCapacity: number;
+        femaleCapacity: number;
+        distanceToShrine: string | null;
+        distanceToBusStation: string | null;
+        distanceToMetro: string | null;
+        lunchReception: boolean;
+        breakfastReception: boolean;
+        dinnerReception: boolean;
+        bathroom: boolean;
+        laundry: boolean;
+        parking: boolean;
+        internet: boolean;
+        familyFriendly: boolean;
+        elevator: boolean;
+        stairs: boolean;
+        maxReservationDays: number;
+        defaultReservationDays: number;
+        mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
+        rules: string | null;
+        telegramChannel: string | null;
+        websiteUrl: string | null;
+        defaultCheckInTime: string;
+        defaultCheckOutTime: string;
+        onlineReservationEnabled: boolean;
+        autoApprovePilgrimReservations: boolean;
+        recordCheckInOnReservationConfirm: boolean;
+        skipCapacityCheckEnabled: boolean;
+        mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
+        ownerUserId: number;
+    } & {
+        availableMaleCapacity: number;
+        availableFemaleCapacity: number;
+        reservedMaleCapacity: number;
+        reservedFemaleCapacity: number;
+        reservationFormConfig: import("./mawkib-acceptance-pattern.util").MawkibReservationFormConfig;
+    })[]>;
     getInventoryHorizon(): Promise<import("./mawkib-inventory.service").MawkibInventoryHorizonMeta>;
     findPublicInventory(id: number, query: MawkibInventoryQueryDto): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
     findOnePublic(id: number): Promise<{
@@ -494,12 +740,25 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
         reservedMaleCapacity: number;
         reservedFemaleCapacity: number;
+        reservationFormConfig: import("./mawkib-acceptance-pattern.util").MawkibReservationFormConfig;
     }>;
     findInventory(id: number, query: MawkibInventoryQueryDto, user: AuthUser): Promise<import("./mawkib-inventory.service").MawkibInventoryRangeResult>;
     reconcileInventory(id: number, body: MawkibInventoryReconcileDto): Promise<{
@@ -576,12 +835,25 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } & {
         availableMaleCapacity: number;
         availableFemaleCapacity: number;
         reservedMaleCapacity: number;
         reservedFemaleCapacity: number;
+        reservationFormConfig: import("./mawkib-acceptance-pattern.util").MawkibReservationFormConfig;
     }>;
     create(dto: CreateMawkibDto, user: AuthUser): Promise<{
         _count: {
@@ -649,6 +921,18 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     }>;
     update(id: number, dto: UpdateMawkibDto, user: AuthUser): Promise<{
@@ -717,6 +1001,18 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     }>;
     remove(id: number): Promise<{
@@ -786,6 +1082,18 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     } | {
         id: number;
@@ -858,6 +1166,18 @@ export declare class MawkibsController {
         recordCheckInOnReservationConfirm: boolean;
         skipCapacityCheckEnabled: boolean;
         mealPlanManagementEnabled: boolean;
+        acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+        stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+        fixedStayDays: number | null;
+        reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+        formShowNationalId: boolean;
+        formShowPassportNumber: boolean;
+        formShowReservationCode: boolean;
+        formShowCarPlate: boolean;
+        formShowGender: boolean;
+        formShowPassword: boolean;
+        formShowLocation: boolean;
+        formShowNationalIdCardImage: boolean;
         ownerUserId: number;
     }>;
 }

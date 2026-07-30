@@ -16,6 +16,12 @@ import {
   normalizeMawkibReservationDayFields,
 } from './mawkib-reservation.constants';
 import {
+  acceptancePatternErrorMessage,
+  buildMawkibReservationFormConfig,
+  normalizeMawkibAcceptancePatternFields,
+  type MawkibAcceptancePatternSource,
+} from './mawkib-acceptance-pattern.util';
+import {
   AdminSearchMawkibDto,
   CreateMawkibDto,
   MAWKIB_AMENITY_FILTER_KEYS,
@@ -31,6 +37,7 @@ import {
   totalAvailable,
 } from '../common/types/capacity.types';
 import { MawkibInventoryService } from './mawkib-inventory.service';
+import { ServantMawkibAccessService } from '../users/servant-mawkib-access.service';
 
 const mawkibInclude = {
   owner: { select: { id: true, fullName: true, mobileNumber: true, province: true, city: true } },
@@ -57,6 +64,7 @@ export class MawkibsService {
   constructor(
     private prisma: PrismaService,
     private inventoryService: MawkibInventoryService,
+    private servantMawkibAccess: ServantMawkibAccessService,
   ) {}
 
   private applyAmenityFilters(
@@ -198,8 +206,92 @@ export class MawkibsService {
         availableFemaleCapacity: snapshot.availableFemale,
         reservedMaleCapacity: snapshot.reservedMale,
         reservedFemaleCapacity: snapshot.reservedFemale,
+        reservationFormConfig: buildMawkibReservationFormConfig(
+          mawkib as unknown as MawkibAcceptancePatternSource,
+        ),
       };
     });
+  }
+
+  private resolveAcceptancePatternForSave(
+    input: {
+      acceptanceType?: Parameters<
+        typeof normalizeMawkibAcceptancePatternFields
+      >[0]['acceptanceType'];
+      stayDurationMode?: Parameters<
+        typeof normalizeMawkibAcceptancePatternFields
+      >[0]['stayDurationMode'];
+      fixedStayDays?: number | null;
+      reservationStartMode?: Parameters<
+        typeof normalizeMawkibAcceptancePatternFields
+      >[0]['reservationStartMode'];
+      maxReservationDays?: number | null;
+      formShowNationalId?: boolean;
+      formShowPassportNumber?: boolean;
+      formShowReservationCode?: boolean;
+      formShowCarPlate?: boolean;
+      formShowGender?: boolean;
+      formShowPassword?: boolean;
+      formShowLocation?: boolean;
+      formShowNationalIdCardImage?: boolean;
+    },
+    existing?: {
+      acceptanceType: Parameters<
+        typeof normalizeMawkibAcceptancePatternFields
+      >[0]['acceptanceType'];
+      stayDurationMode: Parameters<
+        typeof normalizeMawkibAcceptancePatternFields
+      >[0]['stayDurationMode'];
+      fixedStayDays: number | null;
+      reservationStartMode: Parameters<
+        typeof normalizeMawkibAcceptancePatternFields
+      >[0]['reservationStartMode'];
+      maxReservationDays: number;
+      formShowNationalId: boolean;
+      formShowPassportNumber: boolean;
+      formShowReservationCode: boolean;
+      formShowCarPlate: boolean;
+      formShowGender: boolean;
+      formShowPassword: boolean;
+      formShowLocation: boolean;
+      formShowNationalIdCardImage: boolean;
+    },
+  ) {
+    try {
+      return normalizeMawkibAcceptancePatternFields({
+        acceptanceType: input.acceptanceType ?? existing?.acceptanceType,
+        stayDurationMode: input.stayDurationMode ?? existing?.stayDurationMode,
+        fixedStayDays:
+          input.fixedStayDays !== undefined
+            ? input.fixedStayDays
+            : existing?.fixedStayDays,
+        reservationStartMode:
+          input.reservationStartMode ?? existing?.reservationStartMode,
+        maxReservationDays:
+          input.maxReservationDays ?? existing?.maxReservationDays,
+        formShowNationalId:
+          input.formShowNationalId ?? existing?.formShowNationalId,
+        formShowPassportNumber:
+          input.formShowPassportNumber ?? existing?.formShowPassportNumber,
+        formShowReservationCode:
+          input.formShowReservationCode ?? existing?.formShowReservationCode,
+        formShowCarPlate:
+          input.formShowCarPlate ?? existing?.formShowCarPlate,
+        formShowGender: input.formShowGender ?? existing?.formShowGender,
+        formShowPassword: input.formShowPassword ?? existing?.formShowPassword,
+        formShowLocation: input.formShowLocation ?? existing?.formShowLocation,
+        formShowNationalIdCardImage:
+          input.formShowNationalIdCardImage ??
+          existing?.formShowNationalIdCardImage,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new BadRequestException(
+          acceptancePatternErrorMessage(error.message),
+        );
+      }
+      throw error;
+    }
   }
 
   private hasReservationAvailabilitySearch(
@@ -557,7 +649,10 @@ export class MawkibsService {
     }
 
     if (!isAdmin && userId && mawkib.ownerUserId !== userId) {
-      throw new ForbiddenException('شما مجوز مشاهده این موکب را ندارید');
+      const hasAccess = await this.servantMawkibAccess.hasAccess(userId, id);
+      if (!hasAccess) {
+        throw new ForbiddenException('شما مجوز مشاهده این موکب را ندارید');
+      }
     }
 
     const [enriched] = await this.enrichWithTodayCapacity([mawkib]);
@@ -591,6 +686,18 @@ export class MawkibsService {
       galleryImageUrls,
       maxReservationDays,
       defaultReservationDays,
+      acceptanceType,
+      stayDurationMode,
+      fixedStayDays,
+      reservationStartMode,
+      formShowNationalId,
+      formShowPassportNumber,
+      formShowReservationCode,
+      formShowCarPlate,
+      formShowGender,
+      formShowPassword,
+      formShowLocation,
+      formShowNationalIdCardImage,
       ...fields
     } = dto;
 
@@ -599,10 +706,29 @@ export class MawkibsService {
       defaultReservationDays,
     });
 
+    const acceptancePatternFields = this.resolveAcceptancePatternForSave(
+      {
+        acceptanceType,
+        stayDurationMode,
+        fixedStayDays,
+        reservationStartMode,
+        maxReservationDays: reservationDayFields.maxReservationDays,
+        formShowNationalId,
+        formShowPassportNumber,
+        formShowReservationCode,
+        formShowCarPlate,
+        formShowGender,
+        formShowPassword,
+        formShowLocation,
+        formShowNationalIdCardImage,
+      },
+    );
+
     const created = await this.prisma.mawkib.create({
       data: {
         ...fields,
         ...reservationDayFields,
+        ...acceptancePatternFields,
         serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : undefined,
         serviceEndDate: serviceEndDate ? new Date(serviceEndDate) : undefined,
         status: isAdmin ? (status ?? MawkibStatus.Approved) : MawkibStatus.Pending,
@@ -648,21 +774,72 @@ export class MawkibsService {
       galleryImageUrls,
       maxReservationDays,
       defaultReservationDays,
+      acceptanceType,
+      stayDurationMode,
+      fixedStayDays,
+      reservationStartMode,
+      formShowNationalId,
+      formShowPassportNumber,
+      formShowReservationCode,
+      formShowCarPlate,
+      formShowGender,
+      formShowPassword,
+      formShowLocation,
+      formShowNationalIdCardImage,
       ...fields
     } = dto;
 
-    const reservationDayFields =
+    const normalizedReservationDays =
       maxReservationDays !== undefined || defaultReservationDays !== undefined
         ? normalizeMawkibReservationDayFields({
             maxReservationDays: maxReservationDays ?? mawkib.maxReservationDays,
             defaultReservationDays:
               defaultReservationDays ?? mawkib.defaultReservationDays,
           })
+        : null;
+
+    const reservationDayFields = normalizedReservationDays ?? {};
+
+    const acceptancePatternFields =
+      acceptanceType !== undefined ||
+      stayDurationMode !== undefined ||
+      fixedStayDays !== undefined ||
+      reservationStartMode !== undefined ||
+      maxReservationDays !== undefined ||
+      formShowNationalId !== undefined ||
+      formShowPassportNumber !== undefined ||
+      formShowReservationCode !== undefined ||
+      formShowCarPlate !== undefined ||
+      formShowGender !== undefined ||
+      formShowPassword !== undefined ||
+      formShowLocation !== undefined ||
+      formShowNationalIdCardImage !== undefined
+        ? this.resolveAcceptancePatternForSave(
+            {
+              acceptanceType,
+              stayDurationMode,
+              fixedStayDays,
+              reservationStartMode,
+              maxReservationDays:
+                normalizedReservationDays?.maxReservationDays ??
+                mawkib.maxReservationDays,
+              formShowNationalId,
+              formShowPassportNumber,
+              formShowReservationCode,
+              formShowCarPlate,
+              formShowGender,
+              formShowPassword,
+              formShowLocation,
+              formShowNationalIdCardImage,
+            },
+            mawkib,
+          )
         : {};
 
     const data: Prisma.MawkibUpdateInput = {
       ...fields,
       ...reservationDayFields,
+      ...acceptancePatternFields,
       ...(serviceStartDate !== undefined && {
         serviceStartDate: serviceStartDate ? new Date(serviceStartDate) : null,
       }),
@@ -784,8 +961,12 @@ export class MawkibsService {
     }
 
     const isOwner = userId != null && mawkib.ownerUserId === userId;
+    let isServant = false;
+    if (userId != null && !isOwner && !isAdmin) {
+      isServant = await this.servantMawkibAccess.hasAccess(userId, mawkibId);
+    }
 
-    if (mawkib.status !== MawkibStatus.Approved && !isAdmin && !isOwner) {
+    if (mawkib.status !== MawkibStatus.Approved && !isAdmin && !isOwner && !isServant) {
       throw new NotFoundException('موکب یافت نشد');
     }
 
@@ -1047,8 +1228,56 @@ export class MawkibsService {
     return mawkib;
   }
 
-  assertOnlineReservationAllowed(
-    mawkib: { onlineReservationEnabled: boolean; ownerUserId: number },
+  async assertServantAccess(mawkibId: number, userId: number) {
+    const mawkib = await this.prisma.mawkib.findUnique({
+      where: { id: mawkibId },
+    });
+
+    if (!mawkib) {
+      throw new NotFoundException('موکب یافت نشد');
+    }
+
+    const hasAccess = await this.servantMawkibAccess.hasAccess(userId, mawkibId);
+    if (!hasAccess) {
+      throw new ForbiddenException('شما مجوز دسترسی به این موکب را ندارید');
+    }
+
+    return mawkib;
+  }
+
+  async findAssignedMawkibForServant(userId: number) {
+    const mawkibIds = await this.servantMawkibAccess.getAccessibleMawkibIds(
+      userId,
+    );
+
+    if (mawkibIds.length === 0) {
+      throw new NotFoundException('موکب مرتبط با حساب خادم یافت نشد');
+    }
+
+    return this.findOne(mawkibIds[0], userId, false);
+  }
+
+  async findAccessibleForServant(userId: number) {
+    const mawkibIds = await this.servantMawkibAccess.getAccessibleMawkibIds(
+      userId,
+    );
+
+    if (mawkibIds.length === 0) {
+      return [];
+    }
+
+    const mawkibs = await this.prisma.mawkib.findMany({
+      where: { id: { in: mawkibIds } },
+      include: mawkibInclude,
+      orderBy: { name: 'asc' },
+    });
+
+    const enriched = await this.enrichWithTodayCapacity(mawkibs);
+    return this.enrichWithPresentCounts(enriched);
+  }
+
+  async assertOnlineReservationAllowed(
+    mawkib: { id: number; onlineReservationEnabled: boolean; ownerUserId: number },
     currentUser?: AuthUser,
   ) {
     if (mawkib.onlineReservationEnabled) {
@@ -1063,9 +1292,20 @@ export class MawkibsService {
     const isOwner =
       currentUser.roles.includes(RoleName.MawkibOwner) &&
       mawkib.ownerUserId === currentUser.id;
+    const isServant = currentUser.roles.includes(RoleName.MawkibServant);
 
     if (isAdmin || isOwner) {
       return;
+    }
+
+    if (isServant) {
+      const linked = await this.servantMawkibAccess.hasAccess(
+        currentUser.id,
+        mawkib.id,
+      );
+      if (linked) {
+        return;
+      }
     }
 
     throw new BadRequestException('امکان رزرو آنلاین این موکب غیرفعال است');

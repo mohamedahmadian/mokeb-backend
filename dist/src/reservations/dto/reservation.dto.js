@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GuestRecordAttendanceDto = exports.RecordReservationAttendanceDto = exports.ExtendReservationDto = exports.TrackByExactMobileDto = exports.TrackByMobileDto = exports.TrackReservationDto = exports.SearchReservationDto = exports.UpdateReservationTrackingCodeDto = exports.CancelReservationDto = exports.UpdateReservationStatusDto = exports.CreateGuestReservationDto = exports.CreateReservationDto = void 0;
+exports.PurgeMawkibReservationsDto = exports.EvacuateMawkibDto = exports.GuestRecordAttendanceDto = exports.RecordReservationAttendanceDto = exports.ExtendReservationDto = exports.TrackByExactMobileDto = exports.TrackByMobileDto = exports.TrackReservationDto = exports.SearchReservationDto = exports.UpdateReservationTrackingCodeDto = exports.CancelReservationDto = exports.UpdateReservationStatusDto = exports.CreateGuestReservationDto = exports.CreateReservationDto = void 0;
 const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 const class_transformer_1 = require("class-transformer");
@@ -40,6 +40,7 @@ class CreateReservationDto {
     plannedCheckInTime;
     plannedCheckOutTime;
     skipCapacityCheck;
+    skipMawkibAcceptancePattern;
     trackingCode;
 }
 exports.CreateReservationDto = CreateReservationDto;
@@ -113,6 +114,11 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], CreateReservationDto.prototype, "skipCapacityCheck", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateReservationDto.prototype, "skipMawkibAcceptancePattern", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Transform)(({ value }) => {
@@ -505,4 +511,42 @@ __decorate([
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], GuestRecordAttendanceDto.prototype, "recordedAt", void 0);
+class EvacuateMawkibDto {
+    status;
+    checkoutTime;
+    note;
+}
+exports.EvacuateMawkibDto = EvacuateMawkibDto;
+__decorate([
+    (0, class_validator_1.IsIn)(['Completed', 'Cancelled']),
+    __metadata("design:type", String)
+], EvacuateMawkibDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.Matches)(/^([01]\d|2[0-3]):[0-5]\d$/, {
+        message: 'ساعت خروج باید به فرمت HH:mm باشد',
+    }),
+    __metadata("design:type", String)
+], EvacuateMawkibDto.prototype, "checkoutTime", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], EvacuateMawkibDto.prototype, "note", void 0);
+class PurgeMawkibReservationsDto {
+    deletePilgrimUsers;
+    confirmationText;
+}
+exports.PurgeMawkibReservationsDto = PurgeMawkibReservationsDto;
+__decorate([
+    (0, class_transformer_1.Transform)(({ value }) => value === 'true' || value === true),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], PurgeMawkibReservationsDto.prototype, "deletePilgrimUsers", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)({ message: 'متن تأیید الزامی است' }),
+    (0, class_transformer_1.Transform)(({ value }) => (typeof value === 'string' ? value.trim() : value)),
+    __metadata("design:type", String)
+], PurgeMawkibReservationsDto.prototype, "confirmationText", void 0);
 //# sourceMappingURL=reservation.dto.js.map

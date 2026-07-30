@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { MawkibsService } from '../mawkibs/mawkibs.service';
 import { AuthUser } from '../common/decorators/current-user.decorator';
+import { ServantMawkibAccessService } from '../users/servant-mawkib-access.service';
 export interface CapacityStats {
     totalMawkibs: number;
     totalMaleCapacity: number;
@@ -14,9 +15,26 @@ export interface CapacityStats {
 export declare class DashboardService {
     private prisma;
     private mawkibsService;
-    constructor(prisma: PrismaService, mawkibsService: MawkibsService);
+    private servantMawkibAccess;
+    constructor(prisma: PrismaService, mawkibsService: MawkibsService, servantMawkibAccess: ServantMawkibAccessService);
     private computeCapacityStats;
+    private computeCapacityStatsForMawkibIds;
     getStats(user: AuthUser): Promise<{
+        myMawkibsStats: CapacityStats;
+        mawkibServantStats: {
+            totalReservations: number;
+            confirmedReservations: number;
+            cancelledReservations: number;
+        };
+        capacityStats?: undefined;
+        pilgrimStats?: undefined;
+        mawkibOwnerStats?: undefined;
+        totalPilgrims?: undefined;
+        totalMawkibOwners?: undefined;
+        pendingRequests?: undefined;
+        pendingReservations?: undefined;
+        totalReservations?: undefined;
+    } | {
         capacityStats: CapacityStats;
         pilgrimStats: {
             totalReservations: number;
@@ -25,6 +43,7 @@ export declare class DashboardService {
             cancelledReservations: number;
         };
         myMawkibsStats?: undefined;
+        mawkibServantStats?: undefined;
         mawkibOwnerStats?: undefined;
         totalPilgrims?: undefined;
         totalMawkibOwners?: undefined;
@@ -40,6 +59,7 @@ export declare class DashboardService {
             cancelledReservations: number;
             completedReservations: number;
         };
+        mawkibServantStats?: undefined;
         capacityStats?: undefined;
         pilgrimStats?: undefined;
         totalPilgrims?: undefined;
@@ -54,8 +74,9 @@ export declare class DashboardService {
         pendingRequests: number;
         pendingReservations: number;
         totalReservations: number;
-        pilgrimStats?: undefined;
         myMawkibsStats?: undefined;
+        mawkibServantStats?: undefined;
+        pilgrimStats?: undefined;
         mawkibOwnerStats?: undefined;
     }>;
 }

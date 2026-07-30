@@ -134,6 +134,18 @@ class CreateMawkibDto {
     recordCheckInOnReservationConfirm;
     skipCapacityCheckEnabled;
     mealPlanManagementEnabled;
+    acceptanceType;
+    stayDurationMode;
+    fixedStayDays;
+    reservationStartMode;
+    formShowNationalId;
+    formShowPassportNumber;
+    formShowReservationCode;
+    formShowCarPlate;
+    formShowGender;
+    formShowPassword;
+    formShowLocation;
+    formShowNationalIdCardImage;
     ownerUserId;
     status;
 }
@@ -375,6 +387,67 @@ __decorate([
     __metadata("design:type", Boolean)
 ], CreateMawkibDto.prototype, "mealPlanManagementEnabled", void 0);
 __decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibAcceptanceType),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "acceptanceType", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibStayDurationMode),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "stayDurationMode", void 0);
+__decorate([
+    (0, class_validator_1.ValidateIf)((o) => o.stayDurationMode === client_1.MawkibStayDurationMode.Fixed),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Number)
+], CreateMawkibDto.prototype, "fixedStayDays", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibReservationStartMode),
+    __metadata("design:type", String)
+], CreateMawkibDto.prototype, "reservationStartMode", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowNationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowPassportNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowReservationCode", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowCarPlate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowGender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowPassword", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowLocation", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], CreateMawkibDto.prototype, "formShowNationalIdCardImage", void 0);
+__decorate([
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
 ], CreateMawkibDto.prototype, "ownerUserId", void 0);
@@ -429,6 +502,18 @@ class UpdateMawkibDto {
     recordCheckInOnReservationConfirm;
     skipCapacityCheckEnabled;
     mealPlanManagementEnabled;
+    acceptanceType;
+    stayDurationMode;
+    fixedStayDays;
+    reservationStartMode;
+    formShowNationalId;
+    formShowPassportNumber;
+    formShowReservationCode;
+    formShowCarPlate;
+    formShowGender;
+    formShowPassword;
+    formShowLocation;
+    formShowNationalIdCardImage;
     ownerUserId;
     status;
 }
@@ -673,6 +758,68 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateMawkibDto.prototype, "mealPlanManagementEnabled", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibAcceptanceType),
+    __metadata("design:type", String)
+], UpdateMawkibDto.prototype, "acceptanceType", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibStayDurationMode),
+    __metadata("design:type", String)
+], UpdateMawkibDto.prototype, "stayDurationMode", void 0);
+__decorate([
+    (0, class_validator_1.ValidateIf)((o) => o.stayDurationMode === client_1.MawkibStayDurationMode.Fixed),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    __metadata("design:type", Object)
+], UpdateMawkibDto.prototype, "fixedStayDays", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.MawkibReservationStartMode),
+    __metadata("design:type", String)
+], UpdateMawkibDto.prototype, "reservationStartMode", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowNationalId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowPassportNumber", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowReservationCode", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowCarPlate", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowGender", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowPassword", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowLocation", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsBoolean)(),
+    __metadata("design:type", Boolean)
+], UpdateMawkibDto.prototype, "formShowNationalIdCardImage", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),

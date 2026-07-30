@@ -25,6 +25,7 @@ const uploads_module_1 = require("./uploads/uploads.module");
 const reports_module_1 = require("./reports/reports.module");
 const crons_module_1 = require("./crons/crons.module");
 const meal_plans_module_1 = require("./meal-plans/meal-plans.module");
+const fast_reception_pattern_module_1 = require("./fast-reception-pattern/fast-reception-pattern.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(logging_middleware_1.LoggingMiddleware).forRoutes('*');
@@ -50,6 +51,7 @@ exports.AppModule = AppModule = __decorate([
             reports_module_1.ReportsModule,
             crons_module_1.CronsModule,
             meal_plans_module_1.MealPlansModule,
+            fast_reception_pattern_module_1.FastReceptionPatternModule,
         ],
     })
 ], AppModule);

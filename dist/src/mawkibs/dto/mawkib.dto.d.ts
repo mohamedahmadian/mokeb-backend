@@ -1,4 +1,4 @@
-import { MawkibCity, MawkibCountry, MawkibStatus } from '@prisma/client';
+import { MawkibAcceptanceType, MawkibCity, MawkibCountry, MawkibReservationStartMode, MawkibStatus, MawkibStayDurationMode } from '@prisma/client';
 export declare enum MawkibCapacityFilter {
     All = "all",
     Available = "available",
@@ -62,6 +62,18 @@ export declare class CreateMawkibDto {
     recordCheckInOnReservationConfirm?: boolean;
     skipCapacityCheckEnabled?: boolean;
     mealPlanManagementEnabled?: boolean;
+    acceptanceType?: MawkibAcceptanceType;
+    stayDurationMode?: MawkibStayDurationMode;
+    fixedStayDays?: number;
+    reservationStartMode?: MawkibReservationStartMode;
+    formShowNationalId?: boolean;
+    formShowPassportNumber?: boolean;
+    formShowReservationCode?: boolean;
+    formShowCarPlate?: boolean;
+    formShowGender?: boolean;
+    formShowPassword?: boolean;
+    formShowLocation?: boolean;
+    formShowNationalIdCardImage?: boolean;
     ownerUserId: number;
     status?: MawkibStatus;
 }
@@ -111,6 +123,18 @@ export declare class UpdateMawkibDto {
     recordCheckInOnReservationConfirm?: boolean;
     skipCapacityCheckEnabled?: boolean;
     mealPlanManagementEnabled?: boolean;
+    acceptanceType?: MawkibAcceptanceType;
+    stayDurationMode?: MawkibStayDurationMode;
+    fixedStayDays?: number | null;
+    reservationStartMode?: MawkibReservationStartMode;
+    formShowNationalId?: boolean;
+    formShowPassportNumber?: boolean;
+    formShowReservationCode?: boolean;
+    formShowCarPlate?: boolean;
+    formShowGender?: boolean;
+    formShowPassword?: boolean;
+    formShowLocation?: boolean;
+    formShowNationalIdCardImage?: boolean;
     ownerUserId?: number;
     status?: MawkibStatus;
 }

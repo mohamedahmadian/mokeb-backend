@@ -31,6 +31,7 @@ async function main() {
     'Pilgrim',
     'MawkibOwner',
     'HonoraryServant',
+    'MawkibServant',
   ];
 
   for (const name of roles) {

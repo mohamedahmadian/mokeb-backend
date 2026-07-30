@@ -43,6 +43,7 @@ export class UploadsController {
     RoleName.MawkibOwner,
     RoleName.Pilgrim,
     RoleName.HonoraryServant,
+    RoleName.MawkibServant,
   )
   @UseInterceptors(uploadInterceptor)
   uploadProfileImage(@UploadedFile() file: Express.Multer.File) {

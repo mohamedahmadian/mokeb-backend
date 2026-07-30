@@ -35,6 +35,12 @@ let MawkibsController = class MawkibsController {
     findMy(user, search) {
         return this.mawkibsService.findByOwner(user.id, search);
     }
+    findAssigned(user) {
+        return this.mawkibsService.findAssignedMawkibForServant(user.id);
+    }
+    findAccessible(user) {
+        return this.mawkibsService.findAccessibleForServant(user.id);
+    }
     getInventoryHorizon() {
         return this.mawkibsService.getInventoryHorizon();
     }
@@ -101,6 +107,24 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MawkibsController.prototype, "findMy", null);
 __decorate([
+    (0, common_1.Get)('assigned'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibServant),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], MawkibsController.prototype, "findAssigned", null);
+__decorate([
+    (0, common_1.Get)('accessible'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.MawkibServant),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], MawkibsController.prototype, "findAccessible", null);
+__decorate([
     (0, common_1.Get)('inventory/horizon'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -124,7 +148,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id/inventory'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.MawkibServant, client_1.RoleName.Pilgrim),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, common_1.Query)()),
     __param(2, (0, current_user_decorator_1.CurrentUser)()),
@@ -153,7 +177,7 @@ __decorate([
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.MawkibServant),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),

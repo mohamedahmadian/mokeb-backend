@@ -1,5 +1,5 @@
 import type { AuthUser } from '../common/decorators/current-user.decorator';
-import { AddMealPlanDayDto, SaveMealPlansDto, UpsertMealPlanEntryDto } from './dto/meal-plan.dto';
+import { AddMealPlanDayDto, MarkMealServedDto, SaveMealPlansDto, UpsertMealPlanEntryDto } from './dto/meal-plan.dto';
 import { PresentAttendeesReportQueryDto } from './dto/present-attendees-report.dto';
 import { MealPlansService } from './meal-plans.service';
 export declare class MealPlansController {
@@ -25,6 +25,7 @@ export declare class MealPlansController {
             gender: import("@prisma/client").$Enums.UserGender | null;
             maleGuestCount: number;
             femaleGuestCount: number;
+            guestCount: number;
             isPresent: boolean;
             presence: string;
             isServed: boolean;
@@ -36,6 +37,7 @@ export declare class MealPlansController {
         date: Date;
         mealType: import("@prisma/client").$Enums.MealType;
         isRequired: boolean;
+        guestCount: number;
         isServed: boolean;
         servedAt: Date | null;
     }[]>;
@@ -45,6 +47,7 @@ export declare class MealPlansController {
         date: Date;
         mealType: import("@prisma/client").$Enums.MealType;
         isRequired: boolean;
+        guestCount: number;
         isServed: boolean;
         servedAt: Date | null;
     }[]>;
@@ -54,6 +57,7 @@ export declare class MealPlansController {
         date: Date;
         mealType: import("@prisma/client").$Enums.MealType;
         isRequired: boolean;
+        guestCount: number;
         isServed: boolean;
         servedAt: Date | null;
     }[]>;
@@ -63,6 +67,7 @@ export declare class MealPlansController {
         date: Date;
         mealType: import("@prisma/client").$Enums.MealType;
         isRequired: boolean;
+        guestCount: number;
         isServed: boolean;
         servedAt: Date | null;
     }[]>;
@@ -72,6 +77,7 @@ export declare class MealPlansController {
         date: Date;
         mealType: import("@prisma/client").$Enums.MealType;
         isRequired: boolean;
+        guestCount: number;
         isServed: boolean;
         servedAt: Date | null;
     }[]>;
@@ -81,15 +87,17 @@ export declare class MealPlansController {
         date: Date;
         mealType: import("@prisma/client").$Enums.MealType;
         isRequired: boolean;
+        guestCount: number;
         isServed: boolean;
         servedAt: Date | null;
     }[]>;
-    markServed(id: number, user: AuthUser): Promise<{
+    markServed(id: number, dto: MarkMealServedDto, user: AuthUser): Promise<{
         id: number;
         reservationId: number;
         date: Date;
         mealType: import("@prisma/client").$Enums.MealType;
         isRequired: boolean;
+        guestCount: number;
         isServed: boolean;
         servedAt: Date | null;
     }>;

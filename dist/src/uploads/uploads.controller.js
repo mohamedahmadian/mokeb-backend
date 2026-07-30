@@ -62,7 +62,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('profile-image'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim, client_1.RoleName.HonoraryServant),
+    (0, roles_decorator_1.Roles)(client_1.RoleName.Admin, client_1.RoleName.MawkibOwner, client_1.RoleName.Pilgrim, client_1.RoleName.HonoraryServant, client_1.RoleName.MawkibServant),
     (0, common_1.UseInterceptors)(uploadInterceptor),
     __param(0, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),

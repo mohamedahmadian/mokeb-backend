@@ -55,6 +55,9 @@ export class ReservationsController {
     if (user.roles.includes(RoleName.MawkibOwner)) {
       return this.reservationsService.findByMawkibOwner(user.id, search);
     }
+    if (user.roles.includes(RoleName.MawkibServant)) {
+      return this.reservationsService.findByMawkibServant(user.id, search);
+    }
     return this.reservationsService.findByPilgrim(user.id, search);
   }
 

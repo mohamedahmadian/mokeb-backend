@@ -4,6 +4,21 @@ export declare class DashboardController {
     private dashboardService;
     constructor(dashboardService: DashboardService);
     getStats(user: AuthUser): Promise<{
+        myMawkibsStats: import("./dashboard.service").CapacityStats;
+        mawkibServantStats: {
+            totalReservations: number;
+            confirmedReservations: number;
+            cancelledReservations: number;
+        };
+        capacityStats?: undefined;
+        pilgrimStats?: undefined;
+        mawkibOwnerStats?: undefined;
+        totalPilgrims?: undefined;
+        totalMawkibOwners?: undefined;
+        pendingRequests?: undefined;
+        pendingReservations?: undefined;
+        totalReservations?: undefined;
+    } | {
         capacityStats: import("./dashboard.service").CapacityStats;
         pilgrimStats: {
             totalReservations: number;
@@ -12,6 +27,7 @@ export declare class DashboardController {
             cancelledReservations: number;
         };
         myMawkibsStats?: undefined;
+        mawkibServantStats?: undefined;
         mawkibOwnerStats?: undefined;
         totalPilgrims?: undefined;
         totalMawkibOwners?: undefined;
@@ -27,6 +43,7 @@ export declare class DashboardController {
             cancelledReservations: number;
             completedReservations: number;
         };
+        mawkibServantStats?: undefined;
         capacityStats?: undefined;
         pilgrimStats?: undefined;
         totalPilgrims?: undefined;
@@ -41,8 +58,9 @@ export declare class DashboardController {
         pendingRequests: number;
         pendingReservations: number;
         totalReservations: number;
-        pilgrimStats?: undefined;
         myMawkibsStats?: undefined;
+        mawkibServantStats?: undefined;
+        pilgrimStats?: undefined;
         mawkibOwnerStats?: undefined;
     }>;
 }

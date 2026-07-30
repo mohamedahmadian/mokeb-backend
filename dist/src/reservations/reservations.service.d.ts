@@ -1,5 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { MawkibsService } from '../mawkibs/mawkibs.service';
+import { ServantMawkibAccessService } from '../users/servant-mawkib-access.service';
 import { CancelReservationDto, UpdateReservationTrackingCodeDto, CreateReservationDto, CreateGuestReservationDto, ExtendReservationDto, RecordReservationAttendanceDto, SearchReservationDto, UpdateReservationStatusDto } from './dto/reservation.dto';
 import { CreateReservationReviewDto, ReplyReservationReviewDto } from './dto/reservation-review.dto';
 import { CreateReservationDeliveredItemDto, UpdateReservationDeliveredItemDto } from './dto/reservation-delivered-item.dto';
@@ -19,9 +20,10 @@ export declare class ReservationsService {
     private prisma;
     private mawkibsService;
     private usersService;
+    private servantMawkibAccess;
     private reservationEventsService;
     private mealPlansService;
-    constructor(prisma: PrismaService, mawkibsService: MawkibsService, usersService: UsersService, reservationEventsService: ReservationEventsService, mealPlansService: MealPlansService);
+    constructor(prisma: PrismaService, mawkibsService: MawkibsService, usersService: UsersService, servantMawkibAccess: ServantMawkibAccessService, reservationEventsService: ReservationEventsService, mealPlansService: MealPlansService);
     private maybeGenerateMealPlans;
     private statusAuditFields;
     private appendWhereAnd;
@@ -69,24 +71,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -102,8 +104,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -166,24 +168,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -199,8 +201,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -264,24 +266,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -297,8 +299,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -361,24 +363,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -394,8 +396,203 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
+    } & {
+        id: number;
+        description: string | null;
+        createdAt: Date;
+        trackingCode: string;
+        mawkibId: number;
+        pilgrimUserId: number;
+        reservedByUserId: number;
+        reservationDate: Date;
+        reservationEndDate: Date;
+        plannedCheckInTime: string | null;
+        plannedCheckOutTime: string | null;
+        actualCheckInAt: Date | null;
+        actualCheckOutAt: Date | null;
+        maleGuestCount: number;
+        femaleGuestCount: number;
+        pilgrimMobile: string;
+        companions: string | null;
+        travelOrigin: string | null;
+        cancellationNote: string | null;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
+        lastStatusUpdatedByUserId: number | null;
+        lastStatusUpdatedAt: Date | null;
+    }>>;
+    findByMawkibIds(mawkibIds: number[], search?: SearchReservationDto): Promise<({
+        mawkib: {
+            id: number;
+            name: string;
+            imageUrl: string | null;
+            address: string;
+            neshanAddressUrl: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            phoneNumber: string;
+            maxReservationDays: number;
+            defaultReservationDays: number;
+            defaultCheckInTime: string;
+            defaultCheckOutTime: string;
+            mealPlanManagementEnabled: boolean;
+            owner: {
+                mobileNumber: string;
+                fullName: string;
+            };
+        };
+        pilgrim: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
+        };
+        reservedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        };
+        lastStatusUpdatedBy: {
+            id: number;
+            fullName: string;
+        } | null;
+        review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
+        } & {
+            id: number;
+            createdAt: Date;
+            reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
+            content: string;
+            adminReply: string | null;
+            repliedAt: Date | null;
+            repliedByUserId: number | null;
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
+                id: number;
+                fullName: string;
+            };
+        } & {
+            id: number;
+            description: string | null;
+            createdAt: Date;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
+            reservationId: number;
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
+    } & {
+        id: number;
+        description: string | null;
+        createdAt: Date;
+        trackingCode: string;
+        mawkibId: number;
+        pilgrimUserId: number;
+        reservedByUserId: number;
+        reservationDate: Date;
+        reservationEndDate: Date;
+        plannedCheckInTime: string | null;
+        plannedCheckOutTime: string | null;
+        actualCheckInAt: Date | null;
+        actualCheckOutAt: Date | null;
+        maleGuestCount: number;
+        femaleGuestCount: number;
+        pilgrimMobile: string;
+        companions: string | null;
+        travelOrigin: string | null;
+        cancellationNote: string | null;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
+        lastStatusUpdatedByUserId: number | null;
+        lastStatusUpdatedAt: Date | null;
+    })[] | PaginatedReservationsResult<{
+        mawkib: {
+            id: number;
+            name: string;
+            imageUrl: string | null;
+            address: string;
+            neshanAddressUrl: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            phoneNumber: string;
+            maxReservationDays: number;
+            defaultReservationDays: number;
+            defaultCheckInTime: string;
+            defaultCheckOutTime: string;
+            mealPlanManagementEnabled: boolean;
+            owner: {
+                mobileNumber: string;
+                fullName: string;
+            };
+        };
+        pilgrim: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
+        };
+        reservedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        };
+        lastStatusUpdatedBy: {
+            id: number;
+            fullName: string;
+        } | null;
+        review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
+        } & {
+            id: number;
+            createdAt: Date;
+            reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
+            content: string;
+            adminReply: string | null;
+            repliedAt: Date | null;
+            repliedByUserId: number | null;
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
+                id: number;
+                fullName: string;
+            };
+        } & {
+            id: number;
+            description: string | null;
+            createdAt: Date;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
+            reservationId: number;
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -459,24 +656,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -492,8 +689,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -556,24 +753,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -589,8 +786,203 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
+    } & {
+        id: number;
+        description: string | null;
+        createdAt: Date;
+        trackingCode: string;
+        mawkibId: number;
+        pilgrimUserId: number;
+        reservedByUserId: number;
+        reservationDate: Date;
+        reservationEndDate: Date;
+        plannedCheckInTime: string | null;
+        plannedCheckOutTime: string | null;
+        actualCheckInAt: Date | null;
+        actualCheckOutAt: Date | null;
+        maleGuestCount: number;
+        femaleGuestCount: number;
+        pilgrimMobile: string;
+        companions: string | null;
+        travelOrigin: string | null;
+        cancellationNote: string | null;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
+        lastStatusUpdatedByUserId: number | null;
+        lastStatusUpdatedAt: Date | null;
+    }>>;
+    findByMawkibServant(userId: number, search?: SearchReservationDto): Promise<({
+        mawkib: {
+            id: number;
+            name: string;
+            imageUrl: string | null;
+            address: string;
+            neshanAddressUrl: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            phoneNumber: string;
+            maxReservationDays: number;
+            defaultReservationDays: number;
+            defaultCheckInTime: string;
+            defaultCheckOutTime: string;
+            mealPlanManagementEnabled: boolean;
+            owner: {
+                mobileNumber: string;
+                fullName: string;
+            };
+        };
+        pilgrim: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
+        };
+        reservedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        };
+        lastStatusUpdatedBy: {
+            id: number;
+            fullName: string;
+        } | null;
+        review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
+        } & {
+            id: number;
+            createdAt: Date;
+            reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
+            content: string;
+            adminReply: string | null;
+            repliedAt: Date | null;
+            repliedByUserId: number | null;
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
+                id: number;
+                fullName: string;
+            };
+        } & {
+            id: number;
+            description: string | null;
+            createdAt: Date;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
+            reservationId: number;
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
+        })[];
+    } & {
+        id: number;
+        description: string | null;
+        createdAt: Date;
+        trackingCode: string;
+        mawkibId: number;
+        pilgrimUserId: number;
+        reservedByUserId: number;
+        reservationDate: Date;
+        reservationEndDate: Date;
+        plannedCheckInTime: string | null;
+        plannedCheckOutTime: string | null;
+        actualCheckInAt: Date | null;
+        actualCheckOutAt: Date | null;
+        maleGuestCount: number;
+        femaleGuestCount: number;
+        pilgrimMobile: string;
+        companions: string | null;
+        travelOrigin: string | null;
+        cancellationNote: string | null;
+        status: import("@prisma/client").$Enums.ReservationStatus;
+        presenceState: import("@prisma/client").$Enums.ReservationPresenceState;
+        lastStatusUpdatedByUserId: number | null;
+        lastStatusUpdatedAt: Date | null;
+    })[] | PaginatedReservationsResult<{
+        mawkib: {
+            id: number;
+            name: string;
+            imageUrl: string | null;
+            address: string;
+            neshanAddressUrl: string | null;
+            latitude: number | null;
+            longitude: number | null;
+            phoneNumber: string;
+            maxReservationDays: number;
+            defaultReservationDays: number;
+            defaultCheckInTime: string;
+            defaultCheckOutTime: string;
+            mealPlanManagementEnabled: boolean;
+            owner: {
+                mobileNumber: string;
+                fullName: string;
+            };
+        };
+        pilgrim: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+            nationalId: string | null;
+            gender: import("@prisma/client").$Enums.UserGender | null;
+        };
+        reservedBy: {
+            id: number;
+            mobileNumber: string;
+            fullName: string;
+        };
+        lastStatusUpdatedBy: {
+            id: number;
+            fullName: string;
+        } | null;
+        review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
+        } & {
+            id: number;
+            createdAt: Date;
+            reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
+            content: string;
+            adminReply: string | null;
+            repliedAt: Date | null;
+            repliedByUserId: number | null;
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
+                id: number;
+                fullName: string;
+            };
+        } & {
+            id: number;
+            description: string | null;
+            createdAt: Date;
+            status: import("@prisma/client").$Enums.ReservationDeliveredItemStatus;
+            reservationId: number;
+            updatedAt: Date;
+            itemName: string;
+            quantity: number;
+            recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -663,24 +1055,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -696,8 +1088,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -762,24 +1154,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -795,8 +1187,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -860,24 +1252,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -893,8 +1285,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -956,8 +1348,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -1019,8 +1411,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -1084,24 +1476,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -1117,8 +1509,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -1146,6 +1538,7 @@ export declare class ReservationsService {
         lastStatusUpdatedAt: Date | null;
     }>;
     private assertTrackingCodeAvailable;
+    private applyAcceptancePatternToReservation;
     private createWithTrackingCode;
     private assertNoConflictingReservation;
     private throwReservationConflict;
@@ -1198,6 +1591,18 @@ export declare class ReservationsService {
             recordCheckInOnReservationConfirm: boolean;
             skipCapacityCheckEnabled: boolean;
             mealPlanManagementEnabled: boolean;
+            acceptanceType: import("@prisma/client").$Enums.MawkibAcceptanceType;
+            stayDurationMode: import("@prisma/client").$Enums.MawkibStayDurationMode;
+            fixedStayDays: number | null;
+            reservationStartMode: import("@prisma/client").$Enums.MawkibReservationStartMode;
+            formShowNationalId: boolean;
+            formShowPassportNumber: boolean;
+            formShowReservationCode: boolean;
+            formShowCarPlate: boolean;
+            formShowGender: boolean;
+            formShowPassword: boolean;
+            formShowLocation: boolean;
+            formShowNationalIdCardImage: boolean;
             ownerUserId: number;
         };
         pilgrim: {
@@ -1223,6 +1628,9 @@ export declare class ReservationsService {
             eitaa: string | null;
             email: string | null;
             isActive: boolean;
+            servantMawkibId: number | null;
+            servantOwnerUserId: number | null;
+            servantAllMawkibsAccess: boolean;
             createdAt: Date;
         };
         reservedBy: {
@@ -1248,6 +1656,9 @@ export declare class ReservationsService {
             eitaa: string | null;
             email: string | null;
             isActive: boolean;
+            servantMawkibId: number | null;
+            servantOwnerUserId: number | null;
+            servantAllMawkibsAccess: boolean;
             createdAt: Date;
         };
         lastStatusUpdatedBy: {
@@ -1273,18 +1684,21 @@ export declare class ReservationsService {
             eitaa: string | null;
             email: string | null;
             isActive: boolean;
+            servantMawkibId: number | null;
+            servantOwnerUserId: number | null;
+            servantAllMawkibsAccess: boolean;
             createdAt: Date;
         } | null;
         review: {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         } | null;
         deliveredItems: {
             id: number;
@@ -1295,8 +1709,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         }[];
         events: {
             id: number;
@@ -1310,10 +1724,11 @@ export declare class ReservationsService {
             id: number;
             createdAt: Date;
             reservationId: number;
-            updatedAt: Date;
             date: Date;
+            updatedAt: Date;
             mealType: import("@prisma/client").$Enums.MealType;
             isRequired: boolean;
+            guestCount: number;
             isServed: boolean;
             servedAt: Date | null;
         }[];
@@ -1400,24 +1815,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -1433,8 +1848,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -1498,24 +1913,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -1531,8 +1946,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -1596,24 +2011,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -1629,8 +2044,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -1662,139 +2077,63 @@ export declare class ReservationsService {
             id: number;
             name: string;
             imageUrl: string | null;
-            country: import("@prisma/client").$Enums.MawkibCountry;
             address: string;
-            description: string | null;
-            whatsapp: string | null;
-            bale: string | null;
-            eitaa: string | null;
-            createdAt: Date;
-            status: import("@prisma/client").$Enums.MawkibStatus;
             neshanAddressUrl: string | null;
             latitude: number | null;
             longitude: number | null;
             phoneNumber: string;
-            facilities: string | null;
-            services: string | null;
-            serviceStartDate: Date | null;
-            serviceEndDate: Date | null;
-            maleCapacity: number;
-            femaleCapacity: number;
-            distanceToShrine: string | null;
-            distanceToBusStation: string | null;
-            distanceToMetro: string | null;
-            lunchReception: boolean;
-            breakfastReception: boolean;
-            dinnerReception: boolean;
-            bathroom: boolean;
-            laundry: boolean;
-            parking: boolean;
-            internet: boolean;
-            familyFriendly: boolean;
-            elevator: boolean;
-            stairs: boolean;
             maxReservationDays: number;
             defaultReservationDays: number;
-            mawkibCity: import("@prisma/client").$Enums.MawkibCity | null;
-            rules: string | null;
-            telegramChannel: string | null;
-            websiteUrl: string | null;
             defaultCheckInTime: string;
             defaultCheckOutTime: string;
-            onlineReservationEnabled: boolean;
-            autoApprovePilgrimReservations: boolean;
-            recordCheckInOnReservationConfirm: boolean;
-            skipCapacityCheckEnabled: boolean;
             mealPlanManagementEnabled: boolean;
-            ownerUserId: number;
+            owner: {
+                mobileNumber: string;
+                fullName: string;
+            };
         };
         pilgrim: {
             id: number;
             mobileNumber: string;
             fullName: string;
             nationalId: string | null;
-            nationalIdCardImageUrl: string | null;
-            imageUrl: string | null;
             gender: import("@prisma/client").$Enums.UserGender | null;
-            birthDate: Date | null;
-            country: string | null;
-            passportNumber: string | null;
-            passwordHash: string;
-            province: string | null;
-            city: string | null;
-            address: string | null;
-            carPlate: string | null;
-            description: string | null;
-            whatsapp: string | null;
-            telegram: string | null;
-            bale: string | null;
-            eitaa: string | null;
-            email: string | null;
-            isActive: boolean;
-            createdAt: Date;
         };
         reservedBy: {
             id: number;
             mobileNumber: string;
             fullName: string;
-            nationalId: string | null;
-            nationalIdCardImageUrl: string | null;
-            imageUrl: string | null;
-            gender: import("@prisma/client").$Enums.UserGender | null;
-            birthDate: Date | null;
-            country: string | null;
-            passportNumber: string | null;
-            passwordHash: string;
-            province: string | null;
-            city: string | null;
-            address: string | null;
-            carPlate: string | null;
-            description: string | null;
-            whatsapp: string | null;
-            telegram: string | null;
-            bale: string | null;
-            eitaa: string | null;
-            email: string | null;
-            isActive: boolean;
-            createdAt: Date;
         };
         lastStatusUpdatedBy: {
             id: number;
-            mobileNumber: string;
             fullName: string;
-            nationalId: string | null;
-            nationalIdCardImageUrl: string | null;
-            imageUrl: string | null;
-            gender: import("@prisma/client").$Enums.UserGender | null;
-            birthDate: Date | null;
-            country: string | null;
-            passportNumber: string | null;
-            passwordHash: string;
-            province: string | null;
-            city: string | null;
-            address: string | null;
-            carPlate: string | null;
-            description: string | null;
-            whatsapp: string | null;
-            telegram: string | null;
-            bale: string | null;
-            eitaa: string | null;
-            email: string | null;
-            isActive: boolean;
-            createdAt: Date;
         } | null;
-        review: {
+        review: ({
+            author: {
+                id: number;
+                fullName: string;
+            };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
+        } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
-        } | null;
-        deliveredItems: {
+        }) | null;
+        deliveredItems: ({
+            recordedBy: {
+                id: number;
+                fullName: string;
+            };
+        } & {
             id: number;
             description: string | null;
             createdAt: Date;
@@ -1803,38 +2142,9 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
-        }[];
-        events: {
-            id: number;
-            description: string | null;
-            createdAt: Date;
-            reservationId: number;
-            eventType: import("@prisma/client").$Enums.ReservationEventType;
-            createdByUserId: number;
-        }[];
-        mealPlans: {
-            id: number;
-            createdAt: Date;
-            reservationId: number;
-            updatedAt: Date;
-            date: Date;
-            mealType: import("@prisma/client").$Enums.MealType;
-            isRequired: boolean;
-            isServed: boolean;
-            servedAt: Date | null;
-        }[];
-        _count: {
-            mawkib: number;
-            pilgrim: number;
-            reservedBy: number;
-            lastStatusUpdatedBy: number;
-            review: number;
-            deliveredItems: number;
-            events: number;
-            mealPlans: number;
-        };
+            receivedAt: Date | null;
+        })[];
     } & {
         id: number;
         description: string | null;
@@ -1913,24 +2223,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -1946,8 +2256,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2012,24 +2322,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2045,8 +2355,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
         id: number;
         description: string | null;
@@ -2110,24 +2420,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2143,8 +2453,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2208,24 +2518,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2241,8 +2551,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2306,24 +2616,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2339,8 +2649,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2405,24 +2715,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2438,8 +2748,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
         id: number;
         description: string | null;
@@ -2503,24 +2813,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2536,8 +2846,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2601,24 +2911,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2634,8 +2944,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2699,24 +3009,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2732,8 +3042,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2799,24 +3109,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2832,8 +3142,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2897,24 +3207,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -2930,8 +3240,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -2995,24 +3305,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -3028,8 +3338,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;
@@ -3093,24 +3403,24 @@ export declare class ReservationsService {
             fullName: string;
         } | null;
         review: ({
-            repliedBy: {
-                id: number;
-                fullName: string;
-            } | null;
             author: {
                 id: number;
                 fullName: string;
             };
+            repliedBy: {
+                id: number;
+                fullName: string;
+            } | null;
         } & {
             id: number;
             createdAt: Date;
             reservationId: number;
+            updatedAt: Date;
+            authorUserId: number;
             content: string;
             adminReply: string | null;
             repliedAt: Date | null;
-            updatedAt: Date;
             repliedByUserId: number | null;
-            authorUserId: number;
         }) | null;
         deliveredItems: ({
             recordedBy: {
@@ -3126,8 +3436,8 @@ export declare class ReservationsService {
             updatedAt: Date;
             itemName: string;
             quantity: number;
-            receivedAt: Date | null;
             recordedByUserId: number;
+            receivedAt: Date | null;
         })[];
     } & {
         id: number;

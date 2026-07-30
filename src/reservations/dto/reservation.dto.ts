@@ -98,6 +98,11 @@ export class CreateReservationDto {
   @IsBoolean()
   skipCapacityCheck?: boolean;
 
+  /** Staff fast reception — use submitted dates/counts instead of mawkib acceptance pattern. */
+  @IsOptional()
+  @IsBoolean()
+  skipMawkibAcceptancePattern?: boolean;
+
   /** Admin / mawkib owner only — custom unique tracking code; omit for auto-generation. */
   @IsOptional()
   @Transform(({ value }) => {

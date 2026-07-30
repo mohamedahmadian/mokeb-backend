@@ -19,6 +19,12 @@ import {
   PilgrimListScope,
   UpdateUserDto,
 } from './dto/user.dto';
+import {
+  CreateServantDto,
+  ListServantsDto,
+  UpdateServantDto,
+  UpdateServantMawkibAccessDto,
+} from './dto/servant.dto';
 
 const MIN_PILGRIM_SEARCH_LENGTH = 2;
 
@@ -26,7 +32,20 @@ const userInclude = {
   roles: { include: { role: true } },
 } satisfies Prisma.UserInclude;
 
+const servantListInclude = {
+  ...userInclude,
+  servantMawkib: { select: { id: true, name: true, status: true } },
+  mawkibServantAccesses: {
+    select: {
+      mawkib: { select: { id: true, name: true, status: true } },
+    },
+  },
+} satisfies Prisma.UserInclude;
+
 type UserWithRoles = Prisma.UserGetPayload<{ include: typeof userInclude }>;
+type ServantWithMawkibAccess = Prisma.UserGetPayload<{
+  include: typeof servantListInclude;
+}>;
 
 @Injectable()
 export class UsersService {
@@ -110,6 +129,7 @@ export class UsersService {
       include: {
         ...userInclude,
         ownedMawkibs: { select: { id: true, name: true } },
+        servantMawkib: { select: { id: true, name: true, status: true } },
       },
     });
 
@@ -618,5 +638,272 @@ export class UsersService {
     });
 
     return this.findOne(id);
+  }
+
+  private async assertOwnerOwnsMawkib(ownerUserId: number, mawkibId: number) {
+    const mawkib = await this.prisma.mawkib.findFirst({
+      where: { id: mawkibId, ownerUserId },
+      select: { id: true },
+    });
+    if (!mawkib) {
+      throw new ForbiddenException('شما مجوز مدیریت این موکب را ندارید');
+    }
+  }
+
+  private buildServantWhere(
+    ownerUserId: number,
+    query: ListServantsDto = {},
+  ): Prisma.UserWhereInput {
+    const term = query.search?.trim();
+    return {
+      roles: { some: { role: { name: RoleName.MawkibServant } } },
+      AND: [
+        {
+          OR: [
+            { servantOwnerUserId: ownerUserId },
+            { servantMawkib: { ownerUserId } },
+          ],
+        },
+        ...(query.mawkibId
+          ? [
+              {
+                OR: [
+                  {
+                    servantAllMawkibsAccess: true,
+                    servantOwnerUserId: ownerUserId,
+                  },
+                  {
+                    mawkibServantAccesses: {
+                      some: { mawkibId: query.mawkibId },
+                    },
+                  },
+                  { servantMawkibId: query.mawkibId },
+                ],
+              },
+            ]
+          : []),
+        ...(query.isActive !== undefined
+          ? [{ isActive: query.isActive }]
+          : []),
+        ...(term
+          ? [
+              {
+                OR: [
+                  { fullName: { contains: term, mode: 'insensitive' as const } },
+                  {
+                    mobileNumber: { contains: term, mode: 'insensitive' as const },
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
+    };
+  }
+
+  async findServantsForOwner(ownerUserId: number, query: ListServantsDto = {}) {
+    if (query.mawkibId) {
+      await this.assertOwnerOwnsMawkib(ownerUserId, query.mawkibId);
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: this.buildServantWhere(ownerUserId, query),
+      include: servantListInclude,
+      orderBy: { fullName: 'asc' },
+    });
+
+    return users.map((user) => this.sanitize(user));
+  }
+
+  async findServantForOwner(
+    servantId: number,
+    ownerUserId: number,
+  ): Promise<ServantWithMawkibAccess> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: servantId,
+        ...this.buildServantWhere(ownerUserId),
+      },
+      include: servantListInclude,
+    });
+
+    if (!user) {
+      throw new NotFoundException('خادم یافت نشد');
+    }
+
+    return user;
+  }
+
+  async getServantForOwner(servantId: number, ownerUserId: number) {
+    const user = await this.findServantForOwner(servantId, ownerUserId);
+    return this.sanitize(user);
+  }
+
+  async createServantForOwner(dto: CreateServantDto, ownerUserId: number) {
+    const existing = await this.prisma.user.findUnique({
+      where: { mobileNumber: dto.mobileNumber.trim() },
+      include: { roles: { include: { role: true } } },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        'این شماره موبایل قبلاً ثبت شده است. برای خادم باید حساب جدید ایجاد شود',
+      );
+    }
+
+    const role = await this.prisma.role.findUnique({
+      where: { name: RoleName.MawkibServant },
+    });
+
+    if (!role) {
+      throw new BadRequestException('نقش خادم در سیستم تعریف نشده است');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    const user = await this.prisma.user.create({
+      data: {
+        fullName: dto.fullName.trim(),
+        mobileNumber: dto.mobileNumber.trim(),
+        nationalId: dto.nationalId?.trim() || null,
+        nationalIdCardImageUrl: dto.nationalIdCardImageUrl?.trim() || null,
+        gender: dto.gender ?? undefined,
+        passwordHash,
+        province: dto.province?.trim() || null,
+        city: dto.city?.trim() || null,
+        address: dto.address?.trim() || null,
+        description: dto.description?.trim() || null,
+        whatsapp: dto.whatsapp?.trim() || null,
+        telegram: dto.telegram?.trim() || null,
+        bale: dto.bale?.trim() || null,
+        eitaa: dto.eitaa?.trim() || null,
+        email: dto.email?.trim() || null,
+        servantOwnerUserId: ownerUserId,
+        servantAllMawkibsAccess: true,
+        roles: {
+          create: [{ roleId: role.id }],
+        },
+      },
+      include: servantListInclude,
+    });
+
+    return this.sanitize(user);
+  }
+
+  async updateServantForOwner(
+    servantId: number,
+    dto: UpdateServantDto,
+    ownerUserId: number,
+  ) {
+    await this.findServantForOwner(servantId, ownerUserId);
+
+    const { password, ...fields } = dto;
+    const data: Prisma.UserUpdateInput = { ...fields };
+
+    if (fields.nationalId !== undefined) {
+      data.nationalId = fields.nationalId.trim() || null;
+    }
+
+    if (fields.nationalIdCardImageUrl !== undefined) {
+      data.nationalIdCardImageUrl =
+        fields.nationalIdCardImageUrl?.trim() || null;
+    }
+
+    if (password) {
+      data.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: servantId },
+      data,
+      include: servantListInclude,
+    });
+
+    return this.sanitize(user);
+  }
+
+  private collectSelectedServantMawkibs(user: ServantWithMawkibAccess) {
+    const byId = new Map<
+      number,
+      { id: number; name: string; status: string }
+    >();
+    for (const row of user.mawkibServantAccesses) {
+      byId.set(row.mawkib.id, row.mawkib);
+    }
+    if (user.servantMawkib && !byId.has(user.servantMawkib.id)) {
+      byId.set(user.servantMawkib.id, user.servantMawkib);
+    }
+    return [...byId.values()];
+  }
+
+  async getServantMawkibAccessForOwner(
+    servantId: number,
+    ownerUserId: number,
+  ) {
+    const user = await this.findServantForOwner(servantId, ownerUserId);
+    return {
+      allMawkibs: user.servantAllMawkibsAccess,
+      mawkibs: user.servantAllMawkibsAccess
+        ? []
+        : this.collectSelectedServantMawkibs(user),
+    };
+  }
+
+  async updateServantMawkibAccessForOwner(
+    servantId: number,
+    dto: UpdateServantMawkibAccessDto,
+    ownerUserId: number,
+  ) {
+    await this.findServantForOwner(servantId, ownerUserId);
+
+    if (dto.allMawkibs) {
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { id: servantId },
+          data: {
+            servantAllMawkibsAccess: true,
+            servantMawkibId: null,
+          },
+        }),
+        this.prisma.mawkibServantAccess.deleteMany({
+          where: { servantUserId: servantId },
+        }),
+      ]);
+    } else {
+      const mawkibIds = [...new Set(dto.mawkibIds ?? [])];
+      for (const mawkibId of mawkibIds) {
+        await this.assertOwnerOwnsMawkib(ownerUserId, mawkibId);
+      }
+
+      await this.prisma.$transaction([
+        this.prisma.user.update({
+          where: { id: servantId },
+          data: {
+            servantAllMawkibsAccess: false,
+            servantMawkibId: null,
+          },
+        }),
+        this.prisma.mawkibServantAccess.deleteMany({
+          where: { servantUserId: servantId },
+        }),
+        ...(mawkibIds.length
+          ? [
+              this.prisma.mawkibServantAccess.createMany({
+                data: mawkibIds.map((mawkibId) => ({
+                  servantUserId: servantId,
+                  mawkibId,
+                })),
+              }),
+            ]
+          : []),
+      ]);
+    }
+
+    return this.getServantMawkibAccessForOwner(servantId, ownerUserId);
+  }
+
+  async removeServantForOwner(servantId: number, ownerUserId: number) {
+    await this.findServantForOwner(servantId, ownerUserId);
+    return this.remove(servantId);
   }
 }

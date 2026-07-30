@@ -13,6 +13,7 @@ export declare class CreateReservationDto {
     plannedCheckInTime?: string;
     plannedCheckOutTime?: string;
     skipCapacityCheck?: boolean;
+    skipMawkibAcceptancePattern?: boolean;
     trackingCode?: string;
 }
 export declare class CreateGuestReservationDto {
@@ -89,4 +90,13 @@ export declare class RecordReservationAttendanceDto {
 }
 export declare class GuestRecordAttendanceDto extends TrackReservationDto {
     recordedAt?: string;
+}
+export declare class EvacuateMawkibDto {
+    status: 'Completed' | 'Cancelled';
+    checkoutTime: string;
+    note?: string;
+}
+export declare class PurgeMawkibReservationsDto {
+    deletePilgrimUsers: boolean;
+    confirmationText: string;
 }

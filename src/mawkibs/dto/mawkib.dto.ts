@@ -13,7 +13,14 @@ import {
   Min,
   ValidateIf,
 } from 'class-validator';
-import { MawkibCity, MawkibCountry, MawkibStatus } from '@prisma/client';
+import {
+  MawkibAcceptanceType,
+  MawkibCity,
+  MawkibCountry,
+  MawkibReservationStartMode,
+  MawkibStatus,
+  MawkibStayDurationMode,
+} from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
 
 export enum MawkibCapacityFilter {
@@ -269,6 +276,55 @@ export class CreateMawkibDto {
   @IsBoolean()
   mealPlanManagementEnabled?: boolean;
 
+  @IsOptional()
+  @IsEnum(MawkibAcceptanceType)
+  acceptanceType?: MawkibAcceptanceType;
+
+  @IsOptional()
+  @IsEnum(MawkibStayDurationMode)
+  stayDurationMode?: MawkibStayDurationMode;
+
+  @ValidateIf((o) => o.stayDurationMode === MawkibStayDurationMode.Fixed)
+  @IsInt()
+  @Min(1)
+  fixedStayDays?: number;
+
+  @IsOptional()
+  @IsEnum(MawkibReservationStartMode)
+  reservationStartMode?: MawkibReservationStartMode;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowNationalId?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowPassportNumber?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowReservationCode?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowCarPlate?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowGender?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowPassword?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowLocation?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowNationalIdCardImage?: boolean;
+
   @IsInt()
   ownerUserId: number;
 
@@ -472,6 +528,56 @@ export class UpdateMawkibDto {
   @IsOptional()
   @IsBoolean()
   mealPlanManagementEnabled?: boolean;
+
+  @IsOptional()
+  @IsEnum(MawkibAcceptanceType)
+  acceptanceType?: MawkibAcceptanceType;
+
+  @IsOptional()
+  @IsEnum(MawkibStayDurationMode)
+  stayDurationMode?: MawkibStayDurationMode;
+
+  @ValidateIf((o) => o.stayDurationMode === MawkibStayDurationMode.Fixed)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  fixedStayDays?: number | null;
+
+  @IsOptional()
+  @IsEnum(MawkibReservationStartMode)
+  reservationStartMode?: MawkibReservationStartMode;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowNationalId?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowPassportNumber?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowReservationCode?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowCarPlate?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowGender?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowPassword?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowLocation?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  formShowNationalIdCardImage?: boolean;
 
   @IsOptional()
   @IsInt()

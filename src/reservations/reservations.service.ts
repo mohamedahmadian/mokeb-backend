@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  MawkibAcceptanceType,
   MawkibStatus,
   Prisma,
   ReservationDeliveredItemStatus,
@@ -15,6 +16,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MawkibsService } from '../mawkibs/mawkibs.service';
+import { ServantMawkibAccessService } from '../users/servant-mawkib-access.service';
 import {
   CancelReservationDto,
   UpdateReservationTrackingCodeDto,
@@ -48,7 +50,6 @@ import {
   appLocalDateTimeToUtc,
   isRecordedAtBeforeCheckInMinute,
 } from '../common/utils/date.util';
-import { DEFAULT_CHECK_IN_TIME } from '../common/constants/check-times';
 import { allocateNextReservationTrackingCode } from '../common/utils/reservation-code.util';
 import {
   buildExactMobileLookupVariants,
@@ -77,6 +78,12 @@ import {
 import { MealPlansService } from '../meal-plans/meal-plans.service';
 import { AttendanceRosterKind } from './dto/attendance-roster.dto';
 import { resolveAbsentRosterContext } from './attendance-roster.util';
+import {
+  acceptancePatternErrorMessage,
+  assertReservationMatchesAcceptancePattern,
+  normalizeGuestCountsForAcceptancePattern,
+  resolveReservationDatesForAcceptancePattern,
+} from '../mawkibs/mawkib-acceptance-pattern.util';
 
 const reviewUserSelect = {
   id: true,
@@ -170,6 +177,7 @@ export class ReservationsService {
     private prisma: PrismaService,
     private mawkibsService: MawkibsService,
     private usersService: UsersService,
+    private servantMawkibAccess: ServantMawkibAccessService,
     private reservationEventsService: ReservationEventsService,
     private mealPlansService: MealPlansService,
   ) {}
@@ -559,13 +567,10 @@ export class ReservationsService {
     return this.applyListPagination(filtered, search);
   }
 
-  async findByMawkibOwner(ownerUserId: number, search?: SearchReservationDto) {
-    const mawkibs = await this.prisma.mawkib.findMany({
-      where: { ownerUserId },
-      select: { id: true },
-    });
-
-    const mawkibIds = mawkibs.map((m) => m.id);
+  async findByMawkibIds(mawkibIds: number[], search?: SearchReservationDto) {
+    if (mawkibIds.length === 0) {
+      return this.applyListPagination([], search);
+    }
 
     if (search?.mawkibId && !mawkibIds.includes(search.mawkibId)) {
       return this.applyListPagination([], search);
@@ -592,6 +597,29 @@ export class ReservationsService {
       search,
     );
     return this.applyListPagination(filtered, search);
+  }
+
+  async findByMawkibOwner(ownerUserId: number, search?: SearchReservationDto) {
+    const mawkibs = await this.prisma.mawkib.findMany({
+      where: { ownerUserId },
+      select: { id: true },
+    });
+
+    return this.findByMawkibIds(
+      mawkibs.map((m) => m.id),
+      search,
+    );
+  }
+
+  async findByMawkibServant(userId: number, search?: SearchReservationDto) {
+    const mawkibIds =
+      await this.servantMawkibAccess.getAccessibleMawkibIds(userId);
+
+    if (mawkibIds.length === 0) {
+      return this.applyListPagination([], search);
+    }
+
+    return this.findByMawkibIds(mawkibIds, search);
   }
 
   async getPendingCountsByMawkib(user: AuthUser) {
@@ -816,6 +844,7 @@ export class ReservationsService {
     const reservation = await this.findOne(id);
     const isAdmin = currentUser.roles.includes(RoleName.Admin);
     const isOwner = currentUser.roles.includes(RoleName.MawkibOwner);
+    const isServant = currentUser.roles.includes(RoleName.MawkibServant);
 
     if (isAdmin) {
       return reservation;
@@ -823,6 +852,14 @@ export class ReservationsService {
 
     if (isOwner) {
       await this.mawkibsService.assertOwnerAccess(
+        reservation.mawkibId,
+        currentUser.id,
+      );
+      return reservation;
+    }
+
+    if (isServant) {
+      await this.mawkibsService.assertServantAccess(
         reservation.mawkibId,
         currentUser.id,
       );
@@ -848,6 +885,88 @@ export class ReservationsService {
     if (existing) {
       throw new BadRequestException('این کد رزرو قبلاً ثبت شده است');
     }
+  }
+
+  private applyAcceptancePatternToReservation(
+    mawkib: {
+      acceptanceType: MawkibAcceptanceType;
+      stayDurationMode: Parameters<
+        typeof resolveReservationDatesForAcceptancePattern
+      >[0]['stayDurationMode'];
+      fixedStayDays: number | null;
+      reservationStartMode: Parameters<
+        typeof resolveReservationDatesForAcceptancePattern
+      >[0]['reservationStartMode'];
+      maleCapacity: number;
+      femaleCapacity: number;
+      maxReservationDays: number;
+    },
+    input: {
+      reservationDate: string;
+      reservationEndDate?: string;
+      maleGuestCount: number;
+      femaleGuestCount: number;
+      companions?: string;
+    },
+  ) {
+    let dates: { reservationDate: string; reservationEndDate: string };
+    try {
+      dates = resolveReservationDatesForAcceptancePattern(mawkib, {
+        reservationDate: input.reservationDate,
+        reservationEndDate: input.reservationEndDate,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new BadRequestException(
+          acceptancePatternErrorMessage(error.message),
+        );
+      }
+      throw error;
+    }
+
+    const counts = normalizeGuestCountsForAcceptancePattern(
+      mawkib,
+      input.maleGuestCount,
+      input.femaleGuestCount,
+    );
+
+    let companions = input.companions?.trim() || undefined;
+    if (mawkib.acceptanceType === MawkibAcceptanceType.Individual) {
+      companions = undefined;
+    }
+
+    try {
+      assertReservationMatchesAcceptancePattern(mawkib, {
+        ...counts,
+        companions,
+        reservationDate: dates.reservationDate,
+        reservationEndDate: dates.reservationEndDate,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new BadRequestException(
+          acceptancePatternErrorMessage(error.message),
+        );
+      }
+      throw error;
+    }
+
+    const reservationDate = parseDateOnly(dates.reservationDate);
+    const reservationEndDate = parseDateOnly(dates.reservationEndDate);
+
+    if (reservationEndDate < reservationDate) {
+      throw new BadRequestException(
+        'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد',
+      );
+    }
+
+    return {
+      reservationDate,
+      reservationEndDate,
+      maleGuestCount: counts.maleGuestCount,
+      femaleGuestCount: counts.femaleGuestCount,
+      companions,
+    };
   }
 
   private async createWithTrackingCode(
@@ -1005,25 +1124,69 @@ export class ReservationsService {
       throw new BadRequestException('موکب یافت نشد یا تایید نشده است');
     }
 
-    this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
+    await this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
 
     const isAdmin = currentUser.roles.includes(RoleName.Admin);
     const isOwner = currentUser.roles.includes(RoleName.MawkibOwner);
+    const isServant = currentUser.roles.includes(RoleName.MawkibServant);
 
+    let isStaffForMawkib = isAdmin;
     if (!isAdmin && isOwner) {
       await this.mawkibsService.assertOwnerAccess(dto.mawkibId, currentUser.id);
-    }
-
-    const reservationDate = parseDateOnly(dto.reservationDate);
-    const reservationEndDate = parseDateOnly(
-      dto.reservationEndDate ?? dto.reservationDate,
-    );
-
-    if (reservationEndDate < reservationDate) {
-      throw new BadRequestException(
-        'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد',
+      isStaffForMawkib = true;
+    } else if (!isAdmin && isServant) {
+      await this.mawkibsService.assertServantAccess(
+        dto.mawkibId,
+        currentUser.id,
       );
+      isStaffForMawkib = true;
     }
+
+    let patternApplied: {
+      reservationDate: Date;
+      reservationEndDate: Date;
+      maleGuestCount: number;
+      femaleGuestCount: number;
+      companions: string | undefined;
+    };
+
+    if (dto.skipMawkibAcceptancePattern === true) {
+      if (!isStaffForMawkib) {
+        throw new ForbiddenException(
+          'شما مجوز ثبت رزرو با الگوی پذیرش سریع را ندارید',
+        );
+      }
+      const reservationDate = parseDateOnly(dto.reservationDate);
+      const reservationEndDate = parseDateOnly(
+        dto.reservationEndDate ?? dto.reservationDate,
+      );
+      if (reservationEndDate < reservationDate) {
+        throw new BadRequestException(
+          'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد',
+        );
+      }
+      patternApplied = {
+        reservationDate,
+        reservationEndDate,
+        maleGuestCount: dto.maleGuestCount,
+        femaleGuestCount: dto.femaleGuestCount,
+        companions: dto.companions?.trim() || undefined,
+      };
+    } else {
+      patternApplied = this.applyAcceptancePatternToReservation(mawkib, {
+        reservationDate: dto.reservationDate,
+        reservationEndDate: dto.reservationEndDate,
+        maleGuestCount: dto.maleGuestCount,
+        femaleGuestCount: dto.femaleGuestCount,
+        companions: dto.companions,
+      });
+    }
+
+    const reservationDate = patternApplied.reservationDate;
+    const reservationEndDate = patternApplied.reservationEndDate;
+    const maleGuestCount = patternApplied.maleGuestCount;
+    const femaleGuestCount = patternApplied.femaleGuestCount;
+    const companions = patternApplied.companions;
 
     await this.mawkibsService.assertReservationServiceStart(
       dto.mawkibId,
@@ -1036,23 +1199,24 @@ export class ReservationsService {
       reservationEndDate,
     );
 
-    const skipCapacity = dto.skipCapacityCheck === true && (isAdmin || isOwner);
+    const skipCapacity =
+      dto.skipCapacityCheck === true && (isAdmin || (isOwner && isStaffForMawkib));
 
-    if (dto.skipCapacityCheck === true && !isAdmin && !isOwner) {
+    if (dto.skipCapacityCheck === true && !isAdmin && !(isOwner && isStaffForMawkib)) {
       throw new ForbiddenException(
         'شما مجوز ثبت رزرو بدون بررسی ظرفیت را ندارید',
       );
     }
 
-    if (dto.trackingCode && !isAdmin && !isOwner) {
+    if (dto.trackingCode && !(isAdmin || (isOwner && isStaffForMawkib))) {
       throw new ForbiddenException('شما مجوز تعیین کد رزرو را ندارید');
     }
 
     if (!skipCapacity) {
       await this.mawkibsService.assertCapacityInRange(
         dto.mawkibId,
-        dto.maleGuestCount,
-        dto.femaleGuestCount,
+        maleGuestCount,
+        femaleGuestCount,
         reservationDate,
         reservationEndDate,
       );
@@ -1085,13 +1249,13 @@ export class ReservationsService {
       mawkibId: dto.mawkibId,
       reservationDate,
       reservationEndDate,
-      maleGuestCount: dto.maleGuestCount,
-      femaleGuestCount: dto.femaleGuestCount,
+      maleGuestCount,
+      femaleGuestCount,
     });
 
     const plannedTimes = resolvePlannedTimes(dto, mawkib);
 
-    const autoConfirmed = isAdmin || isOwner;
+    const autoConfirmed = isStaffForMawkib;
     const checkInOnConfirm = autoConfirmed
       ? this.resolveActualCheckInOnConfirm(mawkib, null)
       : undefined;
@@ -1105,11 +1269,11 @@ export class ReservationsService {
         reservationEndDate,
         plannedCheckInTime: plannedTimes.plannedCheckInTime,
         plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
-        maleGuestCount: dto.maleGuestCount,
-        femaleGuestCount: dto.femaleGuestCount,
+        maleGuestCount,
+        femaleGuestCount,
         pilgrimMobile: dto.pilgrimMobile,
         description: dto.description,
-        companions: dto.companions?.trim() || undefined,
+        companions,
         status: autoConfirmed
           ? ReservationStatus.Confirmed
           : ReservationStatus.Pending,
@@ -1118,7 +1282,7 @@ export class ReservationsService {
       },
       {
         customTrackingCode: dto.trackingCode,
-        allowCustomTrackingCode: isAdmin || isOwner,
+        allowCustomTrackingCode: isAdmin || (isOwner && isStaffForMawkib),
       },
     );
 
@@ -1148,18 +1312,21 @@ export class ReservationsService {
       throw new BadRequestException('موکب یافت نشد یا تایید نشده است');
     }
 
-    this.mawkibsService.assertOnlineReservationAllowed(mawkib);
+    await this.mawkibsService.assertOnlineReservationAllowed(mawkib);
 
-    const reservationDate = parseDateOnly(dto.reservationDate);
-    const reservationEndDate = parseDateOnly(
-      dto.reservationEndDate ?? dto.reservationDate,
-    );
+    const patternApplied = this.applyAcceptancePatternToReservation(mawkib, {
+      reservationDate: dto.reservationDate,
+      reservationEndDate: dto.reservationEndDate,
+      maleGuestCount: dto.maleGuestCount,
+      femaleGuestCount: dto.femaleGuestCount,
+      companions: dto.companions,
+    });
 
-    if (reservationEndDate < reservationDate) {
-      throw new BadRequestException(
-        'تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد',
-      );
-    }
+    const reservationDate = patternApplied.reservationDate;
+    const reservationEndDate = patternApplied.reservationEndDate;
+    const maleGuestCount = patternApplied.maleGuestCount;
+    const femaleGuestCount = patternApplied.femaleGuestCount;
+    const companions = patternApplied.companions;
 
     await this.mawkibsService.assertReservationServiceStart(
       dto.mawkibId,
@@ -1174,8 +1341,8 @@ export class ReservationsService {
 
     await this.mawkibsService.assertCapacityInRange(
       dto.mawkibId,
-      dto.maleGuestCount,
-      dto.femaleGuestCount,
+      maleGuestCount,
+      femaleGuestCount,
       reservationDate,
       reservationEndDate,
     );
@@ -1201,8 +1368,8 @@ export class ReservationsService {
       mawkibId: dto.mawkibId,
       reservationDate,
       reservationEndDate,
-      maleGuestCount: dto.maleGuestCount,
-      femaleGuestCount: dto.femaleGuestCount,
+      maleGuestCount,
+      femaleGuestCount,
     });
 
     const plannedTimes = resolvePlannedTimes(dto, mawkib);
@@ -1225,12 +1392,12 @@ export class ReservationsService {
         reservationEndDate,
         plannedCheckInTime: plannedTimes.plannedCheckInTime,
         plannedCheckOutTime: plannedTimes.plannedCheckOutTime,
-        maleGuestCount: dto.maleGuestCount,
-        femaleGuestCount: dto.femaleGuestCount,
+        maleGuestCount,
+        femaleGuestCount,
         pilgrimMobile: mobileNumber,
         description: dto.description?.trim() || undefined,
         travelOrigin: dto.travelOrigin?.trim() || undefined,
-        companions: dto.companions?.trim() || undefined,
+        companions,
         status: initialStatus,
         ...(checkInOnConfirm ? { actualCheckInAt: checkInOnConfirm } : {}),
       },
@@ -1426,6 +1593,7 @@ export class ReservationsService {
     const isAdmin = currentUser.roles.includes(RoleName.Admin);
     const isOwner = currentUser.roles.includes(RoleName.MawkibOwner);
     const isPilgrim = currentUser.roles.includes(RoleName.Pilgrim);
+    const isServant = currentUser.roles.includes(RoleName.MawkibServant);
 
     if (reservation.status === ReservationStatus.Cancelled) {
       throw new BadRequestException('این رزرو قبلاً لغو شده است');
@@ -1439,7 +1607,7 @@ export class ReservationsService {
 
     if (isAdmin) {
       // full access
-    } else if (isPilgrim && !isAdmin && !isOwner) {
+    } else if (isPilgrim && !isAdmin && !isOwner && !isServant) {
       if (reservation.pilgrimUserId !== currentUser.id) {
         throw new ForbiddenException(
           'فقط رزروهای خودتان را می‌توانید لغو کنید',
@@ -1450,12 +1618,17 @@ export class ReservationsService {
         reservation.mawkibId,
         currentUser.id,
       );
+    } else if (isServant && !isAdmin && !isOwner) {
+      await this.mawkibsService.assertServantAccess(
+        reservation.mawkibId,
+        currentUser.id,
+      );
     } else {
       throw new ForbiddenException('شما مجوز لغو این رزرو را ندارید');
     }
 
     const note = dto.note?.trim() || undefined;
-    const isStaffCancel = isAdmin || isOwner;
+    const isStaffCancel = isAdmin || isOwner || isServant;
 
     if (reservation.status === ReservationStatus.Confirmed) {
       await this.mawkibsService.syncInventoryOnReservationCancelled(
@@ -1519,7 +1692,7 @@ export class ReservationsService {
       throw new BadRequestException('موکب یافت نشد یا تایید نشده است');
     }
 
-    this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
+    await this.mawkibsService.assertOnlineReservationAllowed(mawkib, currentUser);
 
     const reservationStartStr = formatDateOnly(
       parseDateOnly(source.reservationDate),
